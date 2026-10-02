@@ -5,6 +5,7 @@
 - **Competition:** AI Vibe Coding Challenge (Open Category)
 - **Event date:** 2026-10-07, Day 2 afternoon, Tandaya Hall
 - **Status:** Approved design, pending implementation
+- **Revised:** 2026-10-02 — §4 stack updated after the proposal review (see `docs/PROPOSALS.md`)
 
 ## 1. Context
 
@@ -78,7 +79,7 @@ The ECC clone moves from the repository root into `reference/` and is gitignored
 
 ### 4.1 Stack
 
-Vite + React + TypeScript + Tailwind + shadcn/ui.
+Vite + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui, with a motion layer (Motion, GSAP, Lenis) and an optional 3D layer (three.js via React Three Fiber).
 
 Vite is chosen over Next.js because the demo is local-only, so server-side rendering provides no benefit, while the Next server/client component boundary is a common source of hard-to-read errors under time pressure. Vite has a faster dev server and more legible failure modes.
 
@@ -94,8 +95,12 @@ Every module is generic. None encodes domain logic.
 | Component library | shadcn/ui | Button, card, dialog, table, tabs, form, toast, select |
 | Forms and validation | react-hook-form + zod | Most civic applications take user input |
 | Data tables | TanStack Table | Sorting and filtering wrapper |
-| Charts | Recharts | Themed defaults for dashboard-shaped topics |
-| Maps | react-leaflet | Smart LGU topics are frequently geographic |
+| Charts | Recharts (Apache ECharts when richer animation is needed) | Themed defaults for dashboard-shaped topics |
+| Maps | MapLibre GL JS via `react-map-gl/maplibre` | Vector maps with pitch, 3D extrusion and terrain; no API token |
+| Spatial analysis | `@turf/turf` | Point-in-polygon, nearest facility, buffers — hazard lookups with no backend |
+| UI motion | `motion` (motion/react) | Hover/tap, layout reorders, modals, page transitions |
+| Choreographed motion | `gsap` + `@gsap/react`, `lenis` | Scroll storytelling, text reveals, count-ups, scrubbable timelines (project skill `gsap-motion`) |
+| 3D (only if the chosen proposal needs it) | `three` + `@react-three/fiber` + `@react-three/drei` | Terrain and water-level scenes (project skill `r3f-scenes`) |
 | State and persistence | zustand + localStorage | No backend; survives refresh |
 | Mock data | Seed helper | Demo data without a database |
 | UI states | Loading, empty, error components | Carries the 15% UX score |
@@ -109,6 +114,12 @@ A fat scaffold is a liability if it must be rediscovered or if unused parts ling
 2. **Each module is self-contained** in its own folder, with a header comment stating it is safe to delete if unused.
 3. **A strip step in the first 15 minutes.** Once the topic is known, unused modules are deleted outright.
 4. **Every module ships a demo route** that is deleted along with it, so nothing is left half-wired.
+
+### 4.4 Data
+
+Which GIS layers ship in `app/public/data/` depends on the chosen proposal (`docs/PROPOSALS.md`). The three shortlisted proposals — Ligtas Ba Ako?, Libot Catbalogan and Kalinga — share one foundation: Catbalogan barangays, hazard layers and critical facilities.
+
+Conversion happens before the event, never during the four hours: `mapshaper` (via `npx`) simplifies the unsimplified NOAH/NAMRIA GeoJSON and reprojects the UTM 51N CPDCO shapefiles to WGS84. Source data is read from `D:\lgu_portal - GIS`. Nothing is copied from `C:\lgu_portal`, which holds credential files.
 
 ## 5. Competition-day ECC configuration
 
