@@ -1,0 +1,23 @@
+mission:
+Participants have exactly four (4) hours to conceptualize, design, and develop a web-based application using AI-powered tools
+
+focus:
+Effective use of generative AI technologies for coding, design, documentation, and problem-solving to address real-world challenges.
+
+the challenge:
+The AI Vibe Coding challenge is a fast-paced innovation competition that tasks participants with rapidly developing digital solutions using the power of Artificial Intelligence. This event showcases how AI-assisted development can transform a conceptual idea into a functional web application in just a few hours.
+
+Competition Deliverables:
+During the 4-hour window. participants must complete the following:
+- Functional Web App: a working application with clear workflows and user interfaces.
+- Project Poster: A visual summary highlighting the problem statement. AI Tools utilized. development process. and potential impact.
+- Live Demonstration: A presentation and functional demo before the judging panel.
+
+Evaluation Criteria:
+Projects will be judged based on the following rubric.
+- Effective use of AI technologies - 20%
+- Innovation and Creativity - 20%
+- Functionality and Technical Execution - 20%
+- User Experience (UX) and Interface Design - 15%
+- Relevance and Practical Impact - 15%
+- Presentation and Poser Quality - 10%
