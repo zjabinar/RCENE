@@ -1,21 +1,23 @@
 # RSCENE 2026 AI Vibe Coding Challenge — Project Proposals
 
-Twenty candidate projects for the four-hour solo build on **October 7, 2026** at Tandaya Hall, Catbalogan City, with a recommended shortlist, tech stack, and prep plan.
+Thirty candidate projects for the four-hour solo build on **October 7, 2026** at Tandaya Hall, Catbalogan City — 20 focused single-feature apps and 10 integrated platforms — with recommended shortlists, data-provenance rules, tech stack, and prep plan.
 
 - **Event theme:** *The Living Tapestry: Weaving the Threads of Innovation and Heritage*
 - **Deliverables:** functional web app · project poster · live demonstration
 - **Rubric:** AI use 20% · Innovation 20% · Functionality 20% · UX/UI 15% · Relevance & impact 15% · Poster & presentation 10%
 - **Constraints:** solo · React + TypeScript · local-only demo · prepared repo allowed · no runtime AI API in the app
 
-Sources reviewed: `VibeCoding_Challenge.txt` and the event poster; the LGU Portal Pro codebase and its gap-analysis/audit documents (`C:\lgu_portal`); the Region VIII GIS archive (`D:\lgu_portal - GIS`).
+Sources reviewed: `VibeCoding_Challenge.txt` and the event poster; the LGU Portal Pro codebase and its gap-analysis/audit documents (`C:\lgu_portal`); the Region VIII GIS archive (`D:\lgu_portal - GIS`); the GPDSS / Project HABAGAT codebase and research documents (`D:\monica`).
 
 ---
 
 ## What the review found
 
-### GIS data — the edge no other team has
+### GIS data — a real edge, once provenance is checked
 
 The archive holds 15 GB covering Region VIII: 6 provinces, 143 municipalities, and 4,390 barangays. Its deepest detail is for **Catbalogan City** (57 barangays), the host city, and **Motiong** (30 barangays, pre-clipped).
+
+> Not every layer is free to show in public. Check **Data provenance & permissions** below before using any of it.
 
 **Ready now** (small WGS84 GeoJSON that loads straight into a browser map):
 
@@ -52,6 +54,52 @@ The portal's own gap analyses and audits record these unmet needs:
 - no Waray/Filipino localisation
 - hazard data locked in technical formats
 - field work that must survive without signal
+
+### GPDSS / Project HABAGAT — useful, but not yours alone to publish
+
+`D:\monica` holds **GPDSS** (Geospatial Predictive Decision Support System), a Django + PostGIS system that profiles hazard risk for Catbalogan's 57 barangays. It uses Random Forest / Gradient Boosting models with SHAP explanations, an eight-preset scenario engine, and an LLM assistant.
+
+**Whose it is.** GPDSS is **Anna Monica C. Paculaba's DIT dissertation** (University of the Cordilleras). **Project HABAGAT** — SSU, April–October 2027, with LGU Catbalogan as partner — is a separate institutional proposal, with Paculaba as project leader and Zaldy A. Jabiñar as member. Her dissertation evaluation and a Springer LNCS manuscript are still pending.
+
+**What it adds that the other sources don't:**
+- CBMS **barangay-level aggregates** for 2013 (the pre-Haiyan baseline), 2022 and 2024: housing materials, age structure by sex, and SDG service indicators (water, sanitation, electricity, internet, tenure, safety). It holds no household or person-level data.
+- A 57 × 6 hazard matrix: flood, landslide, storm surge, ground shaking, liquefaction, tsunami.
+- 35 historical incidents (2013–2024), 95 earthquakes, 11 tropical cyclones, and 11 years of daily weather.
+- **11 island barangays in three clusters**; 31 of 57 barangays are coastal.
+- Research insight: dense coastal and poblacion barangays and riverine barangays in the Catbalogan River basin are the most vulnerable; upland barangays are mainly landslide-exposed.
+- Poverty and food-insecurity fields are empty, so poverty-based features have no data behind them.
+
+**What its own roadmap lists as missing.** These are good competition seeds, and building them from scratch is your own work:
+- a plain-language answer to "why is my barangay at risk?"
+- geocoded digital incident reporting (only 35 incidents are on record)
+- an offline PWA for field officers
+- geo-targeted, multilingual alerts
+- saving and sharing scenarios
+- maritime connectivity for island barangays
+- evacuation-capacity and shelter mapping
+
+CSWDO, the social welfare office, appears nowhere in it.
+
+**What not to use without her consent:**
+- the code
+- the model outputs: risk levels, SHAP values, risk snapshots, metrics
+- `journal_outputs\`
+- anything derived from the above
+
+Two reasons. Showing them first in a public competition could count as prior publication. And the risk labels are a weighted index, not validated ground truth, so presenting them to residents as "AI predictions" would overstate them.
+
+### Data provenance & permissions
+
+| Tier | Meaning | Sources |
+|---|---|---|
+| 🟢 Open | Use with attribution | HDX/OCHA admin boundaries (57 Catbalogan barangays) · OpenStreetMap facilities (ODbL, "© OpenStreetMap contributors") · UP Project NOAH flood, landslide and storm-surge maps (confirm the license on the download page) · Geoportal Philippines public downloads (confirm which files came from there) · PSA published statistics · PHIVOLCS public earthquake bulletins · PAGASA public tropical-cyclone lists |
+| 🟡 Permission | Gathered by others under agreements; use only with the owner's OK | CBMS barangay aggregates (LGU-CBMS office) · CDRRMO risk overlays and evacuation-center lists · CPDCO heritage and eco-tourism KML and photos · NAMRIA RDAB layers and IfSAR DSM/DTM ("Terms of Agreement") · PAGASA station daily data · PHIVOLCS KMZ hazard overlays obtained under the MOU |
+| 🔴 Don't use | Off-limits for a public demo | GPDSS model outputs, SHAP values, metrics, `journal_outputs\` · PHIVOLCS WMS links and token URL (the MOU forbids sharing them) · any credential file (`.env`, `gemini_api_key.txt`, Firebase keys) · any user, chat or audit table |
+
+Rules that apply whatever the tier:
+- **Barangay-level figures only.** Publish rates rather than raw counts, and suppress any cell under 5. Small island barangays make small counts identifying.
+- **Credit every source** on a data-sources page and on the poster.
+- **🟢 data must be enough to ship.** 🟡 data is an upgrade if permission arrives in time, never a dependency.
 
 ---
 
@@ -222,7 +270,7 @@ The portal's own gap analyses and audits record these unmet needs:
 - **MVP:** Household layer and hazard overlay · ranked list · assignment and check-off · summary
 - **Wow:** The map pulses on priority households; a Motion list re-sorts as people are moved
 - **Stack:** core + MapLibre, Turf, Motion
-- **Data:** **Synthetic households only, never real residents.** The schema follows LGU Portal Pro's senior, PWD, and solo-parent registries.
+- **Data:** **Synthetic households only, never real residents.** The schema follows LGU Portal Pro's senior, PWD, and solo-parent registries. With LGU permission, barangay-level CBMS aggregates (age structure, housing materials) can drive the barangay ranking; households stay synthetic either way.
 - **Edge:** The strongest human-impact pitch.
 
 ### 19. Ayuda Tracker — QR relief distribution
@@ -251,6 +299,167 @@ The portal's own gap analyses and audits record these unmet needs:
 | Wild card | **Tubig (#2)** | Only if three.js must be the star, and only with a heightmap baked in advance. |
 
 **All three shortlisted proposals share one data foundation**: Catbalogan barangays, hazards, and facilities. Preparing it once keeps every option open, so the final pick can wait until the data is ready.
+
+---
+
+## Integrated platforms (P1–P10)
+
+Proposals #1–#20 each solve one problem. These ten group related services into one platform: a shared data spine, several role-based views, and a single workflow that runs across them. A platform shows "clear workflows and user interfaces" — the competition's own wording for the app deliverable — better than a single screen can. It also carries more risk.
+
+**Five rules make a platform four-hour feasible:**
+1. **One spine.** Every module reads and writes the same store (Zustand), keyed by barangay. Modules are views of it, not separate apps.
+2. **No more than three core modules.** Everything else is *stretch*, and gets built only if the core is working by T+2:00.
+3. **The demo is one workflow across roles** — for example CDRRMO → resident → evacuation-center staff. Any module that doesn't appear in that workflow is cut.
+4. **The spine exists before the event.** Data conversion, the store shape and the map component are ready on October 7; the four hours go to the modules.
+5. **The first core module stands alone.** If time runs out, it is still a complete single-feature entry. The platform degrades into one of #1–#20 instead of failing.
+
+### At a glance
+
+| # | Platform | Groups | Roles in the demo | Data | 4-h feasibility | Originality |
+|---|---|---|---|---|---|---|
+| P1 | **Andam Catbalogan** | #1 #3 #4 #5 | CDRRMO · resident · evacuation staff | 🟢 | Med–High | Medium |
+| P2 | **Bayanihan Response** | #6 #19 + incident reporting | Resident · CDRRMO · relief volunteer · public | 🟢 + synthetic | Medium | Medium |
+| P3 | **Kalinga Catbalogan** | #18 + vulnerability profile + referrals | CSWDO · BDRRMC · tanod/BHW | 🟡 or synthetic | Med–High | High |
+| P4 | **Isla Link** | new (+ #3 #19) | Island barangay · CDRRMO / port | 🟢 + synthetic | High | Very high |
+| P5 | **Serbisyo Catbalogan** | #7 #8 #20 | Resident · frontline staff · display board | 🟢 | High | Low–Med |
+| P6 | **Negosyo Catbalogan** | #7 #9 #10 | Applicant · BPLO · public | 🟢 | Med–High | High |
+| P7 | **Bukas Catbalogan** | #11 #12 #13 | Resident · planning office | 🟢 + synthetic | Medium | Medium |
+| P8 | **Libot Catbalogan+** | #16 #17 + enterprise directory | Visitor · local enterprise | 🟡 or own photos | Medium | High (theme) |
+| P9 | **Luntian Catbalogan** | #2 #14 #15 | Resident · ENRO / planner | 🟢 / 🟡 | Medium | Medium |
+| P10 | **Barangay 360** | #4 #8 #12 + barangay profile | Punong Barangay · resident | 🟡 or synthetic | Med–High | Medium |
+
+### P1. Andam Catbalogan — community preparedness platform
+- **Groups:** #1 Ligtas Ba Ako?, #3 Likas, #4 Bantay Barangay, #5 Sakuna Sim
+- **Workflow:**
+  1. CDRRMO raises a scenario ("Signal No. 3, storm surge SSA2").
+  2. Affected barangays and evacuation centers light up.
+  3. A resident checks their location and gets their nearest open center.
+  4. Center staff update headcounts, and the public board fills live.
+- **Core:** hazard lookup (resident) · scenario switch (CDRRMO) · evacuation finder + capacity board
+- **Stretch:** plain-language barangay risk explainer ("why is my barangay at risk?")
+- **Spine:** barangay × hazard matrix, facilities, active scenario state, shared across windows with BroadcastChannel
+- **Data:** 🟢 HDX boundaries, UP NOAH hazards, OSM schools and health facilities · 🟡 CDRRMO evacuation-center list if permitted
+- **Signature:** three synced windows — the CDRRMO console, a resident's phone view, the public board
+- **Why it scores:** it answers documented gaps from both the LGU portal (the "Am I Safe?" failure, no routing) and GPDSS (plain-language explanations, evacuation capacity)
+- **Note:** this sits closest to HABAGAT's territory. Tell Paculaba before you build it.
+
+### P2. Bayanihan Response — report-to-relief lifecycle
+- **Groups:** #6 Damage Snap, #19 Ayuda Tracker, plus geocoded incident reporting and relief transparency
+- **Workflow:**
+  1. A resident or field officer files a geotagged report, which works offline.
+  2. The CDRRMO triage board verifies and assigns it.
+  3. Relief is distributed by QR, with a duplicate guard.
+  4. A public dashboard shows what reached which barangay.
+- **Core:** report form with offline queue · triage board · QR distribution
+- **Stretch:** public transparency view
+- **Spine:** incidents, synthetic household QR codes, and distributions, all keyed by barangay
+- **Data:** 🟢 boundaries; synthetic households and reports
+- **Why it scores:** GPDSS has only 35 incidents on record in 12 years and its roadmap asks for exactly this workflow; the LGU portal flags offline field work
+
+### P3. Kalinga Catbalogan — vulnerability-aware social protection
+- **Groups:** #18 Kalinga, a barangay vulnerability profile, and program referrals
+- **Workflow:**
+  1. The CSWDO or BDRRMC sees barangays ranked by vulnerability: light-material housing in surge zones, seniors, young children.
+  2. It generates a pre-emptive evacuation priority list.
+  3. Tanods and BHWs check households off as they move.
+  4. Families are referred to programs.
+- **Core:** vulnerability profile and ranking · priority list with check-off
+- **Stretch:** program referral directory
+- **Spine:** barangay profile (age structure, housing materials, services) × hazards; a synthetic household registry
+- **Data:** 🟡 CBMS barangay aggregates with LGU permission · 🟢 synthetic fallback shaped like CBMS · suppress cells under 5
+- **Signature:** a housing-materials time-lapse from 2013 (pre-Haiyan) to 2022 to 2024
+- **Why it scores:** CSWDO appears nowhere in GPDSS, and the LGU portal's own gap list says risk is modelled as purely physical
+
+### P4. Isla Link — island-barangay connectivity & resilience
+- **Groups:** new; borrows from #3 and #19
+- **Workflow:**
+  1. Each island barangay posts its daily status and needs: water, rice, medicine, patients needing transport.
+  2. The mainland CDRRMO or port office watches a needs board.
+  3. A sea-travel advisory follows the tropical-cyclone signal.
+  4. A boat or relief run is dispatched and logged.
+- **Core:** island-cluster map with status board · needs requests · sea-travel advisory
+- **Stretch:** boat dispatch log
+- **Spine:** the 11 island barangays in three clusters, needs, advisories
+- **Data:** 🟢 boundaries; PAGASA public cyclone signals; synthetic needs and trips
+- **Signature:** island clusters pulse by urgency, and a sea lane draws itself when a trip is dispatched
+- **Why it scores:** GPDSS found these barangays spatially isolated and lists maritime connectivity as unbuilt future work. No other team is likely to think of it, and it is unmistakably Catbalogan.
+
+### P5. Serbisyo Catbalogan — one-stop citizen services
+- **Groups:** #7 Pila, #8 Sertipiko, #20 Sumat
+- **Workflow:**
+  1. A resident finds a service by describing it in Waray, Filipino or English.
+  2. They submit a request and get a queue ticket or appointment.
+  3. They track its status.
+  4. They claim it with QR verification. Staff use a console with a "Now Serving" board.
+- **Core:** service finder · request + ticket · staff console with display board
+- **Stretch:** QR verification page
+- **Data:** 🟢 the Citizen's Charter (a public document)
+- **Why it scores:** the most universally understood workflow; the Waray interface is the differentiator
+
+### P6. Negosyo Catbalogan — hazard-aware business hub
+- **Groups:** #9 Negosyo Navigator, #10 Reklamo, #7 Pila
+- **Workflow:**
+  1. A prospective owner answers the wizard and gets requirements plus a fee estimate.
+  2. They drop a pin for the business location and get a hazard and zoning check: "this lot is in a storm-surge zone — here's what that means."
+  3. They book an appointment.
+  4. The public sees a business registry with complaint lookup.
+- **Core:** wizard + fee estimate · location hazard check · appointment booking
+- **Stretch:** public registry and complaints
+- **Data:** 🟢 NOAH hazards and boundaries; fee rules re-entered as config from your eBOSS knowledge
+- **Why it scores:** it joins your two deepest domains, eBOSS and DRRM, into something neither system does today: risk-aware business siting
+
+### P7. Bukas Catbalogan — transparency & participation
+- **Groups:** #11 Bayanihan Budget, #12 Proyekto Watch, #13 Bukas Datos
+- **Workflow:**
+  1. A scroll story explains the city's data.
+  2. A projects map shows what is being built.
+  3. Residents allocate a virtual budget and vote.
+  4. They leave feedback.
+- **Core:** scroll story · projects map · budget vote
+- **Stretch:** feedback
+- **Data:** 🟢 public Full Disclosure Policy documents; synthetic projects · 🟡 CEEPUO project photos
+- **Why it scores:** the most visually designed option, and the story section doubles as the poster
+
+### P8. Libot Catbalogan+ — heritage, tourism & local economy
+- **Groups:** #16 Libot, #17 Banig, plus a local-enterprise directory and travel advisory
+- **Workflow:**
+  1. A visitor explores the heritage story map and builds a trail.
+  2. They get a "safe to visit today" advisory.
+  3. They find local guides and pasalubong shops.
+  4. They make a banig-pattern souvenir card to share.
+- **Core:** heritage story map + trail · hazard advisory · enterprise directory
+- **Stretch:** banig pattern maker
+- **Data:** 🟡 CPDCO heritage and eco-tourism KML and photos · 🟢 OSM points of interest, NOAH hazards, your own photos
+- **Why it scores:** it hits the event theme dead-centre — *Weaving the Threads of Innovation and Heritage*
+
+### P9. Luntian Catbalogan — environment & climate action
+- **Groups:** #2 Tubig (2D version), #14 Basura Alert, #15 Bakhaw Watch
+- **Workflow:**
+  1. Residents check waste schedules and play the segregation game.
+  2. They report environmental violations.
+  3. Planners view mangrove change and sea-level-rise exposure by barangay.
+- **Core:** waste schedule + game · violation report · sea-level-rise exposure view
+- **Stretch:** mangrove change
+- **Data:** 🟢 NOAH storm surge · 🟡 NAMRIA coastal resources and sea-level-rise inundation (check for public Geoportal equivalents)
+
+### P10. Barangay 360 — barangay officials' cockpit
+- **Groups:** #4, #8, #12, plus a barangay profile
+- **Workflow:**
+  1. A Punong Barangay opens their barangay and sees its profile: population, age structure, housing and services trends from 2022 to 2024.
+  2. They see hazard exposure, open requests and projects.
+  3. They post an announcement, which residents see on their side.
+- **Core:** profile + trends · hazard exposure · announcements
+- **Stretch:** requests and projects
+- **Data:** 🟡 CBMS aggregates with permission · 🟢 synthetic fallback
+- **Why it scores:** turns each of the 57 barangays' data into one screen; GPDSS has a public "Know-Your-Barangay" page but nothing for barangay officials
+
+### Platform shortlist
+
+| Rank | Platform | Why |
+|---|---|---|
+| **1** | **P1 Andam Catbalogan** | It turns the strongest single-feature ideas into one cross-role workflow and runs entirely on 🟢 open data. Its first module *is* #1 Ligtas Ba Ako?, so it degrades safely. |
+| **2** | **P4 Isla Link** | The most original idea on the list: small, feasible, and unmistakably Catbalogan. |
+| **3** | **P3 Kalinga Catbalogan** | The strongest story if the LGU approves the CBMS aggregates — housing resilience since the 2013 pre-Haiyan baseline, plus a CSWDO angle nobody has built. |
 
 ---
 
@@ -295,7 +504,7 @@ Pin the latest versions at install time, and verify with a real install and prod
 
 | Date | Work |
 |---|---|
-| Oct 2–3 | Pick the proposal. Convert and simplify the Catbalogan data foundation. |
+| Oct 2–3 | Pick the proposal or platform. Send permission requests: Paculaba for anything touching GPDSS or HABAGAT; the LGU (CDRRMO, CPDCO, CBMS office) for 🟡 data. Convert and simplify the 🟢 open-data foundation. |
 | Oct 4–5 | Build the scaffold. Run one full four-hour **dry run**, including the poster and demo. |
 | Oct 6 | Freeze. Re-verify the build offline. Print the runbook. |
 | Oct 7 | Compete. |
