@@ -9,6 +9,15 @@ Thirty candidate projects for the four-hour solo build on **October 7, 2026** at
 
 Sources reviewed: `VibeCoding_Challenge.txt` and the event poster; the LGU Portal Pro codebase and its gap-analysis/audit documents (`C:\lgu_portal`); the Region VIII GIS archive (`D:\lgu_portal - GIS`); the GPDSS / Project HABAGAT codebase and research documents (`D:\monica`).
 
+## Decisions
+
+| Date | Decision |
+|---|---|
+| 2026-10-02 | Build **P1 Andam Catbalogan**. Its PRD lives at `docs/PRD.md`. |
+| 2026-10-02 | The entry is **fully independent of GPDSS and Project HABAGAT**. Nothing from `D:\monica` is used — no code, outputs, data, or findings, including its island-barangay list and roadmap gaps. The GPDSS review below stays only as a record of what was examined. P4 Isla Link is set aside because it rests on GPDSS findings. |
+| 2026-10-02 | Data: 🟢 open data first. The user holds permission for some 🟡 datasets; the PRD records exactly which ones. |
+| 2026-10-02 | Topic format (self-chosen or announced on the day) is unconfirmed. Plan for self-chosen, and keep the scaffold generic enough to pivot. |
+
 ---
 
 ## What the review found

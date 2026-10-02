@@ -117,7 +117,7 @@ A fat scaffold is a liability if it must be rediscovered or if unused parts ling
 
 ### 4.4 Data
 
-Which GIS layers ship in `app/public/data/` depends on the chosen proposal (`docs/PROPOSALS.md`). The three shortlisted proposals — Ligtas Ba Ako?, Libot Catbalogan and Kalinga — share one foundation: Catbalogan barangays, hazard layers and critical facilities.
+The chosen project is **Andam Catbalogan** (platform P1). Its PRD, `docs/PRD.md` §8, is the source of truth for which layers ship in `app/public/data/`, their sources, and the data rules. The foundation is Catbalogan barangays, hazard layers and critical facilities.
 
 Conversion happens before the event, never during the four hours: `mapshaper` (via `npx`) simplifies the unsimplified NOAH/NAMRIA GeoJSON and reprojects the UTM 51N CPDCO shapefiles to WGS84. Source data is read from `D:\lgu_portal - GIS`. Nothing is copied from `C:\lgu_portal`, which holds credential files.
 
