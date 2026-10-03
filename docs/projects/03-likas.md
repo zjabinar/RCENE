@@ -5,7 +5,7 @@
 | **App** | `apps/03-likas` · dev port 5103 · preview 6103 |
 | **Batch** | 1 |
 | **Proposal** | `docs/proposal.md` (#3 in the monorepo's `docs/PROPOSALS.md`) · this is **Core 3 of `docs/PRD.md`** (Andam Catbalogan, R3.1–R3.3) |
-| **Reused by platforms** | P1 Andam Catbalogan (evacuation finder, `/center/:id`, `/board`), P4 Isla Link (board pattern; P4 is set aside in the decisions of the monorepo's `docs/PROPOSALS.md`, so this only means keep the board generic) |
+| **Reused by platforms** | P1 Andam Catbalogan (evacuation finder, `/center/:id`, `/board`), P4 Isla Link (the board pattern for its needs board, so keep `Board` generic) |
 | **Data** | boundary, barangays, facilities (schools become candidate centers), all five `hazard-*` layers · 🟢 HDX + OSM, 🟡 CDRRMO risk maps (permission) · synthetic: illustrative candidate capacities (seed 101) |
 | **AI in the app** | none |
 | **Skills to use** | `maplibre-gis`, `gsap-motion` (count-ups, banner sweep), Motion `layout` for the board re-sort, Design plugin `ux-copy` (reasons and badges) and `accessibility-review` (board legibility) |

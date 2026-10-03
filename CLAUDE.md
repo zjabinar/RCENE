@@ -2,7 +2,7 @@
 
 > **If your working directory is `apps/<slug>` (or a copied app folder), ignore this file and follow that folder's `CLAUDE.md`.** Everything below is for the orchestrator on `main` and for the 00-data session, both at the repo root.
 
-20 pre-built React apps for Catbalogan City (RSCENE 2026 AI Vibe Coding Challenge, Oct 7). On the day one app is picked and continued for 4 hours; the demo runs **offline**, with no server and no runtime AI API. Every `apps/NN-slug/` is a **self-contained project** (own `package.json` and lockfile, its own copy of the shared code in `rcene/`, its own `data/`, `CLAUDE.md`, skills, hooks and smoke test), so it can be copied out and run with `npm ci`. There is no root `packages/` folder.
+20 pre-built single-feature React apps and 10 platforms (P1–P10) for Catbalogan City (RSCENE 2026 AI Vibe Coding Challenge, Oct 7). On the day one app is picked and continued for 4 hours; the demo runs **offline**, with no server and no runtime AI API. Every `apps/NN-slug/` is a **self-contained project** (own `package.json` and lockfile, its own copy of the shared code in `rcene/`, its own `data/`, `CLAUDE.md`, skills, hooks and smoke test), so it can be copied out and run with `npm ci`. There is no root `packages/` folder.
 
 ## Repo map
 
@@ -10,6 +10,7 @@
 |---|---|
 | `apps/_template/` | The reference app: generator source, and the reference copy of the shared code (`rcene/`), app skills (`.claude/skills/`), hooks, scripts and app docs. Port 5100 |
 | `apps/NN-slug/` | One app per proposal (ports 5101–5120; preview = port + 1000), generated from the template |
+| `apps/pNN-slug/` | One platform per P1–P10 (ports 5201–5210), generated from the template plus a role scaffold (`scripts/lib/platform.mjs`); its module apps' briefs are in its `docs/modules/` |
 | `data/` | Canonical data: `files/` (real, from the 00-data session), `fixtures/` (fake), `README.md` (catalogue). Apps get a copy via `pnpm sync-data` |
 | `docs/projects/` | `projects.json` (manifest) and one brief per project; each brief is copied into its app as `docs/brief.md` |
 | `docs/` | `PRD.md`, `PROPOSALS.md`, `PARALLEL.md` (the build how-to), `SKILLS.md`, `DISCLOSURE.md` |
@@ -24,7 +25,7 @@
 | `pnpm install` | Once per checkout or worktree: one install for every app |
 | `pnpm --filter @rcene/<slug> dev` | Run one app (or `pnpm dev` inside its folder); the template is `@rcene/template` |
 | `pnpm test` · `pnpm typecheck` · `pnpm build` | Whole repo |
-| `pnpm new-app <slug>` | Generate `apps/<slug>` from the template and its `projects.json` row (`--all`, `--dry-run`; started apps only with `--force`) |
+| `pnpm new-app <slug>` | Generate `apps/<slug>` from the template and its `projects.json` row, apps and platforms alike (`--all`, `--dry-run`; started apps only with `--force`) |
 | `pnpm sync-shared --all` | Three-way push of the template's shared code, scripts, skills, config and docs (briefs included) into the apps. Files an app changed are skipped and reported unless `--force`; started apps only when named or with `--include-started`; `--dry-run`, `--only rcene,docs,…` |
 | `pnpm sync-data` | Mirror root `data/` into every app's `data/` (started apps included) |
 | `pnpm lockfiles` | Regenerate each app's `package-lock.json` (for standalone `npm ci`) |
@@ -46,6 +47,8 @@ powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Status
 ```
 
 Each session starts **inside** `<worktree>\apps\<slug>` with that app's `CLAUDE.md`, settings (guard hooks), skills and Playwright MCP, exactly as a copied folder would on Oct 7. `-Resume` reopens a session, `-Remove` drops a worktree (keep the branch). Details: `docs/PARALLEL.md`.
+
+Batches 1–4 are the single-feature apps; batches 5–6 are the platforms (B5: P1, P3, P5, P6, P10; B6: P2, P4, P7, P8, P9). Merge a platform's module apps (its row's `modules`) before launching it: the session lifts their finished code into its own folder (see "Platforms" in `docs/PARALLEL.md`).
 
 ## Review and merge (main checkout)
 

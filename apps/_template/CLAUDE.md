@@ -16,20 +16,20 @@ The SessionStart hook prints which one you are in (mode `project`, `monorepo` or
 | Commands | `npm run …` or the pnpm equivalents (`pnpm dev`, `pnpm test`, `pnpm run smoke`) | `npm run …` |
 | Git | **commit only**: no push, merge, rebase, cherry-pick, `reset --hard`, worktree or branch switching. The human reviews and merges | commit and push allowed; keep provenance as `docs/DISCLOSURE.md` describes |
 | Dependencies | `pnpm add <pkg>` inside this folder, then `npm install --package-lock-only` to refresh `package-lock.json`. Never `-w`/`-r`, never a plain `npm install`/`npm ci` (npm breaks pnpm's `node_modules`) | `npm install <pkg>` (exact pins via `.npmrc`) |
-| Read-only | `data/**`, `docs/brief.md` (both synced from the repo), `scripts/hooks/**`, `.claude/settings.json` | nothing, but keep the hooks |
+| Read-only | `data/**`, `docs/brief.md`, `docs/modules/**` (synced from the repo), `scripts/hooks/**`, `.claude/settings.json` | nothing, but keep the hooks |
 
 ## Folder map
 
 | Path | What |
 |---|---|
-| `docs/brief.md` | The spec. Also `docs/proposal.md` (the proposal), `docs/PRD.md` (apps 01, 03, 05 only), `docs/DISCLOSURE.md` |
+| `docs/brief.md` | The spec. Also `docs/proposal.md` (the proposal), `docs/PRD.md` (01, 03, 05 and P1 only), `docs/DISCLOSURE.md`, and for a platform `docs/modules/` (its module apps' briefs) |
 | `docs/plan.md` | Your plan (you write it) · `docs/screenshots/` is written by the smoke test |
 | `src/` | App code: `domain/` (pure functions + tests), `features/`, `pages/`, `i18n/strings.ts`, `routes.tsx`, `store.ts`, `components/ui/` (app-only shadcn) |
 | `rcene/` | **This app's own copy of the shared code**: `data`, `geo`, `i18n`, `store`, `ui`, `map`, `config`, imported as `@rcene/<pkg>`. Read the `README.md` in each (the map API is in the `maplibre-gis` skill), not the source |
 | `data/files`, `data/fixtures` | Layers served at `/data/` (real files first, fake fixtures as a per-file fallback). `data/README.md` is the catalogue |
 | `models/` | In-browser AI models (gitignored, never committed), filled by `npm run fetch-models` |
 | `scripts/` | `smoke.mjs`, `fetch-models.mjs`, `hooks/` (guard and session context) |
-| `project.json` | id, slug, title, port, `ai`, brief, branch, `smokeRoutes` |
+| `project.json` | id, slug, title, port, `ai`, brief, branch, `smokeRoutes`; a platform also has `kind`, `modules` and `roles` |
 | `STATUS.md` · `AI-LOG.md` · `NOTES.md` · `DEMO.md` | Where you are · one row per commit · decisions and requests · the demo script |
 
 ## Commands (in this folder)
@@ -71,7 +71,7 @@ npm run fetch-models -- --model e5|clip|all  # ★AI apps only: once, while onli
 
 A PreToolUse guard (`scripts/hooks/guard.mjs`) blocks, and tells you why:
 - always: any path or command touching `D:\monica` or `C:\lgu_portal`; reading or editing credential files (`.env*` except `.env.example`, `*.pem`, `*service-account*.json`, API-key files); edits outside this folder (your scratchpad, `~/.claude` and the OS temp folder are fine) or under `node_modules/` and `dist/`;
-- on a `proj/` branch: edits while checked out on another branch; edits to `data/**`, `docs/brief.md`, `scripts/hooks/**`, `.claude/settings.json`; git push, merge, rebase, cherry-pick, worktree, `reset --hard`, branch delete/rename or switching branches;
+- on a `proj/` branch: edits while checked out on another branch; edits to `data/**`, `docs/brief.md`, `docs/modules/**`, `scripts/hooks/**`, `.claude/settings{,.local}.json` and `~/.claude/settings*.json`; git push, pull, merge, rebase, cherry-pick, am, worktree, `reset --hard`, branch delete/rename or switching branches;
 - in the monorepo: dependency changes outside this app, `-w`/`-r`, and `npm`/`yarn`/`bun` installs.
 
 Don't try to work around a block. If it stops real work, write it in `STATUS.md` under Blockers.
@@ -91,6 +91,16 @@ Don't try to work around a block. If it stops real work, write it in `STATUS.md`
 - `@/` maps to `src/`. Shared primitives come from `@rcene/ui/components/<name>`; app-only shadcn components go in `src/components/ui/`.
 - Stores: `createSyncedStore("__SLUG__:<name>", …)`. Persist state only, never layers.
 - `vite.config.ts` calls `rceneApp()` from `rcene/config/vite.ts`; pass Vite plugins via `plugins` and anything else via `overrides` (deep-merged).
+
+## Platforms (when `project.json` has `"kind": "platform"`)
+
+A platform (P1–P10) is one workflow across several roles, built from single-feature apps (its `modules`). Everything above applies, plus:
+
+- **Scaffold.** `/` is the role launcher (`RoleLauncher` from `@rcene/ui`). Each role in `project.json` `roles` has a route, a placeholder page and `role.<id>.title` / `role.<id>.summary` strings (`src/roles.ts`, `src/pages/`, `src/i18n/strings.ts`). Replace the placeholders; keep the routes.
+- **Modules.** The briefs of the module apps are in `docs/modules/NN-slug.md`. Your brief's "Lift, then wire" section says what each one becomes.
+- **Lift, don't rebuild.** In the monorepo, a finished module app sits next to this folder (`../NN-slug`, `STATUS.md` says `Phase: done`). Copy its domain code and components into `src/modules/<name>/` (reading other folders is fine, editing them is not), fix the imports and make its tests pass here. If it isn't done, build only what your brief lists, from `docs/modules/NN-slug.md`. Record every lift in `NOTES.md` under "Lifted modules": app, commit, files, changes.
+- **One spine.** All roles read and write one store, `createSyncedStore("__SLUG__:spine", …)`, keyed by barangay where it holds per-barangay records. Each role usually runs in its own window (**New window** on `/`), and the synced store is what makes one role's action appear in the others.
+- **R1 stands alone.** The first requirement must be a finished single-feature app before anything cross-role is built.
 
 ## Skills and plugins
 

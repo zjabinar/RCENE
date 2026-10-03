@@ -22,6 +22,7 @@ import {
   findApp,
 } from "./lib/apps.mjs";
 import { renameLock, EXACT } from "./lib/lock.mjs";
+import { platformSources, validateRoles } from "./lib/platform.mjs";
 import { splitArgs } from "./smoke.mjs";
 import { scriptFeatures } from "./fetch-models.mjs";
 
@@ -62,6 +63,7 @@ describe("lib/apps", () => {
     expect(managedGroup("tsconfig.app.json")).toBe("config");
     expect(managedGroup("index.html")).toBe("config");
     expect(managedGroup("docs/brief.md")).toBe("docs");
+    expect(managedGroup("docs/modules/01-ligtas.md")).toBe("docs");
     expect(managedGroup("package.json")).toBe("package");
     for (const p of ["src/main.tsx", "public/favicon.svg", "data/files/x.geojson", "project.json", "STATUS.md", "NOTES.md", "AI-LOG.md", "DEMO.md", "docs/plan.md", ".claude/settings.local.json"]) {
       expect(managedGroup(p), p).toBe(null);
@@ -76,6 +78,15 @@ describe("lib/apps", () => {
     expect(proposalSection(text, 20)).toContain("- twenty");
     expect(proposalSection(text, 20)).not.toContain("After");
     expect(proposalSection(text, 3)).toBe(null);
+  });
+
+  it("cuts a platform section (### P<n>.) without matching ### 1.", () => {
+    const text = "### 1. One — a\n- one\n\n### P1. Andam — b\n- platform\n\n### P10. Ten — c\n- ten\n";
+    expect(proposalSection(text, "P1")).toContain("# Proposal P1. Andam — b");
+    expect(proposalSection(text, "P1")).toContain("(P1 of P1–P10)");
+    expect(proposalSection(text, "P1")).not.toContain("- ten");
+    expect(proposalSection(text, "P10")).toContain("- ten");
+    expect(proposalSection(text, 1)).not.toContain("platform");
   });
 
   it("owns only stack packages and template scripts in package.json", () => {
@@ -95,6 +106,46 @@ describe("lib/apps", () => {
     expect(findApp(manifest, "5")?.slug).toBe("05-sakuna");
     expect(findApp(manifest, "apps/05-sakuna/")?.slug).toBe("05-sakuna");
     expect(findApp(manifest, "00")).toBe(null);
+  });
+
+  it("finds platforms by P id, padded id and slug", () => {
+    const manifest = { projects: [{ id: "01", slug: "01-ligtas", kind: "app" }, { id: "P1", slug: "p01-andam", kind: "platform" }, { id: "P10", slug: "p10-barangay360", kind: "platform" }] };
+    for (const key of ["P1", "p1", "p01", "p01-andam", "apps/p01-andam"]) expect(findApp(manifest, key)?.slug, key).toBe("p01-andam");
+    expect(findApp(manifest, "p10")?.slug).toBe("p10-barangay360");
+    expect(findApp(manifest, "1")?.slug).toBe("01-ligtas");
+  });
+});
+
+describe("lib/platform", () => {
+  const role = (id, path, width) => ({ id, path, width, title: { en: `${id} t`, war: `${id} w`, fil: `${id} f` }, summary: { en: "s", war: "s", fil: "s" } });
+  const row = { id: "P1", slug: "p01-andam", title: "Andam", tagline: "Prep", kind: "platform", roles: [role("console", "/console", "full"), role("resident", "/resident", "phone")] };
+
+  it("writes the role scaffold from the row", () => {
+    const files = platformSources(row);
+    expect([...files.keys()].sort()).toEqual([
+      "src/AppLayout.tsx",
+      "src/i18n/strings.ts",
+      "src/pages/RolePage.tsx",
+      "src/pages/Start.tsx",
+      "src/roles.test.ts",
+      "src/roles.ts",
+      "src/routes.tsx",
+      "src/store.ts",
+    ]);
+    expect(files.get("src/roles.ts")).toContain('{ id: "console", path: "/console", width: "full" },');
+    expect(files.get("src/routes.tsx")).toContain('{ path: "resident", element: <RolePage role="resident" /> },');
+    expect(files.get("src/i18n/strings.ts")).toContain('"role.console.title": "console w",');
+    expect(files.get("src/i18n/strings.ts")).toContain('"app.title": "Andam",');
+    expect(files.get("src/store.ts")).toContain('"p01-andam:spine"');
+    expect(files.get("src/pages/Start.tsx")).toContain('windowPrefix="p01-andam"');
+  });
+
+  it("rejects roles that would break the scaffold", () => {
+    expect(() => validateRoles({ ...row, roles: [] })).toThrow(/non-empty/);
+    expect(() => validateRoles({ ...row, roles: [role("a", "/a/b", "full")] })).toThrow(/one segment/);
+    expect(() => validateRoles({ ...row, roles: [role("a", "/a", "tablet")] })).toThrow(/width/);
+    expect(() => validateRoles({ ...row, roles: [role("a", "/a", "full"), role("a", "/b", "full")] })).toThrow(/duplicate/);
+    expect(() => validateRoles({ ...row, roles: [{ ...role("a", "/a", "full"), title: { en: "x" } }] })).toThrow(/title and summary/);
   });
 });
 
@@ -193,14 +244,20 @@ beforeAll(() => {
         { id: "00", slug: "00-data", kind: "data", batch: 0, brief: "docs/projects/00-data.md", writeScope: ["data/**"] },
         { id: "01", slug: "01-one", title: "One", tagline: "First app", kind: "app", batch: 1, port: 5101, branch: "proj/01-one", app: "apps/01-one", brief: "docs/projects/01-one.md", ai: false },
         { id: "02", slug: "02-two", title: "Two", tagline: "Second app", kind: "app", batch: 1, port: 5102, branch: "proj/02-two", app: "apps/02-two", brief: "docs/projects/02-two.md", ai: true },
+        {
+          id: "P1", slug: "p01-plat", title: "Plat", tagline: "A platform", kind: "platform", batch: 5, port: 5201, branch: "proj/p01-plat", app: "apps/p01-plat",
+          brief: "docs/projects/p01-plat.md", ai: false, modules: ["01", "02"], smokeRoutes: ["/", "/desk", "/sources"],
+          roles: [{ id: "desk", path: "/desk", width: "full", title: { en: "Desk", war: "Desk", fil: "Desk" }, summary: { en: "Work", war: "Trabaho", fil: "Trabaho" } }],
+        },
       ],
     }),
   );
   write("docs/projects/01-one.md", "# Brief one\n");
   write("docs/projects/02-two.md", "# Brief two\n");
+  write("docs/projects/p01-plat.md", "# Platform brief\n");
   write("docs/DISCLOSURE.md", "# Disclosure\n");
   write("docs/PRD.md", "# PRD\n");
-  write("docs/PROPOSALS.md", "### 1. One — first\n- p1\n\n### 2. Two — second\n- p2\n");
+  write("docs/PROPOSALS.md", "### 1. One — first\n- p1\n\n### 2. Two — second\n- p2\n\n### P1. Plat — both\n- platform\n");
   write("data/README.md", "# Data\n");
   write("data/files/.gitkeep", "");
   write("data/fixtures/boundary.geojson", '{"type":"FeatureCollection","features":[]}\n');
@@ -212,6 +269,9 @@ beforeAll(() => {
   write(`${t}.npmrc`, "ignore-scripts=true\n");
   write(`${t}CLAUDE.md`, "# __ID__ · __TITLE__\n\n__TAGLINE__ (brief: __BRIEF__)\n");
   write(`${t}STATUS.md`, "# Status — __ID__\n\nNot started\n");
+  write(`${t}NOTES.md`, "# Notes — __ID__\n");
+  write(`${t}src/pages/Home.tsx`, "export const home = 1;\n");
+  write(`${t}src/pages/Sources.tsx`, "export const Sources = 1;\n");
   write(`${t}index.html`, '<!doctype html><title>__TITLE__</title><link rel="icon" href="/favicon.svg"><script type="module" src="/src/main.ts"></script>\n');
   write(`${t}public/favicon.svg`, "<svg/>\n");
   write(`${t}tsconfig.json`, json({ extends: "./tsconfig.base.json", include: ["src", "rcene"] }));
@@ -240,7 +300,7 @@ describe("new-app", () => {
   it("generates self-contained apps from the template", () => {
     const r = run("new-app.mjs", ["--all", "--root", repo]);
     expect(r.status, r.out).toBe(0);
-    expect(r.out).toContain("2 written");
+    expect(r.out).toContain("3 written");
     const pkg = JSON.parse(read("apps/01-one/package.json"));
     expect(pkg).toMatchObject({ name: "@rcene/01-one", description: "First app", engines: { node: ">=22.18" }, ...STACK.app });
     expect(pkg.packageManager).toBeUndefined();
@@ -260,6 +320,24 @@ describe("new-app", () => {
     expect(Object.keys(JSON.parse(read("apps/01-one/.sync.json")).files)).toContain("rcene/geo/index.ts");
   });
 
+  it("generates a platform: module briefs, role scaffold, platform project.json", () => {
+    const dir = "apps/p01-plat";
+    const project = JSON.parse(read(`${dir}/project.json`));
+    expect(project).toMatchObject({ id: "P1", kind: "platform", modules: ["01-one", "02-two"], roles: [{ id: "desk", path: "/desk", width: "full" }] });
+    expect(project.roles[0].title).toBeUndefined(); // titles live in src/i18n/strings.ts
+    expect(read(`${dir}/docs/modules/01-one.md`)).toMatch(/^> \*\*Module brief\*\* \(reference\)\. This is the spec of app #01 One[\s\S]*# Brief one\n$/);
+    expect(read(`${dir}/docs/modules/02-two.md`)).toContain("# Brief two");
+    expect(read(`${dir}/docs/proposal.md`)).toContain("- platform");
+    expect(read(`${dir}/src/roles.ts`)).toContain('{ id: "desk", path: "/desk", width: "full" },');
+    expect(read(`${dir}/src/i18n/strings.ts`)).toContain('"role.desk.summary": "Trabaho",');
+    expect(existsSync(path.join(repo, dir, "src/pages/Home.tsx"))).toBe(false);
+    expect(read(`${dir}/NOTES.md`)).toContain("## Lifted modules");
+    expect(Object.keys(JSON.parse(read(`${dir}/.sync.json`)).files)).toContain("docs/modules/01-one.md");
+    // single-feature apps keep the template's pages and have no platform fields
+    expect(existsSync(path.join(repo, "apps/01-one/src/pages/Home.tsx"))).toBe(true);
+    expect(JSON.parse(read("apps/01-one/project.json")).kind).toBeUndefined();
+  });
+
   it("refuses to overwrite a started app without --force", () => {
     // The template's STATUS.md comment mentions "Not started"; only a line that is exactly that counts.
     const started = 'Phase: features\n\n<!-- Keep the "Not started" line until work begins -->\n';
@@ -274,7 +352,7 @@ describe("check-standalone, lockfiles --check, stack", () => {
   it("passes the generated apps and the template", () => {
     const r = run("check-standalone.mjs", ["--all", "--root", repo]);
     expect(r.status, r.out).toBe(0);
-    expect(r.out).toContain("3 of 3 folder(s) pass");
+    expect(r.out).toContain("4 of 4 folder(s) pass");
     expect(run("lockfiles.mjs", ["--check", "--root", repo]).status).toBe(0);
     expect(run("stack.mjs", ["--check", "--root", repo]).status).toBe(0);
   });
@@ -362,6 +440,15 @@ describe("sync-shared", () => {
     expect(named.status, named.out).toBe(0);
     expect(read("apps/02-two/rcene/geo/index.ts")).toBe("export const geo = 2;\n");
     expect(run("sync-shared.mjs", ["--all", "--include-started", "--dry-run", "--root", repo]).out).toContain("0 open conflict(s)");
+  });
+
+  it("updates a platform's copy of a module brief", () => {
+    write("docs/projects/01-one.md", "# Brief one, v2\n");
+    const r = run("sync-shared.mjs", ["P1", "--only", "docs", "--root", repo]);
+    expect(r.status, r.out).toBe(0);
+    expect(read("apps/p01-plat/docs/modules/01-one.md")).toContain("# Brief one, v2");
+    write("docs/projects/01-one.md", "# Brief one\n");
+    expect(run("sync-shared.mjs", ["--all", "--only", "docs", "--root", repo]).status).toBe(0);
   });
 
   it("drops a package stack.json no longer has, without a false conflict", () => {

@@ -22,6 +22,8 @@ Sources reviewed: `docs/event/VibeCoding_Challenge.txt` and the event poster; th
 | 2026-10-03 | **Parallel worktree build.** `docs/projects/projects.json` is the manifest, with one brief per project in `docs/projects/`. `scripts/launch-worktrees.ps1` opens a Claude Code session per project in a git worktree on `proj/NN-slug`, in batches: B0 data (local) · B1 01, 03, 04, 16, 18 · B2 05, 07, 09, 13, 20 · B3 08, 10, 11, 12, 14 · B4 02, 06, 15, 17, 19 (optional, riskiest). Each app keeps its own `AI-LOG.md`. See `docs/PARALLEL.md`. |
 | 2026-10-03 | **Platforms P1–P10 come later**, composed from the finished single-feature apps. P1 Andam = #1 (Core 1) + #5 (Core 2) + #3 (Core 3). |
 | 2026-10-03 | **Stack pinned** in the pnpm catalog to majors the coding model knows well (see Tech stack). Newer majors wait until after the event. |
+| 2026-10-03 | **Pre-build the 10 platforms P1–P10 too**, as self-contained apps `apps/pNN-slug/` (ports 5201–5210) in batches B5 (P1, P3, P5, P6, P10) and B6 (P2, P4, P7, P8, P9), after B1–B4. Each platform's brief lists its module apps; their briefs are copied into `docs/modules/`, and the session lifts the finished, merged module code into the platform folder (or builds the module from its brief if the app is not done). The first core module must stand alone, so a platform degrades into one of #1–#20. Supersedes "Platforms P1–P10 come later" above. |
+| 2026-10-03 | **P4 Isla Link is restored on open data only.** Island barangays are computed from the open HDX boundary and land layers; cyclone signals come from PAGASA's public definitions; needs and trips are synthetic. Nothing from GPDSS or Project HABAGAT is used. Supersedes the P4 part of the 2026-10-02 independence row. |
 | 2026-10-03 | **Self-contained apps.** `packages/` is folded into each app: every `apps/NN-slug/` carries its own copy of the shared code (`rcene/`), data (`data/`, synced from root `data/`), full library stack with exact pins (`stack.json`) and `package-lock.json`, Claude setup and scripts, so the chosen app's folder runs on its own with `npm ci`. `apps/_template` is the reference copy (`pnpm sync-shared`). Scoped `@deck.gl/*` packages replace the `deck.gl` meta-package. Supersedes the `packages/` layout in the rows above. |
 
 ---
@@ -394,10 +396,11 @@ Proposals #1–#20 each solve one problem. These ten group related services into
   4. A boat or relief run is dispatched and logged.
 - **Core:** island-cluster map with status board · needs requests · sea-travel advisory
 - **Stretch:** boat dispatch log
-- **Spine:** the 11 island barangays in three clusters, needs, advisories
-- **Data:** 🟢 boundaries; PAGASA public cyclone signals; synthetic needs and trips
+- **Spine:** the island barangays, needs, advisories. Which barangays are islands is computed from the open HDX boundary and land layers (a barangay whose land does not touch the mainland), and they are grouped into clusters by distance. No list is copied from anywhere.
+- **Data:** 🟢 HDX boundaries and the land outline; PAGASA public cyclone-signal definitions; synthetic needs and trips
 - **Signature:** island clusters pulse by urgency, and a sea lane draws itself when a trip is dispatched
-- **Why it scores:** GPDSS found these barangays spatially isolated and lists maritime connectivity as unbuilt future work. No other team is likely to think of it, and it is unmistakably Catbalogan.
+- **Why it scores:** Catbalogan's island barangays depend on boats for water, food, medicine and patient transfers, and a cyclone signal can cut them off for days. No other team is likely to think of it, and it is unmistakably Catbalogan.
+- **Independence (2026-10-03):** restored on open data only. Nothing from GPDSS or Project HABAGAT is used: not its island list, findings or roadmap.
 
 ### P5. Serbisyo Catbalogan — one-stop citizen services
 - **Groups:** #7 Pila, #8 Sertipiko, #20 Sumat
