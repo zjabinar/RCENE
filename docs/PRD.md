@@ -8,6 +8,7 @@
 | **Builder** | Zaldy A. Jabiñar (solo) |
 | **Origin** | Platform P1 in `docs/PROPOSALS.md` |
 | **Codebase design** | `docs/superpowers/specs/2026-09-03-rscene-competition-codebase-design.md` |
+| **Status** | Revised 2026-10-03: all 20 single-feature proposals are pre-built before the event as separate apps, and one is continued on the day (§11, `docs/DISCLOSURE.md`). Core 1 is now `docs/projects/01-ligtas.md` (`apps/01-ligtas`); Core 2 and Core 3 map to #5 Sakuna Sim (`apps/05-sakuna`) and #3 Likas (`apps/03-likas`). The P1 composition comes after those apps are finished. |
 
 > ***Andam*** — ready. One map that tells a resident whether a place is in danger, where to go, and whether there is still room there. It updates live the moment the CDRRMO raises a warning.
 
@@ -75,11 +76,13 @@ Catbalogan faces typhoons, storm surge, flooding, rain-induced landslides, and e
 5. **Arrivals.** In `/center/:id`, staff log +25, then +40. Capacity bars fill and the board re-sorts. The center reaches **FULL**, and the resident's recommendation moves to the next eligible center.
 6. **The CDRRMO lowers the warning.** All views return to calm.
 
-**Closing line:** *"Every hazard zone you saw is the CDRRMO's own risk map. Every facility is from OpenStreetMap. Both were prepared before today. Everything else was built in the last four hours, with AI."*
+**Closing line:** *"Every hazard zone you saw is the CDRRMO's own risk map. Every facility is from OpenStreetMap. Both were prepared before today, and so was the first version of this app, built with AI — our poster says so. Everything since the `pre-event-freeze` tag was built in the last four hours, with AI."*
 
 ## 6. Modules and scope
 
 Build in this order. Each core module builds on the one before, and **Core 1 is a complete entry on its own**. If time runs out after Core 1, the submission is still a finished single-feature app.
+
+Since 2026-10-03, each core is pre-built as its own app from its brief: Core 1 → `apps/01-ligtas`, Core 2 → `apps/05-sakuna`, Core 3 → `apps/03-likas`. The requirements below remain the target for the P1 composition.
 
 ### Core 1 — Ligtas Ba Ako? (resident hazard lookup)
 
@@ -118,12 +121,14 @@ Build in this order. Each core module builds on the one before, and **Core 1 is 
 
 ## 7. Architecture
 
-- **Stack:** as in the codebase design spec. Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui; MapLibre via `react-map-gl/maplibre`; `@turf/turf`; Zustand; `motion` and GSAP. **No three.js** — 3D adds nothing to this product's information.
+- **Stack:** as in the codebase design spec, with versions pinned in the pnpm catalog (`pnpm-workspace.yaml`). Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui; MapLibre via `react-map-gl/maplibre`; `@turf/turf`; Zustand; `motion` and GSAP. **No three.js** — 3D adds nothing to this product's information.
+- **Layout:** a pnpm monorepo. Each core is its own app under `apps/` (§6); shared code lives in `packages/` (`@rcene/config`, `data`, `geo`, `store`, `i18n`, `ui`, `map`).
 - **Routes:** `/`, `/console`, `/center/:id`, `/board`, `/sources`.
-- **State:** one Zustand store, persisted to `localStorage` under the key `andam`. Other windows rehydrate on the browser's `storage` event, which fires in every other same-origin window when the key changes. That is all the cross-window sync needs: no server, and no message protocol to debug. `BroadcastChannel` is the fallback if rehydration proves flaky.
+- **State:** each app's Zustand store is created with `createSyncedStore` from `@rcene/store` and persisted to `localStorage` under the key `rcene:<slug>:<store>` (for example `rcene:01-ligtas:app`). Other windows rehydrate on the browser's `storage` event, which fires in every other same-origin window when the key changes. That is all the cross-window sync needs: no server, and no message protocol to debug. `BroadcastChannel` is the fallback if rehydration proves flaky.
 - **Basemap works offline.** The map draws the city boundary, barangays, and sea from local GeoJSON on a plain background. Online raster tiles are an *optional* toggle when Wi-Fi works. Fonts are self-hosted, with no CDN calls.
-- **Pure logic in `src/domain/`**, separate from React, so it can be unit-tested with Vitest:
-  - `lookupHazards(point, zones, boundary)` returns the three-state status per hazard
+- **Pure logic in each app's `src/domain/`** (for example `apps/01-ligtas/src/domain/`), plus the shared geometry helpers in `@rcene/geo`, all separate from React so they can be unit-tested with Vitest:
+  - `lookupHazards(point, zones, boundary)` (`@rcene/geo`) returns the three-state status per hazard
+  - `nearest(point, points)` (`@rcene/geo`) sorts points by straight-line distance
   - `isEligible(center, scenario, zones)` returns eligible, or a reason it isn't
   - `nearestEligible(point, centers, scenario, zones)`
   - `affectedBarangays(scenario, zones, barangays)`
@@ -164,11 +169,13 @@ interface AndamState {
 }
 ```
 
-Static data (zones, barangays, centers, scenarios) loads from `public/data/` and is **not** persisted. Only `AndamState` is persisted.
+Static data (zones, barangays, centers, scenarios) loads from `/data/` (§8.1) and is **not** persisted. Only `AndamState` is persisted.
 
 ## 8. Data
 
-### 8.1 Files that ship in `app/public/data/`
+### 8.1 Files that ship in `packages/data/files/`
+
+Apps fetch `/data/<file>`. The shared Vite config serves `packages/data/files/` (real data) first and falls back, file by file, to the fake fixtures committed in `packages/data/fixtures/`; a "Sample data" badge shows while any fixture is in use.
 
 | Output | Source | Tier |
 |---|---|---|
@@ -182,9 +189,9 @@ Static data (zones, barangays, centers, scenarios) loads from `public/data/` and
 
 **Fallback:** if a CDRRMO hazard layer turns out unusable in prep, use the UP Project NOAH layer for that hazard (🟢, Samar-wide under `noah_hazards\`, clipped to the boundary). Note the substitution in `sources.json`.
 
-**Canonical layer per hazard.** Each hazard folder holds several exposure layers (population, critical facilities, urban use, …). During prep, choose **one** per hazard — default *Population to {Hazard} Risk* — and map its own category field onto `Level`. Record the choice and the mapping in `app/public/data/README.md`. These layers map *risk to people and assets*, not the full hazard extent, which is why the UI says "mapped risk zone".
+**Canonical layer per hazard.** Each hazard folder holds several exposure layers (population, critical facilities, urban use, …). During prep, choose **one** per hazard — default *Population to {Hazard} Risk* — and map its own category field onto `Level`. Record the choice and the mapping in `packages/data/README.md`. These layers map *risk to people and assets*, not the full hazard extent, which is why the UI says "mapped risk zone".
 
-**Conversion** happens before the event, with `npx mapshaper`:
+**Conversion** happens before the event, in the local data session (batch B0, `docs/projects/00-data.md`), with `npx mapshaper`:
 - reproject to WGS84 (`-proj wgs84`); the folder mixes UTM 51N and geographic `.prj` files
 - clip to the city boundary
 - simplify, keeping shapes
@@ -216,6 +223,7 @@ Waray labels are prepared with the content in §11.
 
 - **Never read from `D:\monica`.** Never copy anything from `C:\lgu_portal`; its root holds credential files.
 - Barangay-level and facility-level data only. No personal data, real or invented, appears anywhere in the app.
+- The repository stays private: the 🟡 permission-tier layers are committed in `packages/data/files/`.
 - Every source is credited on `/sources` and on the poster:
   - *Risk maps: Catbalogan City CDRRMO / CPDCO, used with permission.*
   - *Boundaries: OCHA/HDX.*
@@ -244,33 +252,43 @@ Waray labels are prepared with the content in §11.
 
 No AI runs inside the app, by decision. The AI score therefore rests on the build process, made visible:
 
-- **Built with Claude Code**, using the ECC plugin and the project's `gsap-motion` skill. Every prompt that shaped the product and every accept or reject decision goes into `docs/AI-LOG.md` at each commit.
-- **AI-written data-prep commands** (mapshaper), prepared before the event and logged.
+- **Built with Claude Code**, using the ECC plugin and the project skills (`gsap-motion` and others; see `docs/SKILLS.md`). Every prompt that shaped the product and every accept or reject decision goes into that app's own `AI-LOG.md` (`apps/NN-slug/AI-LOG.md`), one entry per commit, before the event and on the day.
+- **The parallel multi-agent build itself.** Twenty briefs in `docs/projects/` act as the specs. Parallel Claude Code sessions, one per app in its own git worktree, build them in batches (`docs/PARALLEL.md`). Hooks in `.claude/settings.json` are the guardrails: each session stays inside its own app folder and away from `D:\monica` and `C:\lgu_portal`. Each app is verified with Playwright screenshots (`scripts/smoke.mjs`).
+- **AI-written data-prep commands** (mapshaper), run in the local data session before the event and logged.
 - **AI-drafted Waray strings, corrected by a human.** Keep the before and after. *"Here's what the AI got wrong in Waray, and how we fixed it"* is a strong, honest poster panel.
-- **AI-generated unit tests** for the four domain functions in §7, reviewed by a human.
-- **Poster panel "How AI built Andam":** tools used, number of logged prompts, what AI did, what the human decided.
+- **AI-generated unit tests** for the domain functions in §7, reviewed by a human.
+- **Poster panel "How AI built Andam":** tools used, number of parallel sessions and logged prompts, what AI did, what the human decided, and what was built before the event versus on the day (§11).
 
 ## 11. Prepared before the event vs. built on the day
 
-**Fair-play line:** data, a generic scaffold, content, skills and rehearsal are prepared ahead. **All Andam feature code is written during the four hours.**
+**Fair-play line (revised 2026-10-03):** all 20 single-feature proposals (#1–#20) are **pre-built before the event**, as real apps, in parallel Claude Code sessions. On October 7 the builder picks **one** and continues it during the four hours as the entry. Platforms P1–P10 come later, composed from the finished apps. This replaces the earlier rule that all feature code is written on the day. The competition text says apps are developed within the four hours, so the pre-built code may count against the entry, or be ruled out. The owner accepted that risk knowingly. It is handled in the open:
+
+1. **Ask first.** Ask the organizers by **October 4** whether pre-built code is allowed (§13, §17).
+2. **Freeze and tag.** Tag the repo `pre-event-freeze` on **October 6**. `git diff pre-event-freeze..HEAD` then shows judges exactly what was built on the day.
+3. **Disclose.** Say it in the demo and on the poster (`docs/DISCLOSURE.md`).
+4. **Fallback.** If the organizers say no, start the entry from the generic template and shared packages only (`apps/_template` and `packages/*`), which contain no project feature code, and build the chosen proposal on the day from its brief in `docs/projects/`.
 
 | Before October 7 | On October 7 |
 |---|---|
-| Data conversion → `app/public/data/` | All routes, components and domain functions |
-| Generic scaffold per the codebase spec, with no Andam-specific code | Unit tests for §7 |
-| String table content and "what to do" checklists (EN + Waray) as plain text | Wiring the content into the UI |
-| Evacuation-center list (Plan A) or the Plan B decision | Poster and demo rehearsal |
-| A full dry run on a throwaway branch, **deleted afterwards** | |
+| Data conversion → `packages/data/files/` (local data session, batch B0) | Pick one app and continue it: new routes, components and domain functions |
+| Shared packages `packages/*` and the generic `apps/_template` | Integration toward the platform (for #1: the scenario from #5, live capacity from #3) |
+| All 20 single-feature apps `apps/01-ligtas` … `apps/20-sumat`, built in parallel from the briefs in `docs/projects/` | Unit tests for every new domain function |
+| String tables and "what to do" checklists (EN + Waray + Filipino drafts) inside each app | Polish, accessibility pass and Wi-Fi-off check |
+| Evacuation-center list (Plan A) or the Plan B decision | The chosen app's `AI-LOG.md` entries for the day |
+| `docs/DISCLOSURE.md`; a full dry run on a throwaway branch, **deleted afterwards** | Poster and demo rehearsal |
+
+Everything on the left except the deleted dry run is in the repo at the `pre-event-freeze` tag. The code on the right is exactly `git diff pre-event-freeze..HEAD`.
 
 ## 12. Four-hour build plan
 
+The four hours continue a pre-built app (§11); they do not start from an empty scaffold. The plan below assumes the default pick, #1 Ligtas (`apps/01-ligtas`), growing toward P1 Andam.
+
 | Window | Work |
 |---|---|
-| T+0:00–0:20 | Confirm the topic fits. If a theme is announced, map Andam onto it or switch to the shortlist. Re-read this PRD. Start `AI-LOG.md`. |
-| T+0:20–0:35 | Strip unused scaffold modules (3D, tables), load `public/data/`, commit a baseline |
-| T+0:35–1:25 | **Core 1**, including the basic `isEligible` (open + below capacity), with tests for `lookupHazards` and `nearestEligible` |
-| T+1:25–1:55 | **Core 2**, with a test for `affectedBarangays` |
-| T+1:55–2:45 | **Core 3**: extend `isEligible` with the active-scenario hazard exclusion, and test it. Golden path end-to-end by **T+2:15**, then stretch only if green. |
+| T+0:00–0:20 | Confirm the topic fits. If a theme is announced, pick the closest of the 20 pre-built apps (shortlist in `PROPOSALS.md`); otherwise pick `apps/01-ligtas`. Read its `STATUS.md`, `NOTES.md` and `DEMO.md`. Re-read this PRD. Add the first on-the-day entry to the app's `AI-LOG.md`. |
+| T+0:20–0:35 | Strip: delete the chosen app's routes the demo doesn't need; run `pnpm test` and `node scripts/smoke.mjs --app <slug>`; commit a baseline |
+| T+0:35–1:35 | **Extend with Core 2** toward the platform: raise and lower a scenario, lifted from `apps/05-sakuna`, with a test for `affectedBarangays` |
+| T+1:35–2:45 | **Integrate Core 3** from `apps/03-likas`: live capacity, and `isEligible` with the active-scenario hazard exclusion, tested. Golden path end-to-end by **T+2:15**, then stretch only if green. |
 | T+2:45 | **Feature freeze** |
 | T+2:45–3:15 | Polish: motion, empty/loading states, accessibility pass, Wi-Fi-off check |
 | T+3:15–3:45 | Poster |
@@ -282,22 +300,25 @@ No AI runs inside the app, by decision. The AI score therefore rests on the buil
 |---|---|---|
 | Zaldy | Request the CDRRMO evacuation-center list | Oct 4 |
 | Zaldy | Confirm the topic format with the organizers (self-chosen or announced) | Oct 4 |
+| Zaldy | Ask the organizers whether code pre-built before the event is allowed (§11, §17). Record the answer in `docs/DISCLOSURE.md`; if no, use the fallback in §11. | Oct 4 |
 | Zaldy | Have the written LGU data permission ready to show | Oct 6 |
-| Claude (after approval) | Convert data → `app/public/data/` + `sources.json` + data README | Oct 3 |
-| Claude (after approval) | Generic scaffold per the codebase spec | Oct 4 |
-| Zaldy + Claude | EN + Waray string table and "what to do" checklists — AI drafts, Zaldy corrects | Oct 4 |
-| Both | Full four-hour dry run on a throwaway branch, then delete it | Oct 5 |
+| Claude, local session B0 | Data foundation per `docs/projects/00-data.md` → `packages/data/files/` + `sources.json` + `packages/data/README.md`; Zaldy reviews and merges before B1 | Oct 3–4 |
+| Claude (after approval) | Monorepo scaffold: `packages/*`, `apps/_template`, the 20 app stubs, the briefs in `docs/projects/` | Oct 3 |
+| Claude, parallel sessions | Build the 20 apps in batches with `scripts/launch-worktrees.ps1` (`docs/PARALLEL.md`): B1 01, 03, 04, 16, 18 · B2 05, 07, 09, 13, 20 · B3 08, 10, 11, 12, 14 · B4 02, 06, 15, 17, 19 (optional, riskiest). Zaldy reviews and merges each `proj/NN-slug` branch. | Oct 3–5 |
+| Zaldy + Claude | EN + Waray string table and "what to do" checklists — AI drafts, Zaldy corrects (each app's `NOTES.md` lists the translations to review) | Oct 4 |
+| Both | Full four-hour dry run (continue one pre-built app) on a throwaway branch, then delete it | Oct 5 |
+| Zaldy | Tag `main` as `pre-event-freeze` and push the tag | Oct 6 |
 | Zaldy | Test on the competition laptop: on battery, Wi-Fi off, with the projector if possible | Oct 6 |
 
 ## 14. Demo and poster
 
-**Demo:** the golden path (§5), rehearsed. The backup is a 60-second screen recording of the golden path, made at T+3:40.
+**Demo:** the golden path (§5), rehearsed. The backup is a 60-second screen recording of the golden path, made at T+3:40. Before the golden path, say plainly what was pre-built and how to check it (`docs/DISCLOSURE.md`).
 
 **Poster outline** (the competition requires problem statement, AI tools, development process, and impact):
 1. **Problem** — §2, in one sentence each, with the "safe vs no data" point made generally
 2. **Andam in one picture** — the three windows, mid-warning
 3. **What makes it different** — truthful three-state answers; centers inside the hazard are never recommended; live sync across roles with no server; Waray-first
-4. **How AI built it** — §10 panel
+4. **How AI built it** — §10 panel, with the one-line disclosure from `docs/DISCLOSURE.md`
 5. **Data** — sources and permissions (§8.4)
 6. **Impact and next steps** — official evacuation-center registry, SMS/push alerts, every barangay hall on the board
 
@@ -305,11 +326,12 @@ No AI runs inside the app, by decision. The AI score therefore rests on the buil
 
 | Risk | Mitigation |
 |---|---|
-| Topic is announced on the day and doesn't fit | The generic scaffold plus the warm shortlist in `PROPOSALS.md`; the data foundation is reusable |
+| Topic is announced on the day and doesn't fit | Pick the closest of the 20 pre-built apps, or start from `apps/_template` + `packages/*`; the data foundation is reusable |
+| Organizers rule out pre-built code, or judges mark it down | Asked by Oct 4; `pre-event-freeze` tag and `git diff pre-event-freeze..HEAD`; open disclosure; fallback to `apps/_template` + `packages/*` (§11) |
 | No evacuation-center list arrives | Plan B (§8.2): labelled OSM candidates |
 | CDRRMO layer categories are inconsistent | Choose the canonical layer and mapping during prep; NOAH fallback per hazard |
 | Venue Wi-Fi fails | Offline basemap and self-hosted fonts; the golden path is rehearsed with Wi-Fi off |
-| Build overruns | Core 1 stands alone; stretch gated at T+2:15; freeze at T+2:45 |
+| Build overruns | The chosen app is already a finished entry at T+0:00; stretch gated at T+2:15; freeze at T+2:45 |
 | A resident reads the app as an official safety guarantee | Three-state answers, no "safe" wording, disclaimer footer, "candidate" badges |
 | Judges question the data | The `/sources` page and the written permission |
 
@@ -323,10 +345,11 @@ No AI runs inside the app, by decision. The AI score therefore rests on the buil
    - `affectedBarangays`
 3. No view ever displays "safe".
 4. `/sources` credits every dataset, and the disclaimer footer appears on every view.
-5. `AI-LOG.md` and the poster are complete by T+4:00.
+5. The chosen app's `AI-LOG.md` and the poster, including the disclosure line, are complete by T+4:00.
 
 ## 17. Open questions
 
 1. Will there be a projector or second screen for `/board` at Tandaya Hall? If not, the board shares the laptop screen in a split layout.
 2. Waray and English only, or Filipino too (stretch S3)?
 3. Plan B capacities: one flat illustrative number per school, or an estimate scaled by school size?
+4. Do the organizers allow code pre-built before the event (§11)? Ask by October 4. If not, start the entry from `apps/_template` + `packages/*` only.

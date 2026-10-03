@@ -17,6 +17,11 @@ Sources reviewed: `docs/event/VibeCoding_Challenge.txt` and the event poster; th
 | 2026-10-02 | The entry is **fully independent of GPDSS and Project HABAGAT**. Nothing from `D:\monica` is used — no code, outputs, data, or findings, including its island-barangay list and roadmap gaps. The GPDSS review below stays only as a record of what was examined. P4 Isla Link is set aside because it rests on GPDSS findings. |
 | 2026-10-02 | Data: 🟢 open data first. The user holds permission for some 🟡 datasets; the PRD records exactly which ones. |
 | 2026-10-02 | Topic format (self-chosen or announced on the day) is unconfirmed. Plan for self-chosen, and keep the scaffold generic enough to pivot. |
+| 2026-10-03 | **Pre-build all 20 single-feature proposals (#1–#20) now**, as real apps, in parallel. On October 7 the builder picks **one** and continues it during the four hours as the entry. This replaces the PRD's earlier fair-play line; the owner accepts the risk knowingly. Mitigations: ask the organizers by Oct 4 whether pre-built code is allowed; tag the repo `pre-event-freeze` on Oct 6 so `git diff pre-event-freeze..HEAD` shows the day's work; disclose it in the demo and on the poster (`docs/DISCLOSURE.md`); if the organizers say no, start from `apps/_template` + `packages/*` only, which contain no project feature code. |
+| 2026-10-03 | **Monorepo** replaces the single `app/`: a pnpm workspace with `apps/_template`, 20 apps `apps/NN-slug/` (ports 5101–5120) and shared `packages/{config,data,geo,store,i18n,ui,map}`. Data ships in `packages/data/files/`, with fake fixtures in `packages/data/fixtures/` as a per-file fallback. |
+| 2026-10-03 | **Parallel worktree build.** `docs/projects/projects.json` is the manifest, with one brief per project in `docs/projects/`. `scripts/launch-worktrees.ps1` opens a Claude Code session per project in a git worktree on `proj/NN-slug`, in batches: B0 data (local) · B1 01, 03, 04, 16, 18 · B2 05, 07, 09, 13, 20 · B3 08, 10, 11, 12, 14 · B4 02, 06, 15, 17, 19 (optional, riskiest). Each app keeps its own `AI-LOG.md`. See `docs/PARALLEL.md`. |
+| 2026-10-03 | **Platforms P1–P10 come later**, composed from the finished single-feature apps. P1 Andam = #1 (Core 1) + #5 (Core 2) + #3 (Core 3). |
+| 2026-10-03 | **Stack pinned** in the pnpm catalog to majors the coding model knows well (see Tech stack). Newer majors wait until after the event. |
 
 ---
 
@@ -474,7 +479,7 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 
 ## Tech stack
 
-Pin the latest versions at install time, and verify with a real install and production build.
+Every version is pinned once, in the pnpm catalog (`pnpm-workspace.yaml`), and verified with a real install and production build. The pinned majors are ones the coding model knows well: React 19.3 · TypeScript 6.0 · Vite 8 · Tailwind CSS 4.3 · react-router 7.18 · motion 12.43 · TanStack Table 8 · vitest 4.1 · maplibre-gl 6.11 + react-map-gl 8.1 · lucide-react 0.577. Newer majors exist (TypeScript 7, react-router 8, motion 13+, TanStack Table 9, vitest 5, lucide-react 1) and are deliberately avoided until after the event.
 
 **Core:** Vite · React 19 · TypeScript · Tailwind CSS v4 (`@tailwindcss/vite`) · shadcn/ui + lucide-react · React Router · Zustand (localStorage persist) · react-hook-form + zod · TanStack Table
 
@@ -507,15 +512,17 @@ Pin the latest versions at install time, and verify with a real install and prod
 | three.js / React Three Fiber | Project skill `r3f-scenes` (`.claude/skills/r3f-scenes/`) |
 | Design critique, accessibility review, UX copy | Anthropic **Design** plugin |
 
+The full skills and plugins recommendation is in `docs/SKILLS.md`.
+
 ---
 
 ## Prep calendar
 
 | Date | Work |
 |---|---|
-| Oct 2–3 | Pick the proposal or platform. Send permission requests: Paculaba for anything touching GPDSS or HABAGAT; the LGU (CDRRMO, CPDCO, CBMS office) for 🟡 data. Convert and simplify the 🟢 open-data foundation. |
-| Oct 4–5 | Build the scaffold. Run one full four-hour **dry run**, including the poster and demo. |
-| Oct 6 | Freeze. Re-verify the build offline. Print the runbook. |
-| Oct 7 | Compete. |
+| Oct 2–3 | Send permission requests: Paculaba for anything touching GPDSS or HABAGAT; the LGU (CDRRMO, CPDCO, CBMS office) for 🟡 data. Build the monorepo scaffold and the briefs. Convert and simplify the 🟢 open-data foundation (batch B0, local data session). |
+| Oct 3–5 | Build the 20 single-feature apps in parallel, batches B1–B4 (`docs/PARALLEL.md`). Ask the organizers by Oct 4 whether pre-built code is allowed. Run one full four-hour **dry run**, including the poster and demo. |
+| Oct 6 | Freeze: tag the repo `pre-event-freeze`. Re-verify the build offline. Print the runbook. |
+| Oct 7 | Compete: pick one pre-built app and continue it. |
 
-**Open question:** Is the project topic self-chosen, or will a theme or problem be announced on the day? If self-chosen, prepare one proposal deeply. If announced, keep the shared data foundation and the shortlist warm.
+**Open question:** Is the project topic self-chosen, or will a theme or problem be announced on the day? If self-chosen, continue the shortlist's first pick. If announced, pick the closest of the 20 pre-built apps, or start from `apps/_template` with the shared data foundation.
