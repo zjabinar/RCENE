@@ -117,8 +117,11 @@ export function rceneStatic(mounts: StaticMount[]): Plugin {
         }
         for (const dir of mount.dirs) {
           const abs = path.join(dir, rel);
-          if (existsSync(abs) && statSync(abs).isFile()) {
+          const stat = existsSync(abs) ? statSync(abs) : null;
+          if (stat?.isFile()) {
             res.setHeader("Content-Type", contentType(abs));
+            // Lets fetch() report download progress (e.g. Transformers.js model loading).
+            res.setHeader("Content-Length", String(stat.size));
             res.setHeader("Cache-Control", "no-store");
             createReadStream(abs).pipe(res);
             return;
