@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "ECC_GATEGUARD": "off"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm exec *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm dev *)",
+      "Bash(pnpm lint *)",
+      "Bash(node scripts/*)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-files *)",
+      "Bash(git branch --show-current)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git restore *)",
+      "Bash(ls *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npm test *)",
+      "PowerShell(pnpm run *)",
+      "PowerShell(pnpm test *)",
+      "PowerShell(pnpm exec *)",
+      "PowerShell(pnpm typecheck *)",
+      "PowerShell(pnpm build *)",
+      "PowerShell(pnpm dev *)",
+      "PowerShell(pnpm lint *)",
+      "PowerShell(node scripts/*)",
+      "PowerShell(git status *)",
+      "PowerShell(git diff *)",
+      "PowerShell(git log *)",
+      "PowerShell(git show *)",
+      "PowerShell(git rev-parse *)",
+      "PowerShell(git ls-files *)",
+      "PowerShell(git branch --show-current)",
+      "PowerShell(git add *)",
+      "PowerShell(git commit *)",
+      "PowerShell(git restore *)",
+      "PowerShell(ls *)",
+      "mcp__playwright__*"
+    ],
+    "deny": [
+      "Read(//d/monica/**)",
+      "Edit(//d/monica/**)",
+      "Read(//c/lgu_portal/**)",
+      "Edit(//c/lgu_portal/**)",
+      "Read(**/.env)",
+      "Edit(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(**/.env.*)",
+      "Read(!**/.env.example)",
+      "Edit(!**/.env.example)",
+      "Read(**/*service-account*.json)",
+      "Read(**/gemini_api_key.txt)",
+      "Read(**/*.pem)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/scripts/hooks/session-context.mjs"],
+            "timeout": 600,
+            "statusMessage": "Loading RCENE app context"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/scripts/hooks/guard.mjs"],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "enabledMcpjsonServers": ["playwright"],
+  "extraKnownMarketplaces": {
+    "knowledge-work-plugins": {
+      "source": { "source": "github", "repo": "anthropics/knowledge-work-plugins" }
+    },
+    "superpowers-marketplace": {
+      "source": { "source": "github", "repo": "obra/superpowers-marketplace" }
+    }
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "design@knowledge-work-plugins": true,
+    "superpowers@superpowers-marketplace": true
+  }
+}

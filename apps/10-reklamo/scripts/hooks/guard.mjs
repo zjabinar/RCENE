@@ -25,7 +25,7 @@
  *             the session scratchpad or the OS temp dir (never another part of the
  *             repository that contains the app); never under node_modules/ or dist/.
  *   project   edits only while the checkout is on project.json "branch"; no edits to
- *             data/**, docs/brief.md (synced from the repo), scripts/hooks/** or
+ *             data/**, docs/brief.md and docs/modules/** (synced from the repo), scripts/hooks/** or
  *             .claude/settings{,.local}.json (this guard and its wiring).
  *   project + monorepo
  *             no edits to ~/.claude/settings{,.local}.json (they can disable hooks).
@@ -401,7 +401,7 @@ function editReason(toolInput, ctx) {
       `Do not edit here. Switch back with git switch ${ctx.expectedBranch}, or stop and tell the human.`
     );
   }
-  if (segments[0] === "data" || relLower === "docs/brief.md") {
+  if (segments[0] === "data" || relLower === "docs/brief.md" || relLower.startsWith("docs/modules/")) {
     return (
       `Blocked: ${rel} is synced from the RCENE repo (data layers and the brief are read-only in a project session). ` +
       "Write the change you need (a new layer, a field, a brief correction) in NOTES.md, and work around it locally meanwhile."

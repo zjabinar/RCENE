@@ -5,7 +5,7 @@
 | **App** | `apps/19-ayuda` · dev port 5119 · preview 6119 |
 | **Batch** | 4 |
 | **Proposal** | `docs/proposal.md` (#19 in the monorepo's `docs/PROPOSALS.md`) |
-| **Reused by platforms** | P2 Bayanihan Response (core 3 "QR distribution with duplicate guard"; stretch "public transparency view", see "Platform hooks") |
+| **Reused by platforms** | P2 Bayanihan Response (core 3 "QR distribution with duplicate guard"; stretch "public transparency view", see "Platform hooks"), P4 Isla Link (the distribution log pattern for its boat-run log) |
 | **Data** | `barangays` · 🟢 HDX boundaries · **synthetic households** (seed 1901), synthetic distribution points `EC-01`… and synthetic sample claims (seed 1902) |
 | **AI in the app** | none |
 | **Skills to use** | built-in `dataviz` (read it before the first chart or stat tile), `gsap-motion` (count-ups, only if `StatTile countUp` isn't enough), Design plugin `ux-copy` (scan-result wording) and `accessibility-review` |

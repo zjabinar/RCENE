@@ -673,7 +673,8 @@
         "barangays",
         "hazard-*",
         "facilities",
-        "derived/barangay-hazard"
+        "derived/barangay-hazard",
+        "derived/facility-hazard"
       ],
       "feasibility": "Med-High",
       "roles": [
@@ -1183,7 +1184,9 @@
         "boundary",
         "barangays",
         "hazard-*",
-        "facilities"
+        "facilities",
+        "derived/barangay-hazard",
+        "derived/facility-hazard"
       ],
       "feasibility": "Medium",
       "roles": [
@@ -1264,7 +1267,7 @@
       "id": "P8",
       "slug": "p08-libot",
       "title": "Libot Catbalogan+",
-      "tagline": "Heritage trails, today's travel advisory and the people who make the city",
+      "tagline": "Heritage trails, a check-before-you-go advisory and local enterprises",
       "domain": "Platform",
       "kind": "platform",
       "batch": 6,
@@ -1296,9 +1299,9 @@
             "fil": "Bisita"
           },
           "summary": {
-            "en": "Explore the heritage story map, build a trail and check today's advisory.",
-            "war": "Usisaa an mapa han istorya han kabilin, paghimo hin trail ngan tan-awa an advisory yana nga adlaw.",
-            "fil": "Galugarin ang mapa ng kuwento ng pamana, bumuo ng trail at tingnan ang abiso ngayong araw."
+            "en": "Explore the heritage story map, build a trail and check the hazards before you go.",
+            "war": "Usisaa an mapa han istorya han kabilin, paghimo hin trail ngan tan-awa an mga peligro antes ka kumadto.",
+            "fil": "Galugarin ang mapa ng kuwento ng pamana, bumuo ng trail at tingnan ang mga panganib bago ka pumunta."
           }
         },
         {
@@ -1454,7 +1457,8 @@
         "barangays",
         "hazard-*",
         "facilities",
-        "derived/barangay-hazard"
+        "derived/barangay-hazard",
+        "derived/facility-hazard"
       ],
       "feasibility": "Med-High",
       "roles": [

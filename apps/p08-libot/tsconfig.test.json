@@ -1,0 +1,10 @@
+{
+  "_comment": "Tests may use Node APIs (fs, path) as well as the DOM.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vite/client", "node", "vitest/importMeta"]
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "rcene/**/*.test.ts", "rcene/**/*.test.tsx", "src/vite-env.d.ts"],
+  "exclude": ["rcene/config"]
+}

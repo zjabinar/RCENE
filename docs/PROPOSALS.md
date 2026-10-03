@@ -357,8 +357,8 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 - **Spine:** barangay × hazard matrix, facilities, active scenario state, shared across windows with BroadcastChannel
 - **Data:** 🟢 HDX boundaries, UP NOAH hazards, OSM schools and health facilities · 🟡 CDRRMO evacuation-center list if permitted
 - **Signature:** three synced windows — the CDRRMO console, a resident's phone view, the public board
-- **Why it scores:** it answers documented gaps from both the LGU portal (the "Am I Safe?" failure, no routing) and GPDSS (plain-language explanations, evacuation capacity)
-- **Note:** this sits closest to HABAGAT's territory. Tell Paculaba before you build it.
+- **Why it scores:** it answers documented gaps in the LGU portal (the "Am I Safe?" failure, no evacuation routing) and adds what a warning needs in practice: plain-language hazard answers and live evacuation-center capacity, on open data
+- **Independence (2026-10-03):** built from the LGU portal's documented gaps and open data only; nothing from GPDSS or Project HABAGAT.
 
 ### P2. Bayanihan Response — report-to-relief lifecycle
 - **Groups:** #6 Damage Snap, #19 Ayuda Tracker, plus geocoded incident reporting and relief transparency
@@ -371,7 +371,7 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 - **Stretch:** public transparency view
 - **Spine:** incidents, synthetic household QR codes, and distributions, all keyed by barangay
 - **Data:** 🟢 boundaries; synthetic households and reports
-- **Why it scores:** GPDSS has only 35 incidents on record in 12 years and its roadmap asks for exactly this workflow; the LGU portal flags offline field work
+- **Why it scores:** after a typhoon, damage reports and relief lists are kept on paper and in chat threads, so nobody can show what reached which barangay; the LGU portal flags offline field work as a gap
 
 ### P3. Kalinga Catbalogan — vulnerability-aware social protection
 - **Groups:** #18 Kalinga, a barangay vulnerability profile, and program referrals
@@ -385,7 +385,7 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 - **Spine:** barangay profile (age structure, housing materials, services) × hazards; a synthetic household registry
 - **Data:** 🟡 CBMS barangay aggregates with LGU permission · 🟢 synthetic fallback shaped like CBMS · suppress cells under 5
 - **Signature:** a housing-materials time-lapse from 2013 (pre-Haiyan) to 2022 to 2024
-- **Why it scores:** CSWDO appears nowhere in GPDSS, and the LGU portal's own gap list says risk is modelled as purely physical
+- **Why it scores:** the LGU portal's own gap list says risk is modelled as purely physical; this adds who lives in the hazard zones (seniors, young children, light-material housing) and gives the CSWDO a role in pre-emptive evacuation
 
 ### P4. Isla Link — island-barangay connectivity & resilience
 - **Groups:** new; borrows from #3 and #19
@@ -469,7 +469,7 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 - **Core:** profile + trends · hazard exposure · announcements
 - **Stretch:** requests and projects
 - **Data:** 🟡 CBMS aggregates with permission · 🟢 synthetic fallback
-- **Why it scores:** turns each of the 57 barangays' data into one screen; GPDSS has a public "Know-Your-Barangay" page but nothing for barangay officials
+- **Why it scores:** turns each of the 57 barangays' data into one screen for its own officials, and links what they see to what residents hear
 
 ### Platform shortlist
 

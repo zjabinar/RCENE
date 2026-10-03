@@ -22,7 +22,7 @@ Two to four sentences grounded in `docs/proposal.md`: the documented gap, who su
 | Role | Route | Window in the demo | Needs |
 |---|---|---|---|
 
-The generated scaffold already has: `/` (the role launcher: `RoleLauncher` cards with **Open** and **Open in a new window**), one placeholder page per role route, the nav, and `role.<id>.title` / `role.<id>.summary` strings in three languages (`src/roles.ts`, `src/pages/`, `src/i18n/strings.ts`). Replace each placeholder with the real view; keep the routes. Add routes with parameters (for example `/center/:id`) under the role's path, and add them to `smokeRoutes` in `project.json`.
+The generated scaffold already has: `/` (the role launcher: `RoleLauncher` cards with **Open** and **New window**), one placeholder page per role route, the nav, and `role.<id>.title` / `role.<id>.summary` strings in three languages (`src/roles.ts`, `src/pages/`, `src/i18n/strings.ts`). Replace each placeholder with the real view; keep the routes. Add routes with parameters (for example `/center/:id`) under the role's path, and add them to `smokeRoutes` in `project.json`.
 
 ## Lift, then wire
 

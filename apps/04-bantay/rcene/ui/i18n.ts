@@ -20,6 +20,10 @@ export const uiStrings = extendStrings(common, {
     "ui.suggestions": "Suggestions",
     "ui.noResults": "No results found.",
     "ui.notifications": "Notifications",
+    "ui.open": "Open",
+    "ui.newWindow": "New window",
+    "ui.openRole": "Open {role}",
+    "ui.openRoleWindow": "Open {role} in a new window",
   },
   war: {
     "ui.home": "Puno",
@@ -30,6 +34,10 @@ export const uiStrings = extendStrings(common, {
     "ui.suggestions": "Mga suhestyon",
     "ui.noResults": "Waray nakita nga resulta.",
     "ui.notifications": "Mga pahibaro",
+    "ui.open": "Ablihi",
+    "ui.newWindow": "Bag-o nga window",
+    "ui.openRole": "Ablihi an {role}",
+    "ui.openRoleWindow": "Ablihi an {role} ha bag-o nga window",
   },
   fil: {
     "ui.close": "Isara",
@@ -41,6 +49,10 @@ export const uiStrings = extendStrings(common, {
     "ui.suggestions": "Mga mungkahi",
     "ui.noResults": "Walang nakitang resulta.",
     "ui.notifications": "Mga abiso",
+    "ui.open": "Buksan",
+    "ui.newWindow": "Bagong window",
+    "ui.openRole": "Buksan ang {role}",
+    "ui.openRoleWindow": "Buksan ang {role} sa bagong window",
   },
 });
 

@@ -1,0 +1,47 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P7",
+  "slug": "p07-bukas",
+  "title": "Bukas Catbalogan",
+  "tagline": "See the city's data, follow its projects, vote on its budget",
+  "port": 5207,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p07-bukas",
+  "smokeRoutes": [
+    "/",
+    "/story",
+    "/projects",
+    "/budget",
+    "/planning",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "13-datos",
+    "12-proyekto",
+    "11-bayanihan"
+  ],
+  "roles": [
+    {
+      "id": "story",
+      "path": "/story",
+      "width": "full"
+    },
+    {
+      "id": "projects",
+      "path": "/projects",
+      "width": "wide"
+    },
+    {
+      "id": "budget",
+      "path": "/budget",
+      "width": "phone"
+    },
+    {
+      "id": "planning",
+      "path": "/planning",
+      "width": "full"
+    }
+  ]
+}

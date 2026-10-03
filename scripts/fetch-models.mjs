@@ -5,7 +5,7 @@
  * own scripts/fetch-models.mjs (`npm run fetch-models -- --model e5` inside the
  * app); this wrapper drives those scripts.
  *
- *   node scripts/fetch-models.mjs --all                    # every AI app (06 clip, 10 e5, 20 e5)
+ *   node scripts/fetch-models.mjs --all                    # every AI app (06 clip, 10 e5, 20 e5, P2 clip, P5 e5)
  *   node scripts/fetch-models.mjs --app 10 --app 20        # e5 once, copied into both
  *   node scripts/fetch-models.mjs --app 06 --model all     # override the model
  *   node scripts/fetch-models.mjs --all --dry-run
@@ -22,7 +22,7 @@
  * no --from option every app downloads on its own, and if it has no --model
  * option the app's id is passed as --app (the old interface).
  *
- * Default model per app: 06 clip, 10 e5, 20 e5 (their briefs); other apps need --model.
+ * Default model per app: 06 clip, 10 e5, 20 e5, P2 clip, P5 e5 (their briefs); other apps need --model.
  * Options passed through: --dry-run, --force, --skip-ort, --skip-models, --no-cache.
  * Option: --root <repo>. Exit code 1 when any app failed.
  */
@@ -32,7 +32,7 @@ import os from "node:os";
 import path from "node:path";
 import { ROOT, appDir, appRows, cli, isMain, readManifest, rel, resolveTargets, seconds } from "./lib/apps.mjs";
 
-export const DEFAULT_MODEL = { "06": "clip", "10": "e5", "20": "e5" };
+export const DEFAULT_MODEL = { "06": "clip", "10": "e5", "20": "e5", P2: "clip", P5: "e5" };
 const MODEL_CHOICES = ["e5", "clip", "all"];
 
 const USAGE = `Usage: node scripts/fetch-models.mjs (--app <slug|id>... | --all) [--model e5|clip|all] [--dry-run] [--force] [--skip-ort] [--skip-models] [--no-cache] [--root <repo>]

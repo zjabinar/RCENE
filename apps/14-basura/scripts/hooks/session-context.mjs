@@ -172,7 +172,7 @@ function ruleLines(co, project) {
   lines.push("Edits: only inside this app folder (plus your scratchpad, ~/.claude and the OS temp folder); never node_modules/ or dist/.");
   if (co.mode === "project") {
     lines.push(
-      `Project session rules: stay on ${project.branch ?? co.branch} and commit only (no push, merge, rebase, reset --hard, worktree or branch switching); data/** and docs/brief.md are synced from the repo and read-only, so write requests in NOTES.md.`,
+      `Project session rules: stay on ${project.branch ?? co.branch} and commit only (no push, merge, rebase, reset --hard, worktree or branch switching); data/**, docs/brief.md and docs/modules/** are synced from the repo and read-only, so write requests in NOTES.md.`,
     );
   }
   return lines;
@@ -186,6 +186,23 @@ function recentCommits(co) {
   }
   const log = git(["log", "--oneline", "--no-decorate", "-n", "10"]);
   return `Recent commits:${log ? `\n${log}` : " none yet"}`;
+}
+
+/** A platform's roles and module apps, with whether each module app is finished next to it. */
+function platformLines(co, project) {
+  const lines = [];
+  const roles = Array.isArray(project.roles) ? project.roles : [];
+  if (roles.length) lines.push(`Platform roles: / (role launcher), ${roles.map((r) => `${r.path} ${r.id}`).join(", ")}.`);
+  const modules = Array.isArray(project.modules) ? project.modules : [];
+  if (modules.length) {
+    const state = modules.map((slug) => {
+      const status = co.workspace ? readText(path.join(APP_ROOT, "..", slug, "STATUS.md")) : null;
+      const done = status !== null && /^\s*Phase:\s*done\b/im.test(status);
+      return `${slug}${co.workspace ? (done ? " (done: lift it)" : " (not done: build from docs/modules)") : ""}`;
+    });
+    lines.push(`Platform modules (briefs in docs/modules/): ${state.join(", ")}. See "Platforms" in CLAUDE.md and "Lift, then wire" in the brief.`);
+  }
+  return lines;
 }
 
 function buildContext(co, project) {
@@ -208,6 +225,7 @@ function buildContext(co, project) {
   const briefExists = existsSync(path.join(APP_ROOT, brief));
   lines.push(`Brief (the approved spec, read it first): ${brief}${briefExists ? "" : " (NOT FOUND: tell the human in STATUS.md)"}`);
   if (project.port) lines.push(`Ports: dev ${project.port} (npm run dev), preview ${project.port + 1000} (vite preview, used by the smoke test).`);
+  if (project.kind === "platform") lines.push(...platformLines(co, project));
   lines.push("");
   lines.push("Data layers:");
   lines.push(dataStatus());

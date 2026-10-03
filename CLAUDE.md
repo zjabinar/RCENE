@@ -32,7 +32,7 @@
 | `pnpm check-standalone --all` | Check that no app references anything outside its folder; `--install <slug>` copies the app to a temp folder and runs `npm ci`, typecheck, test, build and smoke there |
 | `pnpm stack:check` | Every app's versions against `stack.json` (`node scripts/stack.mjs --write` fixes them) |
 | `node scripts/smoke.mjs --app <slug>` | Wrapper over the app's own `npm run smoke` (`--app template`, `--all`; other flags pass through) |
-| `node scripts/fetch-models.mjs --app <slug>` | Fill an AI app's `models/` through a shared download cache (06, 10, 20) |
+| `node scripts/fetch-models.mjs --app <slug>` | Fill an AI app's `models/` through a shared download cache (06, 10, 20, P2, P5) |
 
 ## The 00-data session
 
@@ -62,6 +62,7 @@ Batches 1–4 are the single-feature apps; batches 5–6 are the platforms (B5: 
 2. Check the template: `pnpm --filter @rcene/template test`, `typecheck`, `smoke`.
 3. `pnpm sync-shared --all --dry-run`, then without `--dry-run` (name apps or add `--include-started` for apps already in progress; review the conflicts it reports).
 4. `pnpm sync-data` if `data/` changed; `pnpm lockfiles` and `pnpm stack:check` if versions changed (edit `stack.json` first).
+   If a platform's `modules` or `roles` changed in `projects.json`: an unstarted platform is regenerated with `pnpm new-app <slug>`; for a started one, edit its `project.json` (`modules`, `roles`) and `src/roles.ts` by hand. `sync-shared` only refreshes `docs/modules/`.
 5. `pnpm check-standalone --all`, then `pnpm test; pnpm typecheck; pnpm build`, and commit. Later batches start from the updated main.
 
 ## Rules at the root

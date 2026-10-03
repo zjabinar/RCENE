@@ -161,6 +161,20 @@ Client-side, offline: a Blob, an object URL and a temporary `<a download>` (the 
 downloadCsv("households.csv", toCsv(rows, [{ key: "code", header: t("col.code") }], { bom: true }));
 ```
 
+### Roles (multi-role apps and platforms)
+
+**`RoleLauncher`**: `{ roles: RoleCard[]; windowPrefix?: string; headingLevel?: 2 | 3 }`, where `RoleCard = { id; to; title: string; summary?; width?: "phone" | "wide" | "full"; icon? }`. One card per role, each with **Open** (navigates here) and **New window** (opens the role's route in its own sized window named `<windowPrefix>-<id>`, so clicking again reuses it). Several windows side by side then show one workflow across roles, kept in step by `createSyncedStore`. "New window" is a real link: if the browser blocks the popup, it opens a tab instead.
+
+```tsx
+<RoleLauncher
+  windowPrefix="p01-andam"
+  roles={ROLES.map((r) => ({ id: r.id, to: r.path, width: r.width, title: t(`role.${r.id}.title`), summary: t(`role.${r.id}.summary`) }))}
+/>
+```
+
+- `openRoleWindow(to, name, width)` opens one yourself (returns false when blocked); `ROLE_WINDOW_SIZE` holds the sizes (phone 420 × 860, wide 1200 × 860, full 1440 × 900).
+- Popups need a user gesture: call it from a click, never on load.
+
 ### Other
 
 **`StatTile`**: `{ label: ReactNode; value: number | string; hint?: ReactNode; tone?: "default" | "warning" | "danger"; countUp?: boolean; format?: (n: number) => string }`. Shows a big number in a `<dl>`.
@@ -245,5 +259,6 @@ Follow the `gsap-motion` skill. **Import GSAP from here, never from `"gsap"`**, 
 - the hazard badges and list (order, missing layers, all three languages, no "safe");
 - AppShell (strings override, `disclaimer`, toaster), LoadGate and StatTile;
 - SourcesPage (`extra`, `children`, missing `sources.json`) and SourceCard;
+- RoleLauncher (labelled links, sized named windows, the blocked-popup fallback);
 - the accordion, collapsible, alert-dialog, popover and command primitives;
 - `downloadCsv` / `downloadText`.

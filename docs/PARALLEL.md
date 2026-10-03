@@ -88,7 +88,7 @@ The session **lifts** each finished module (`../NN-slug`, `STATUS.md` at `Phase:
 
 Port 5201–5210 (preview +1000). The ★AI platforms are P2 (06's photo suggestion) and P5 (20's semantic search): fill their `models/` as for the AI apps.
 
-## In-browser AI models (06, 10, 20)
+## In-browser AI models (06, 10, 20, P2, P5)
 
 Models are large (> 100 MB each), gitignored and never committed. Before the batch that needs them, while online, fill each AI app's own `models/` (also P2 and P5): inside the app, `npm run fetch-models -- --model e5|clip|all`, or from the root, `node scripts/fetch-models.mjs --app 20-sumat`. Every download also lands in a shared cache (`~/.cache/rcene-models`), so e5 is downloaded once for 10 and 20, and a worktree's app folder fills from the cache (`--from cache`) instead of the network.
 
