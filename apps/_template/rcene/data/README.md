@@ -90,7 +90,7 @@ if (coast.status === "absent") /* hide the toggle; say "not available" if the us
 ## CSV (`csv.ts`)
 
 ```ts
-toCsv<Row>(rows: readonly Row[], columns: readonly CsvColumn<Row>[], options?: { bom?: boolean; eol?: "\r\n" | "\n" }): string
+toCsv<Row>(rows: readonly Row[], columns: readonly CsvColumn<Row>[], options?: { bom?: boolean; eol?: "\r\n" | "\n"; formulaGuard?: boolean }): string
 type CsvColumn<Row> = { key: keyof Row | ((row: Row) => unknown); header: string };
 
 const csv = toCsv(households, [
@@ -104,7 +104,8 @@ downloadCsv("households.csv", csv);   // from @rcene/ui
 - RFC 4180: a field is quoted when it contains a comma, a quote, CR or LF, and inner quotes are doubled. Records are joined with `eol` (default `"\r\n"`), with no trailing line break.
 - Cells: `null`/`undefined` and `NaN`/`Infinity` → empty; numbers plain (`1728.75`, no ₱ or grouping, so spreadsheets read them as numbers); booleans `true`/`false`; dates ISO 8601; other objects JSON.
 - `bom: true` adds a UTF-8 byte-order mark so Excel shows ₱, ñ and Waray place names correctly.
-- `csvField(value)` formats one cell.
+- Formula guard (on by default): text that starts with `=`, `+`, `-`, `@`, a tab or CR gets a leading `'`, so a spreadsheet shows a resident's typed text instead of running it as a formula. Numbers are untouched, so pass numbers as numbers; `formulaGuard: false` turns it off for trusted text.
+- `csvField(value, { formulaGuard? })` formats one cell.
 - Headers are UI text: translate them.
 
 ## Synthetic data (`synthetic.ts`)

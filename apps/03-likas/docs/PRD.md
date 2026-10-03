@@ -121,7 +121,7 @@ Since 2026-10-03, each core is pre-built as its own app from its brief: Core 1 �
 
 ## 7. Architecture
 
-- **Stack:** as in the codebase design spec, with versions pinned in the pnpm catalog (`pnpm-workspace.yaml`). Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui; MapLibre via `react-map-gl/maplibre`; `@turf/turf`; Zustand; `motion` and GSAP. **No three.js** — 3D adds nothing to this product's information.
+- **Stack:** as in the codebase design spec, with exact versions pinned in `stack.json` and in each app's own `package.json`. Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui; MapLibre via `react-map-gl/maplibre`; `@turf/turf`; Zustand; `motion` and GSAP. **No three.js** — 3D adds nothing to this product's information.
 - **Layout:** a pnpm monorepo. Each core is its own app under `apps/` (§6); each app is self-contained and carries its own copy of the shared code in `rcene/` (`config`, `data`, `geo`, `store`, `i18n`, `ui`, `map`), so the chosen app's folder runs on its own.
 - **Routes:** `/`, `/console`, `/center/:id`, `/board`, `/sources`.
 - **State:** each app's Zustand store is created with `createSyncedStore` from `@rcene/store` and persisted to `localStorage` under the key `rcene:<slug>:<store>` (for example `rcene:01-ligtas:app`). Other windows rehydrate on the browser's `storage` event, which fires in every other same-origin window when the key changes. That is all the cross-window sync needs: no server, and no message protocol to debug. `BroadcastChannel` is the fallback if rehydration proves flaky.

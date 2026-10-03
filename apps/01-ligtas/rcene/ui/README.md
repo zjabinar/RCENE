@@ -99,7 +99,13 @@ Components rendered outside the shell (e.g. `RouteError` as a route `errorElemen
 
 ```tsx
 const zones = useZones(HAZARDS);
-<LoadGate state={zones}>{({ zones, missing }) => <HazardStatusList status={lookup(zones)} missing={missing} />}</LoadGate>
+const boundary = useLayer("boundary");
+<LoadGate state={zones}>
+  {({ zones, missing }) =>
+    point && boundary.status === "ready" && (
+      <HazardStatusList status={lookupHazards(point, zones, boundary.data)} missing={missing} />
+    )}
+</LoadGate>
 ```
 
 For a layer that may not exist at all, use `useOptionalLayer` from `@rcene/data` instead (no 404, see its README).

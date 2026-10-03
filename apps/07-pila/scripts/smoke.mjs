@@ -258,7 +258,8 @@ export function isOsmTile(url) {
 
 /** A browser context that aborts every request leaving the machine and records it. */
 export async function offlineContext(browser, viewport, aborted) {
-  const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+  // Service workers are blocked: Playwright cannot route their requests, so the offline check would miss them.
+  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block" });
   await context.route("**/*", (route) => {
     const url = route.request().url();
     if (isLocalUrl(url)) return route.continue();

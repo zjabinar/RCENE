@@ -21,8 +21,10 @@ apps/*/models/*
 # Secrets — never commit
 .env
 .env.*
+!.env.example
 *.pem
 *service-account*.json
+gemini_api_key.txt
 
 # Raw GIS sources stay on the local drive; only converted GeoJSON is committed
 *.shp

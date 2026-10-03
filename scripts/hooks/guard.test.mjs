@@ -74,7 +74,7 @@ describe("forbidden locations (any branch)", () => {
   });
 
   it("blocks other spellings of D:\\monica", () => {
-    for (const p of ["d:/Monica/data", "/d/monica", "/mnt/d/monica/x.csv", "D:\\MONICA"]) {
+    for (const p of ["d:/Monica/data", "/d/monica", "/mnt/d/monica/x.csv", "D:\\MONICA", "\\\\localhost\\d$\\monica\\x", "//PC/D$/monica"]) {
       expect(run({ tool_name: "Glob", tool_input: { pattern: "**/*", path: p }, cwd: mainRepo }).status).toBe(2);
     }
     const bash = run({ tool_name: "Bash", tool_input: { command: "ls -la /d/monica && echo done" }, cwd: mainRepo });
@@ -98,6 +98,17 @@ describe("forbidden locations (any branch)", () => {
     expect(bash.status).toBe(0);
   });
 
+  it("blocks forbidden folders reached through ./, ../, the cwd or an earlier cd", () => {
+    const bash = (command, cwd = mainRepo) => run({ tool_name: "Bash", tool_input: { command }, cwd }).status;
+    expect(run({ tool_name: "Read", tool_input: { file_path: "D:/./monica/x" }, cwd: mainRepo }).status).toBe(2);
+    expect(bash('cat "D:/lgu_portal - GIS/../monica/notes.txt"')).toBe(2);
+    expect(bash("cd /d/ && ls monica")).toBe(2);
+    expect(run({ tool_name: "PowerShell", tool_input: { command: "Set-Location D:\\; Get-ChildItem monica" }, cwd: mainRepo }).status).toBe(2);
+    expect(bash("ls monica", "D:\\")).toBe(2);
+    expect(bash('cd "/d/lgu_portal - GIS" && ls Hazard')).toBe(0);
+    expect(bash("ls monica")).toBe(0);
+  });
+
   it("blocks forbidden paths even when the input is not valid JSON", () => {
     expect(run('{"tool_name":"Read","tool_input":{"file_path":"D:\\\\monica\\\\x"').status).toBe(2);
     expect(run("not json at all").status).toBe(0);
@@ -118,6 +129,9 @@ describe("credential files (any branch)", () => {
     expect(run({ tool_name: "Read", tool_input: { file_path: path.join(mainRepo, ".env") }, cwd: mainRepo }).status).toBe(2);
     expect(run({ tool_name: "Edit", tool_input: { file_path: path.join(mainRepo, "apps", ".env.local") }, cwd: mainRepo }).status).toBe(2);
     expect(run({ tool_name: "Bash", tool_input: { command: "cat .env" }, cwd: mainRepo }).status).toBe(2);
+    // A commit message only mentions the name.
+    expect(run({ tool_name: "Bash", tool_input: { command: 'git commit -m "chore: ignore .env files"' }, cwd: mainRepo }).status).toBe(0);
+    expect(run({ tool_name: "Bash", tool_input: { command: 'git commit -m "x" && cat .env' }, cwd: mainRepo }).status).toBe(2);
   });
 
   it("allows .env.example", () => {
@@ -195,6 +209,11 @@ describe("project branch rules (proj/01-ligtas)", () => {
       "git branch -d -f proj/02-tubig",
       "git branch --delete --force proj/02-tubig",
       "git branch -m renamed",
+      "git checkout main --",
+      "git checkout -b feat --",
+      "git checkout --detach --",
+      "git pull origin main",
+      "git am fix.patch",
     ]) {
       expect(run({ tool_name: "Bash", tool_input: { command }, cwd: projRepo }).status, command).toBe(2);
     }
@@ -209,6 +228,7 @@ describe("project branch rules (proj/01-ligtas)", () => {
       "git merge-base main HEAD",
       "git restore src/App.tsx",
       "git checkout -- src/App.tsx",
+      "git checkout main -- src/App.tsx",
     ]) {
       expect(run({ tool_name: "Bash", tool_input: { command }, cwd: projRepo }).status, command).toBe(0);
     }

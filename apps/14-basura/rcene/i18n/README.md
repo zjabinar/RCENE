@@ -15,14 +15,14 @@ export const strings = extendStrings(common, {
 
 // component
 const t = useT(strings);
-t("home.title"); t("distance.straightLine", { km: fmt.km(1.24) });
 const [lang, setLang] = useLang();   // persisted, synced across windows, sets <html lang>
 const fmt = useFormat();             // number, km, percent, currency, date, time for the active language
+t("home.title"); t("distance.straightLine", { km: fmt.km(1.24) });
 ```
 
 - `common` holds chrome, UI states, hazard and level names and the three answer phrases (`status.inZone` with `{level}`, `status.notInZone`, `status.outsideCoverage`).
 - Missing `war`/`fil` entries fall back to English with a dev warning (`console.warn`, once per key).
-- **Tested rule:** no `status.*` string in any language contains "safe", "ligtas", "luwas", "salbo" or "sigurado". Don't write a "safe" answer anywhere else either.
+- **Tested rule:** no `status.*` string in any language contains "safe", "ligtas", "luwas", "salbo" or "sigurado" (`index.test.ts` for `common`; the app's `src/i18n/strings.test.ts` for its own `status.*`, `level.*`, `answer.*` and `result.*` keys, which the shared badge and legend display). Don't write a "safe" answer anywhere else either.
 - Waray is a first-class language, not an afterthought. AI drafts it; a human corrects it. Keep the before/after in `REVIEW.md` — it's a poster panel ("what the AI got wrong in Waray").
 
 ## API

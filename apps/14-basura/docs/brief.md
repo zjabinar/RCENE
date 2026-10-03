@@ -119,7 +119,7 @@ Push notifications or SMS reminders (no server); the real City ENRO schedule or 
 
 ## Stretch (only after the definition of done is met)
 
-- "Add to calendar": download an `.ics` file of the next 4 weeks of pickups, generated locally (`downloadText` from `@rcene/ui`).
+- "Add to calendar": download an `.ics` file of the next 4 weeks of pickups, generated locally (`downloadText(name, text, "text/calendar;charset=utf-8")` from `@rcene/ui`).
 - A "special waste" explainer card: what counts and why it stays separate.
 - Timed mode for the game (60 seconds), with the best time kept per device.
 

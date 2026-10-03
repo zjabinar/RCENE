@@ -29,7 +29,7 @@ export function Home() {
       <div className="relative h-[60vh] min-h-80 overflow-hidden rounded-xl border lg:h-[calc(100vh-10rem)]">
         <BaseMap onClick={select}>
           {zones.status === "ready" && <ZoneLayer hazard="flood" zones={zones.data.zones.flood} />}
-          {selected && <SelectedPoint lngLat={selected} />}
+          {selected && <SelectedPoint lngLat={selected} label={t("home.selectedPoint")} />}
         </BaseMap>
         <Legend className="absolute bottom-3 left-3" hazard="flood" />
       </div>

@@ -12,7 +12,7 @@
  * scratch copy (--root / --out).
  */
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
@@ -34,9 +34,21 @@ export function repoPaths(root = ROOT) {
   };
 }
 
-/** True when the module with this import.meta.url is the script node was started with. */
+/**
+ * True when the module with this import.meta.url is the script node was started with.
+ * Compares real paths: through a symlink or a Windows junction, argv[1] is the link
+ * path while import.meta.url is the resolved one.
+ */
 export function isMain(metaUrl) {
-  return Boolean(process.argv[1]) && pathToFileURL(path.resolve(process.argv[1])).href === metaUrl;
+  if (!process.argv[1]) return false;
+  const real = (p) => {
+    try {
+      return realpathSync(p);
+    } catch {
+      return path.resolve(p);
+    }
+  };
+  return pathToFileURL(real(path.resolve(process.argv[1]))).href === pathToFileURL(real(fileURLToPath(metaUrl))).href;
 }
 
 export function readJson(file) {
@@ -155,10 +167,16 @@ export function fillPlaceholders(text, row) {
     .replaceAll("__BRIEF__", APP_BRIEF);
 }
 
-/** An app counts as started once its STATUS.md no longer says "Not started". */
+/**
+ * An app counts as started once its STATUS.md no longer has a line that is exactly
+ * "Not started". HTML comments are ignored (the template's own comment mentions the
+ * phrase). A folder with src/ but no STATUS.md counts as started, so nothing is wiped.
+ */
 export function isStarted(dir) {
   const status = path.join(dir, "STATUS.md");
-  return existsSync(status) && !readFileSync(status, "utf8").includes("Not started");
+  if (!existsSync(status)) return existsSync(path.join(dir, "src"));
+  const text = readFileSync(status, "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  return !/^\s*Not started\s*$/m.test(text);
 }
 
 // ---------------------------------------------------------------------------
@@ -300,8 +318,9 @@ export function appPackageJson(row, root = ROOT) {
  * engines; the scripts the template defines; and, in dependencies and
  * devDependencies, the packages stack.json defines. Scripts and packages an app
  * added itself (allowed when justified in its NOTES.md) are the app's and are
- * neither compared nor touched. (Consequence: a package dropped from stack.json
- * stays in existing apps as an extra; stack.mjs reports it.)
+ * neither compared nor touched. .sync.json records the managed names
+ * (packageKeys), so a script or package the template or stack.json drops is
+ * compared against the old baseline and then removed from the app.
  */
 export function packageManagedSubset(pkg, managed) {
   const stackNames = new Set([...Object.keys(managed.dependencies ?? {}), ...Object.keys(managed.devDependencies ?? {})]);
@@ -314,6 +333,20 @@ export function packageManagedSubset(pkg, managed) {
   };
 }
 
+/** The managed names in a package.json, as recorded in .sync.json ("packageKeys"). */
+export function packageManagedKeys(managed) {
+  return {
+    scripts: Object.keys(managed.scripts ?? {}).sort(),
+    packages: [...new Set([...Object.keys(managed.dependencies ?? {}), ...Object.keys(managed.devDependencies ?? {})])].sort(),
+  };
+}
+
+/** A stand-in `managed` that owns exactly these recorded names (values unused): hashes the old subset. */
+export function managedFromKeys(keys) {
+  const blank = (names) => Object.fromEntries((names ?? []).map((k) => [k, ""]));
+  return { scripts: blank(keys.scripts), dependencies: blank(keys.packages), devDependencies: {} };
+}
+
 /** Hash of the managed subset of a package.json object (see packageManagedSubset). */
 export function packageManagedHash(pkg, managed) {
   return sha256(canonicalJson(packageManagedSubset(pkg, managed)));
@@ -321,13 +354,16 @@ export function packageManagedHash(pkg, managed) {
 
 const sortKeys = (obj) => Object.fromEntries(Object.entries(obj).sort(([a], [b]) => a.localeCompare(b)));
 
-/** `pkg` with the managed fields applied; app-added scripts and packages, other fields and key order kept. */
-export function withManagedFields(pkg, managed) {
+/**
+ * `pkg` with the managed fields applied; app-added scripts and packages, other fields and key order kept.
+ * `dropped` ({ scripts, packages }) names formerly managed entries to remove.
+ */
+export function withManagedFields(pkg, managed, dropped = { scripts: [], packages: [] }) {
   const out = { ...pkg };
-  const stackNames = new Set([...Object.keys(managed.dependencies), ...Object.keys(managed.devDependencies)]);
+  const stackNames = new Set([...Object.keys(managed.dependencies), ...Object.keys(managed.devDependencies), ...dropped.packages]);
   const extras = (obj, owned) => Object.fromEntries(Object.entries(obj ?? {}).filter(([k]) => !owned.has(k)));
   out.engines = managed.engines;
-  out.scripts = { ...managed.scripts, ...extras(pkg.scripts, new Set(Object.keys(managed.scripts))) };
+  out.scripts = { ...managed.scripts, ...extras(pkg.scripts, new Set([...Object.keys(managed.scripts), ...dropped.scripts])) };
   out.dependencies = sortKeys({ ...extras(pkg.dependencies, stackNames), ...managed.dependencies });
   out.devDependencies = sortKeys({ ...extras(pkg.devDependencies, stackNames), ...managed.devDependencies });
   // New keys land after "description" in the usual order when the app lacked them.
@@ -480,21 +516,25 @@ export const SYNC_FILE = ".sync.json";
 
 export function readSyncState(dir) {
   const file = path.join(dir, SYNC_FILE);
-  if (!existsSync(file)) return { files: {} };
+  if (!existsSync(file)) return { files: {}, packageKeys: null };
   try {
     const state = readJson(file);
-    return { files: state.files ?? {} };
+    const keys = state.packageKeys;
+    const valid = keys && Array.isArray(keys.scripts) && Array.isArray(keys.packages);
+    return { files: state.files ?? {}, packageKeys: valid ? keys : null };
   } catch {
-    return { files: {} };
+    return { files: {}, packageKeys: null };
   }
 }
 
-export function syncStateJson(files) {
+/** .sync.json text. `packageKeys` (from packageManagedKeys) is the set of package.json names the base hash covers. */
+export function syncStateJson(files, packageKeys = null) {
   const sorted = Object.fromEntries(Object.keys(files).sort().map((k) => [k, files[k]]));
   return json({
     $comment:
-      "Written by the repo's scripts/sync-shared.mjs (and new-app.mjs): sha256 of each managed file as the sync last wrote it (package.json: its engines/scripts/dependencies/devDependencies only). A file whose hash still matches is updated from the template; a file you changed is reported as a conflict and left alone.",
+      "Written by the repo's scripts/sync-shared.mjs (and new-app.mjs): sha256 of each managed file as the sync last wrote it (package.json: its engines/scripts/dependencies/devDependencies only, over the names in packageKeys). A file whose hash still matches is updated from the template; a file you changed is reported as a conflict and left alone.",
     files: sorted,
+    ...(packageKeys ? { packageKeys } : {}),
   });
 }
 

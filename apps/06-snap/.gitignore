@@ -18,6 +18,7 @@ docs/screenshots/*.png
 !.env.example
 *.pem
 *service-account*.json
+gemini_api_key.txt
 
 # Claude Code local settings (on Windows they live in this folder)
 .claude/settings.local.json

@@ -162,7 +162,7 @@ function ruleLines(co, project) {
   const lines = [];
   if (co.workspace) {
     lines.push(
-      "Dependencies (pnpm workspace): add one with pnpm add <pkg> inside this folder (or pnpm --filter <this package> add <pkg>), catalog versions only, and justify it in NOTES.md. Never -w/-r, never npm/yarn install or npm ci (npm would break pnpm's node_modules); npm install --package-lock-only refreshes this app's package-lock.json for standalone use.",
+      "Dependencies (pnpm workspace): add one with pnpm add <pkg> inside this folder (or pnpm --filter <this package> add <pkg>), pinned to an exact version (no ^ or ~, no new major), and justify it in NOTES.md. Never -w/-r, never npm/yarn install or npm ci (npm would break pnpm's node_modules); npm install --package-lock-only refreshes this app's package-lock.json for standalone use.",
     );
   } else if (co.mode === "project") {
     lines.push("Dependencies: frozen in this project session; write requests in NOTES.md.");

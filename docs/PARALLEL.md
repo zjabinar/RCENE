@@ -123,8 +123,8 @@ On an `entry/*` branch the guard runs in monorepo mode: edits stay in the app fo
 git archive -o C:\entry\<slug>.zip --prefix=<slug>/ pre-event-freeze:apps/<slug>
 Expand-Archive C:\entry\<slug>.zip C:\entry
 cd C:\entry\<slug>
+npm ci                                                # the day before, while online (fetch-models needs the installed packages)
 npm run fetch-models -- --model e5 --from cache      # AI apps: models are gitignored; copy them from the shared cache
-npm ci                                                # the day before, while online
 git init; git add -A
 git commit -m "Import apps/<slug> from <monorepo URL> at pre-event-freeze (<full SHA>)"
 npm run smoke                                         # with Wi-Fi off

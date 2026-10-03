@@ -2,10 +2,10 @@
  * Three-language string tables: English (source), Waray (Winaray), Filipino.
  * Every user-facing string in an app goes through a table — no hard-coded text.
  *
- *   // apps/NN-slug/src/i18n/strings.ts
+ *   // src/i18n/strings.ts
  *   export const strings = extendStrings(common, {
  *     en: { "home.title": "Is my place at risk?" },
- *     war: { "home.title": "..." },   // AI-drafted Waray: list it in REVIEW.md
+ *     war: { "home.title": "..." },   // AI-drafted Waray: list it in NOTES.md ("Translations to review")
  *     fil: { "home.title": "..." },
  *   });
  *

@@ -480,7 +480,7 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 
 ## Tech stack
 
-Every version is pinned once, in the pnpm catalog (`pnpm-workspace.yaml`), and verified with a real install and production build. The pinned majors are ones the coding model knows well: React 19.3 · TypeScript 6.0 · Vite 8 · Tailwind CSS 4.3 · react-router 7.18 · motion 12.43 · TanStack Table 8 · vitest 4.1 · maplibre-gl 6.11 + react-map-gl 8.1 · lucide-react 0.577. Newer majors exist (TypeScript 7, react-router 8, motion 13+, TanStack Table 9, vitest 5, lucide-react 1) and are deliberately avoided until after the event.
+Every version is pinned once, in `stack.json` (copied as exact pins into each app's own `package.json` and `package-lock.json`), and verified with a real install and production build. The pinned majors are ones the coding model knows well: React 19.3 · TypeScript 6.0 · Vite 8 · Tailwind CSS 4.3 · react-router 7.18 · motion 12.43 · TanStack Table 8 · vitest 4.1 · maplibre-gl 6.11 + react-map-gl 8.1 · lucide-react 0.577. Newer majors exist (TypeScript 7, react-router 8, motion 13+, TanStack Table 9, vitest 5, lucide-react 1) and are deliberately avoided until after the event.
 
 **Core:** Vite · React 19 · TypeScript · Tailwind CSS v4 (`@tailwindcss/vite`) · shadcn/ui + lucide-react · React Router · Zustand (localStorage persist) · react-hook-form + zod · TanStack Table
 

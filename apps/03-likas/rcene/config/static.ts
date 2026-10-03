@@ -55,7 +55,7 @@ export function listFiles(dir: string): string[] {
   const out: string[] = [];
   const walk = (abs: string, rel: string) => {
     for (const entry of readdirSync(abs, { withFileTypes: true })) {
-      if (IGNORED.has(entry.name)) continue;
+      if (IGNORED.has(entry.name) || entry.name.endsWith(".part")) continue; // .part: an interrupted model download
       const childAbs = path.join(abs, entry.name);
       const childRel = rel ? `${rel}/${entry.name}` : entry.name;
       if (entry.isDirectory()) walk(childAbs, childRel);

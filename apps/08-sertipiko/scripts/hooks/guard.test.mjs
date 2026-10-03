@@ -124,7 +124,7 @@ describe.each(MODES)("always-rules: %s", (_label, key) => {
     const r = call(f, "Read", { file_path: "D:\\monica\\thesis.docx" });
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("D:\\monica");
-    for (const p of ["d:/Monica/data", "/d/monica", "/mnt/d/monica/x.csv", "D:\\MONICA", "/cygdrive/d/monica"]) {
+    for (const p of ["d:/Monica/data", "/d/monica", "/mnt/d/monica/x.csv", "D:\\MONICA", "/cygdrive/d/monica", "\\\\localhost\\d$\\monica\\x", "//PC/D$/monica"]) {
       expect(call(f, "Glob", { pattern: "**/*", path: p }).status, p).toBe(2);
     }
     expect(bash(f, "ls -la /d/monica && echo done").status).toBe(2);
@@ -137,6 +137,18 @@ describe.each(MODES)("always-rules: %s", (_label, key) => {
     expect(r.stderr).toContain("C:\\lgu_portal");
     expect(call(f, "Read", { file_path: "D:\\lgu_portal - GIS\\Hazard\\flood.kml" }).status).toBe(0);
     expect(bash(f, 'ls "/d/lgu_portal - GIS" && mapshaper "D:\\lgu_portal - GIS\\x.shp" -o out.geojson').status).toBe(0);
+  });
+
+  it("blocks forbidden folders reached through ./, ../, the cwd or an earlier cd", () => {
+    const f = fx[key];
+    expect(call(f, "Read", { file_path: "D:/./monica/x" }).status).toBe(2);
+    expect(bash(f, 'cat "D:/lgu_portal - GIS/../monica/notes.txt"').status).toBe(2);
+    expect(bash(f, "cd /d/ && ls monica").status).toBe(2);
+    expect(call(f, "PowerShell", { command: "Set-Location D:\\; Get-ChildItem monica" }).status).toBe(2);
+    expect(bash(f, "ls monica", "D:\\").status).toBe(2);
+    expect(call(f, "Glob", { pattern: "monica/**", path: "D:\\" }).status).toBe(2);
+    expect(bash(f, 'cd "/d/lgu_portal - GIS" && ls Hazard').status).toBe(0);
+    expect(bash(f, "ls monica").status).toBe(0);
   });
 
   it("blocks forbidden paths even when the input is not valid JSON", () => {
@@ -161,6 +173,10 @@ describe.each(MODES)("always-rules: %s", (_label, key) => {
     expect(call(f, "Read", { file_path: path.join(f.app, ".env.example") }).status).toBe(0);
     expect(write(f, path.join(f.app, ".env.example")).status).toBe(0);
     expect(call(f, "Grep", { pattern: "import\\.meta\\.env", path: "src" }).status).toBe(0);
+    // A commit message only mentions the name.
+    expect(bash(f, 'git commit -m "chore: ignore .env files"').status).toBe(0);
+    expect(bash(f, "git commit -am 'docs: .env.local is never committed'").status).toBe(0);
+    expect(bash(f, 'git commit -m "x" && cat .env').status).toBe(2);
   });
 
   it("allows edits inside the app, relative or absolute", () => {
@@ -213,6 +229,7 @@ describe("standalone (free mode)", () => {
     expect(write(f, path.join(f.app, "data", "files", "boundary.geojson")).status).toBe(0);
     expect(write(f, path.join(f.app, "docs", "brief.md")).status).toBe(0);
     expect(write(f, path.join(f.app, "scripts", "hooks", "guard.mjs")).status).toBe(0);
+    expect(write(f, path.join(os.homedir(), ".claude", "settings.json")).status).toBe(0);
   });
 });
 
@@ -261,6 +278,9 @@ describe("project branch (proj/01-x in a monorepo)", () => {
   it("protects its own guard and settings", () => {
     expect(write(p(), path.join(p().app, "scripts", "hooks", "guard.mjs")).status).toBe(2);
     expect(write(p(), path.join(p().app, ".claude", "settings.json")).status).toBe(2);
+    expect(write(p(), path.join(p().app, ".claude", "settings.local.json")).status).toBe(2);
+    expect(write(p(), path.join(os.homedir(), ".claude", "settings.json")).status).toBe(2);
+    expect(write(p(), path.join(os.homedir(), ".claude", "settings.local.json")).status).toBe(2);
     expect(write(p(), path.join(p().app, "scripts", "seed.mjs")).status).toBe(0);
   });
 
@@ -289,6 +309,14 @@ describe("project branch (proj/01-x in a monorepo)", () => {
       "git branch -d -f proj/02-y",
       "git branch --delete --force proj/02-y",
       "git branch -m renamed",
+      // A trailing -- with no path still switches branches.
+      "git checkout main --",
+      "git checkout -b feat --",
+      "git checkout --detach --",
+      "git checkout -b feat -- src/App.tsx",
+      "git pull origin main",
+      "git pull --rebase",
+      "git am fix.patch",
     ]) {
       expect(bash(p(), command).status, command).toBe(2);
     }
@@ -303,6 +331,8 @@ describe("project branch (proj/01-x in a monorepo)", () => {
       "git merge-base main HEAD",
       "git restore src/App.tsx",
       "git checkout -- src/App.tsx",
+      "git checkout HEAD -- src/App.tsx",
+      "git checkout main -- src/App.tsx",
       "git switch proj/01-x",
     ]) {
       expect(bash(p(), command).status, command).toBe(0);
@@ -335,6 +365,9 @@ describe("project branch (proj/01-x in a monorepo)", () => {
       ["pnpm --filter @rcene/ui add lodash", p().root],
       ["pnpm add lodash", p().root],
       ["cd ../.. && pnpm add lodash", p().app],
+      ["(cd ../.. && pnpm add lodash)", p().app],
+      ["{ cd ../..; pnpm add lodash; }", p().app],
+      ["cd ~ && pnpm add lodash", p().app],
       ["pnpm add lodash --filter=@rcene/ui", p().app],
       ["pnpm add lodash -C ../../packages/ui", p().app],
       ["pnpm add lodash --dir=../../packages/ui", p().app],

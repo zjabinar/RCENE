@@ -16,8 +16,9 @@
  *
  * Rules:
  *   always    no path or command may touch D:\monica or C:\lgu_portal (all spellings;
- *             D:\lgu_portal - GIS is allowed). Plain string checks, evaluated first,
- *             and the only rule that fails closed.
+ *             D:\lgu_portal - GIS is allowed). ./ and ../ are collapsed and relative paths
+ *             resolved against the cwd and any earlier cd. Evaluated first, and the
+ *             only rule that fails closed.
  *   always    no reading or editing credential files (.env, .env.* except .env.example,
  *             *service-account*.json, gemini_api_key.txt, *.pem).
  *   always    Edit/Write/MultiEdit/NotebookEdit only inside the app root, ~/.claude,
@@ -25,8 +26,10 @@
  *             repository that contains the app); never under node_modules/ or dist/.
  *   project   edits only while the checkout is on project.json "branch"; no edits to
  *             data/**, docs/brief.md (synced from the repo), scripts/hooks/** or
- *             .claude/settings.json (this guard and its wiring).
- *   project   no git push, merge, rebase, cherry-pick, worktree, reset --hard,
+ *             .claude/settings{,.local}.json (this guard and its wiring).
+ *   project + monorepo
+ *             no edits to ~/.claude/settings{,.local}.json (they can disable hooks).
+ *   project   no git push, pull, merge, rebase, cherry-pick, am, worktree, reset --hard,
  *             branch delete/rename/copy/force, or checkout/switch off the branch.
  *   project + monorepo
  *             dependency changes only for this app: pnpm add/remove inside the app
@@ -59,17 +62,18 @@ function flatten(text) {
   return String(text).toLowerCase().replace(/\\/g, "/").replace(/\/{2,}/g, "/");
 }
 
-// A drive prefix written any common way: "d:", "/d", "/mnt/d", "/cygdrive/d".
+// A drive prefix written any common way: "d:", "/d", "/mnt/d", "/cygdrive/d", or the
+// Windows admin share ("\\host\d$\...").
 // The folder name must end at a separator, quote, space or end of string, so
 // "D:\monica" and "D:\monica - copy" are blocked but "D:\monica2" is not.
 const FORBIDDEN = [
   {
-    re: /(?:^|[^a-z0-9])(?:d:|\/mnt\/d|\/cygdrive\/d|\/d)\/monica(?=$|[^a-z0-9_])/,
+    re: /(?:^|[^a-z0-9])(?:d:|d\$|\/mnt\/d|\/cygdrive\/d|\/d)\/monica(?=$|[^a-z0-9_])/,
     label: "D:\\monica",
     why: "D:\\monica is another person's dissertation project and is off limits. Do not read, list or copy anything from it.",
   },
   {
-    re: /(?:^|[^a-z0-9])(?:c:|\/mnt\/c|\/cygdrive\/c|\/c)\/lgu_portal(?=$|[^a-z0-9_])/,
+    re: /(?:^|[^a-z0-9])(?:c:|c\$|\/mnt\/c|\/cygdrive\/c|\/c)\/lgu_portal(?=$|[^a-z0-9_])/,
     label: "C:\\lgu_portal",
     why: "C:\\lgu_portal holds credential files and is off limits. The GIS archive you may use is D:\\lgu_portal - GIS.",
   },
@@ -81,6 +85,58 @@ const PATH_FIELDS = ["file_path", "path", "notebook_path", "pattern", "glob", "c
 function inputStrings(toolInput) {
   if (!toolInput || typeof toolInput !== "object") return [];
   return PATH_FIELDS.filter((key) => typeof toolInput[key] === "string").map((key) => toolInput[key]);
+}
+
+/** Leading subshell/group openers and trailing closers: "(cd" -> "cd", "zod)" -> "zod". */
+function bare(token) {
+  return String(token).replace(/^[({]+/, "").replace(/[)}]+$/, "");
+}
+
+function isCd(token) {
+  return ["cd", "set-location", "sl", "chdir", "pushd", "push-location"].some((name) => isProgram(token, name));
+}
+
+/**
+ * Every spelling of the locations an input names, for the forbidden-location rule: the raw
+ * fields; each path with ./ and ../ collapsed; each path resolved against the working
+ * directory (in shell commands, the directory after any earlier cd / Set-Location); and the
+ * working directory itself. If this throws, the raw fields are still checked.
+ */
+function forbiddenCandidates(input) {
+  const toolInput = input.tool_input && typeof input.tool_input === "object" ? input.tool_input : {};
+  const out = inputStrings(toolInput);
+  try {
+    const cwd = typeof input.cwd === "string" && input.cwd ? input.cwd : null;
+    if (cwd) out.push(cwd);
+    const variants = (token, base) => {
+      const t = String(token);
+      out.push(path.posix.normalize(flatten(t)));
+      if (base && t && !t.startsWith("-")) out.push(resolveDir(base, t));
+    };
+    for (const key of ["file_path", "path", "notebook_path", "pattern", "glob"]) {
+      if (typeof toolInput[key] !== "string") continue;
+      variants(toolInput[key], cwd);
+      if ((key === "pattern" || key === "glob") && typeof toolInput.path === "string") {
+        variants(toolInput[key], cwd ? resolveDir(cwd, toolInput.path) : toolInput.path);
+      }
+    }
+    if (typeof toolInput.command === "string") {
+      let dir = cwd;
+      for (const segment of segments(toolInput.command)) {
+        const tokens = tokenize(segment).map(bare).filter(Boolean);
+        if (tokens.length === 0) continue;
+        if (isCd(tokens[0]) && tokens[1]) {
+          if (dir) dir = resolveDir(dir, tokens[1]);
+          variants(tokens[1], dir);
+          continue;
+        }
+        for (const t of tokens) variants(t, dir);
+      }
+    }
+  } catch {
+    // the raw fields above are still checked
+  }
+  return out;
 }
 
 function forbiddenReason(strings) {
@@ -121,6 +177,28 @@ function words(command) {
     .filter(Boolean);
 }
 
+/**
+ * The words of a shell command that may name files. A git commit/tag message (-m "...",
+ * --message=...) only mentions names, so "chore: ignore .env files" is not a file access.
+ */
+function shellFileWords(command) {
+  const out = [];
+  for (const segment of segments(command)) {
+    const tokens = tokenize(segment);
+    const isGit = tokens.some((t) => isProgram(bare(t), "git"));
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (isGit && (t === "--message" || /^-[a-zA-Z]*m$/.test(t))) {
+        i++; // skip the message
+        continue;
+      }
+      if (isGit && t.startsWith("--message=")) continue;
+      out.push(...words(t));
+    }
+  }
+  return out;
+}
+
 function credentialReason(toolName, toolInput) {
   const candidates = [];
   for (const key of ["file_path", "path", "notebook_path"]) {
@@ -130,7 +208,7 @@ function credentialReason(toolName, toolInput) {
   if (toolName === "Glob" && typeof toolInput.pattern === "string") candidates.push(baseName(toolInput.pattern));
   if (typeof toolInput.glob === "string") candidates.push(baseName(toolInput.glob));
   if ((toolName === "Bash" || toolName === "PowerShell") && typeof toolInput.command === "string") {
-    for (const w of words(toolInput.command)) candidates.push(baseName(w));
+    for (const w of shellFileWords(toolInput.command)) candidates.push(baseName(w));
   }
   const hit = candidates.find(isCredentialName);
   if (!hit) return null;
@@ -269,6 +347,12 @@ function appContext(input) {
 const EDIT_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
 const SHELL_TOOLS = new Set(["Bash", "PowerShell"]);
 
+/** Claude Code settings in ~/.claude: they can switch hooks off (disableAllHooks). */
+function isUserSettings(abs) {
+  const rel = within(normalizePath(path.join(os.homedir(), ".claude")), abs);
+  return rel !== null && /^settings(\.local)?\.json$/i.test(rel);
+}
+
 /** Places outside the app a session may still write: Claude's own files and its scratchpad. */
 function personalAllowed(abs, ctx) {
   const roots = [normalizePath(path.join(os.homedir(), ".claude"))];
@@ -283,6 +367,9 @@ function editReason(toolInput, ctx) {
   const rel = within(ctx.appRoot, abs);
 
   if (rel === null) {
+    if (ctx.mode !== "free" && isUserSettings(abs)) {
+      return `Blocked: ${raw} is Claude Code's own configuration (it can turn this guard off). A project session never edits it; the human does.`;
+    }
     if (personalAllowed(abs, ctx)) return null;
     if (ctx.top && within(ctx.top, abs) !== null) {
       const repoRel = within(ctx.top, abs);
@@ -320,7 +407,7 @@ function editReason(toolInput, ctx) {
       "Write the change you need (a new layer, a field, a brief correction) in NOTES.md, and work around it locally meanwhile."
     );
   }
-  if (relLower.startsWith("scripts/hooks/") || relLower === ".claude/settings.json") {
+  if (relLower.startsWith("scripts/hooks/") || relLower === ".claude/settings.json" || relLower === ".claude/settings.local.json") {
     return `Blocked: ${rel} is this session's guard or its wiring and is read-only in a project session. Write the change you need in NOTES.md.`;
   }
   return null;
@@ -352,10 +439,17 @@ function isProgram(token, name) {
   return b === name;
 }
 
-/** Resolves a directory named in a command against the current one (Git Bash /c/... too). */
+function expandHome(p) {
+  const s = String(p);
+  return s === "~" || s.startsWith("~/") || s.startsWith("~\\") ? path.join(os.homedir(), s.slice(1)) : s;
+}
+
+/** Resolves a directory named in a command against the current one (Git Bash /c/..., drive letters and ~ too). */
 function resolveDir(cwd, dir) {
-  const target = normalizePath(dir);
-  return isAbsoluteAny(target) ? target : normalizePath(path.resolve(cwd, dir));
+  const target = normalizePath(expandHome(dir));
+  if (isAbsoluteAny(target)) return target;
+  const base = normalizePath(cwd);
+  return isAbsoluteAny(base) ? normalizePath(`${base}/${target}`) : normalizePath(path.resolve(cwd, dir));
 }
 
 // --- git (project mode) ----------------------------------------------------
@@ -378,9 +472,11 @@ function gitReason(sub, args, ctx) {
   const plain = args.filter((a) => !a.startsWith("-"));
   switch (sub) {
     case "push":
+    case "pull":
     case "merge":
     case "rebase":
     case "cherry-pick":
+    case "am":
       return `Blocked: git ${sub} is not allowed in a project session. ${fix}`;
     case "worktree":
       return `Blocked: worktrees are managed by the orchestrator, not by project sessions. ${fix}`;
@@ -402,10 +498,13 @@ function gitReason(sub, args, ctx) {
       return null;
     case "checkout":
     case "switch": {
-      // Allowed: restoring files (`git checkout -- <paths>`) or naming the own branch.
-      // Anything else (a sha, HEAD~0, another branch, -b/--detach) would move HEAD off
-      // the project branch, and a detached HEAD turns these project rules off.
-      const restoresFiles = sub === "checkout" && args.includes("--");
+      // Allowed: restoring files (`git checkout [<tree>] -- <paths>`, at least one path) or
+      // naming the own branch. Anything else (a sha, HEAD~0, another branch, -b/--detach,
+      // `git checkout main --`) would move HEAD off the project branch, and a detached HEAD
+      // turns these project rules off.
+      const dashes = args.indexOf("--");
+      const movesHead = args.some((a) => /^-[a-zA-Z]*[bB]/.test(a) || ["--orphan", "--detach"].includes(a.split("=")[0]));
+      const restoresFiles = sub === "checkout" && dashes !== -1 && dashes < args.length - 1 && !movesHead;
       const staysOnOwn = plain.length === 1 && plain[0] === own && !args.some((a) => a.startsWith("-"));
       if (!restoresFiles && !staysOnOwn) {
         return `Blocked: this session must stay on ${own}. Use git restore <file> to discard changes; switching or creating branches is the orchestrator's job.`;
@@ -499,7 +598,7 @@ function pnpmReason(parsed, ctx, cwd) {
   const name = ctx.pkgName ?? ctx.slug;
   return (
     `Blocked: pnpm ${sub} here would change dependencies outside this app. Run pnpm add <pkg> inside the app folder ` +
-    `(or pnpm --filter ${name} add <pkg>), never with -w or -r. Use catalog versions and justify the dependency in NOTES.md; ` +
+    `(or pnpm --filter ${name} add <pkg>), never with -w or -r. Pin an exact version (never ^ or ~, no new major) and justify the dependency in NOTES.md; ` +
     "requests for root or other packages go in NOTES.md too."
   );
 }
@@ -594,10 +693,11 @@ function commandReason(command, ctx) {
   if (!gitRules && !depRules) return null;
   let cwd = ctx.cwd;
   for (const segment of segments(command)) {
-    const tokens = tokenize(segment);
+    const tokens = tokenize(segment).map(bare).filter(Boolean);
     if (tokens.length === 0) continue;
-    // Track `cd dir` / `Set-Location dir` so `cd ../.. && pnpm add y` resolves correctly.
-    if ((isProgram(tokens[0], "cd") || isProgram(tokens[0], "set-location") || isProgram(tokens[0], "pushd")) && tokens[1]) {
+    // Track `cd dir` / `Set-Location dir` (also in a subshell, "(cd x && ...)") so
+    // `cd ../.. && pnpm add y` resolves correctly. Conservative: a subshell's cd is kept.
+    if (isCd(tokens[0]) && tokens[1]) {
       cwd = resolveDir(cwd, tokens[1]);
       continue;
     }
@@ -648,7 +748,7 @@ async function main() {
   }
 
   // Forbidden locations first, failing closed: if the input can't be parsed, scan the raw text.
-  const strings = input ? inputStrings(input.tool_input) : [raw.replace(/\\\\/g, "\\")];
+  const strings = input && typeof input === "object" ? forbiddenCandidates(input) : [raw.replace(/\\\\/g, "\\")];
   const forbidden = forbiddenReason(strings);
   if (forbidden) return forbidden;
   if (!input || typeof input !== "object") return null;

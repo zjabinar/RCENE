@@ -44,6 +44,16 @@ describe("csvField", () => {
     expect(csvField(new Date("nope"))).toBe("");
     expect(csvField({ a: 1, b: "x" })).toBe('"{""a"":1,""b"":""x""}"');
   });
+
+  it("neutralises text that a spreadsheet would run as a formula", () => {
+    expect(csvField('=HYPERLINK("http://x","Open")')).toBe(`"'=HYPERLINK(""http://x"",""Open"")"`);
+    expect(csvField("+63 dial")).toBe("'+63 dial");
+    expect(csvField("-flood")).toBe("'-flood");
+    expect(csvField("@SUM(A1)")).toBe("'@SUM(A1)");
+    expect(csvField("\tcmd")).toBe("'\tcmd");
+    expect(csvField(-3)).toBe("-3");
+    expect(csvField("=1+1", { formulaGuard: false })).toBe("=1+1");
+  });
 });
 
 describe("toCsv", () => {

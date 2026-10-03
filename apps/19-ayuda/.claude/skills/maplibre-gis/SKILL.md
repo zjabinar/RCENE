@@ -76,7 +76,7 @@ The template's `src/pages/Home.tsx` (every app starts with it) is this screen, a
 
 A hazard answer is exactly one of `inZone {level}`, `notInZone` or `outsideCoverage` (`HazardStatus` in `@rcene/data`). `lookupHazards` is the only thing that produces it.
 
-- **Never display "safe"**, in any language (`FORBIDDEN_ANSWER_WORDS` lists them; a test enforces it on `status.*` strings). "Not in a mapped risk zone" means the risk maps don't cover that hazard there. It is not a safety guarantee, and it is never colored green.
+- **Never display "safe"**, in any language (`FORBIDDEN_ANSWER_WORDS` lists them; tests enforce it on the shared `status.*` strings and on this app's `status.*`, `level.*`, `answer.*` and `result.*` keys in `src/i18n/strings.test.ts`, so keep hazard-answer strings under those prefixes). "Not in a mapped risk zone" means the risk maps don't cover that hazard there. It is not a safety guarantee, and it is never colored green.
 - **Outside the boundary is `outsideCoverage`**, not `notInZone`. There is no data there.
 - **A missing layer is not an answer.** `useZones` lists missing hazards in `missing`; show "not available", never a guess.
 - **Distances are straight-line** (`nearest()` uses great-circle km). Always render them with `t("distance.straightLine", { km })`. Never say "walk", "minutes" or "route" unless you actually computed a route.

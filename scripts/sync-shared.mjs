@@ -58,6 +58,9 @@ import {
   isStarted,
   json,
   managedGroup,
+  managedFromKeys,
+  packageManagedHash,
+  packageManagedKeys,
   packageManagedSubset,
   readJson,
   readManifest,
@@ -108,8 +111,9 @@ function fullDiff(appFile, newContent, rel) {
 }
 
 /** Summary of how the managed package.json fields differ: "dependencies: ~react, +x; scripts: -smoke". */
-function packageDiff(curPkg, managed) {
+function packageDiff(curPkg, managed, dropped) {
   const parts = [];
+  if (droppedCount(dropped)) parts.push(`no longer managed: ${[...dropped.scripts.map((k) => `scripts.${k}`), ...dropped.packages].join(", ")}`);
   const cur = packageManagedSubset(curPkg, managed);
   for (const key of Object.keys(managed)) {
     const a = cur[key] ?? {};
@@ -124,12 +128,39 @@ function packageDiff(curPkg, managed) {
   return parts.join("; ") || "differs";
 }
 
-function writeManaged(dir, rel, want, row, root) {
+/**
+ * package.json against its baseline: the hash of the app's subset over the names the
+ * baseline covered (.sync.json packageKeys; older state files: today's names), and the
+ * formerly managed scripts/packages still in the app that the template or stack.json dropped.
+ */
+function previousPackage(dir, state, want) {
+  const file = path.join(dir, "package.json");
+  const none = { scripts: [], packages: [] };
+  if (!existsSync(file)) return { hash: null, dropped: none };
+  let pkg;
+  try {
+    pkg = readJson(file);
+  } catch {
+    return { hash: currentManagedHash(dir, "package.json", want), dropped: none };
+  }
+  const keys = state.packageKeys ?? packageManagedKeys(want.managed);
+  const now = packageManagedKeys(want.managed);
+  const has = (obj, k) => Object.prototype.hasOwnProperty.call(obj ?? {}, k);
+  const dropped = {
+    scripts: keys.scripts.filter((k) => !now.scripts.includes(k) && has(pkg.scripts, k)),
+    packages: keys.packages.filter((k) => !now.packages.includes(k) && (has(pkg.dependencies, k) || has(pkg.devDependencies, k))),
+  };
+  return { hash: packageManagedHash(pkg, managedFromKeys(keys)), dropped };
+}
+
+const droppedCount = (d) => (d ? d.scripts.length + d.packages.length : 0);
+
+function writeManaged(dir, rel, want, row, root, dropped) {
   const abs = path.join(dir, ...rel.split("/"));
   mkdirSync(path.dirname(abs), { recursive: true });
   if (want.packageJson) {
     const cur = existsSync(abs) ? readJson(abs) : appPackageJson(row, root);
-    writeFileSync(abs, json(withManagedFields(cur, want.managed)));
+    writeFileSync(abs, json(withManagedFields(cur, want.managed, dropped)));
   } else {
     writeFileSync(abs, want.content);
   }
@@ -141,30 +172,36 @@ export function syncApp(root, row, { only = new Set(GROUPS), dryRun = false, for
   const state = readSyncState(dir);
   const desired = desiredManagedFiles(root, row);
   const next = { ...state.files };
+  let nextKeys = state.packageKeys;
   const res = { slug: row.slug, updated: [], created: [], deleted: [], conflicts: [], unchanged: 0, forced: [] };
 
   for (const [rel, want] of desired) {
     if (!only.has(want.group)) continue;
+    const prev = want.packageJson ? previousPackage(dir, state, want) : null;
     const cur = currentManagedHash(dir, rel, want);
     const base = state.files[rel];
-    if (cur === want.hash) {
-      res.unchanged++;
+    const accept = () => {
       next[rel] = want.hash;
+      if (want.packageJson) nextKeys = packageManagedKeys(want.managed);
+    };
+    if (cur === want.hash && !droppedCount(prev?.dropped)) {
+      res.unchanged++;
+      accept();
       continue;
     }
-    if (cur === null || cur === base) {
+    if (cur === null || (prev ? prev.hash : cur) === base) {
       (cur === null ? res.created : res.updated).push(rel);
-      if (!dryRun) writeManaged(dir, rel, want, row, root);
-      next[rel] = want.hash;
+      if (!dryRun) writeManaged(dir, rel, want, row, root, prev?.dropped);
+      accept();
       continue;
     }
     const abs = path.join(dir, ...rel.split("/"));
-    const detail = want.packageJson ? packageDiff(readJson(abs), want.managed) : diffStat(abs, want.content, rel);
+    const detail = want.packageJson ? packageDiff(readJson(abs), want.managed, prev?.dropped) : diffStat(abs, want.content, rel);
     res.conflicts.push({ rel, detail, want, abs, kind: base ? "changed in the app" : "differs (no baseline)" });
     if (force) {
       res.forced.push(rel);
-      if (!dryRun) writeManaged(dir, rel, want, row, root);
-      next[rel] = want.hash;
+      if (!dryRun) writeManaged(dir, rel, want, row, root, prev?.dropped);
+      accept();
     }
   }
 
@@ -196,7 +233,7 @@ export function syncApp(root, row, { only = new Set(GROUPS), dryRun = false, for
   }
 
   if (!dryRun) {
-    const text = syncStateJson(next);
+    const text = syncStateJson(next, nextKeys);
     const file = path.join(dir, SYNC_FILE);
     if (!existsSync(file) || readFileSync(file, "utf8") !== text) writeFileSync(file, text);
   }
@@ -210,12 +247,13 @@ export function driftReport(root, row) {
   const desired = desiredManagedFiles(root, row);
   const rows = [];
   for (const [rel, want] of desired) {
+    const prev = want.packageJson ? previousPackage(dir, state, want) : null;
     const cur = currentManagedHash(dir, rel, want);
-    if (cur === want.hash) continue;
+    if (cur === want.hash && !droppedCount(prev?.dropped)) continue;
     const base = state.files[rel];
     let status;
     if (cur === null) status = "missing";
-    else if (base && cur === base) status = "behind (template moved; app unchanged: sync updates it)";
+    else if (base && (prev ? prev.hash : cur) === base) status = "behind (template moved; app unchanged: sync updates it)";
     else if (base) status = "modified (changed in the app: conflict)";
     else status = "differs (no baseline)";
     rows.push({ rel, status });

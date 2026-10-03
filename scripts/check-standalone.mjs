@@ -238,9 +238,13 @@ function resolvesToFile(abs) {
   return RESOLVE_EXT.some((ext) => existsSync(abs + ext));
 }
 
-/** Relative specifiers in JS/TS (comments ignored): [{ spec, index, kind }]. */
+/**
+ * Relative and absolute specifiers in JS/TS (comments ignored): [{ spec, index, kind }].
+ * Kinds: import (must resolve to a file), url (new URL(…, import.meta.url)), glob (import.meta.glob).
+ */
 export function jsSpecifiers(code) {
   const out = [];
+  const keep = (spec) => spec.startsWith(".") || spec.startsWith("/") || /^[A-Za-z]:[\\/]/.test(spec);
   const patterns = [
     { re: /\bfrom\s*(["'])([^"'\n]+)\1/g, kind: "import" },
     { re: /\bimport\s*(["'])([^"'\n]+)\1/g, kind: "import" },
@@ -251,10 +255,35 @@ export function jsSpecifiers(code) {
   ];
   for (const { re, kind } of patterns) {
     for (const m of code.matchAll(re)) {
-      if (m[2].startsWith(".")) out.push({ spec: m[2], index: m.index, kind });
+      if (keep(m[2]) && !m[2].startsWith("//")) out.push({ spec: m[2], index: m.index, kind });
+    }
+  }
+  // import.meta.glob("…") and import.meta.glob(["…", "!…"])
+  for (const m of code.matchAll(/\bimport\.meta\.glob\s*(?:<[^>]*>)?\s*\(\s*(\[[^\]]*\]|(["'`])[^"'`\n]+\2)/g)) {
+    for (const q of m[1].matchAll(/(["'`])([^"'`\n]+)\1/g)) {
+      const spec = q[2].replace(/^!/, "");
+      if (keep(spec)) out.push({ spec, index: m.index, kind: "glob" });
     }
   }
   return out;
+}
+
+/** Node-side code (build config and scripts, not tests): file names an app joins onto its own folder. */
+const NODE_SIDE = /^(?:vite\.config\.[cm]?[jt]s|rcene\/config\/.+\.[cm]?[jt]s|scripts\/.+\.[cm]?[jt]s)$/;
+
+/**
+ * In Node-side code, any string literal starting with "../" must stay inside the app whether it is
+ * resolved from the file's folder or from the app root (path.join(dir, "../../data") style).
+ */
+function checkNodeStrings(dir, file, code, fail) {
+  if (!NODE_SIDE.test(file) || /\.test\.[cm]?[jt]s$/.test(file)) return;
+  for (const m of code.matchAll(/(["'`])(\.\.[\\/][^"'`\n]*)\1/g)) {
+    const spec = m[2];
+    if (spec.includes("${")) continue;
+    const fromFile = path.resolve(path.dirname(path.join(dir, file)), globBase(spec));
+    const fromRoot = path.resolve(dir, globBase(spec));
+    if (!inside(dir, fromFile) || !inside(dir, fromRoot)) fail(`${file}:${lineOf(code, m.index)}`, `path "${spec}" can leave the app folder`);
+  }
 }
 
 function checkJs(dir, file, fail) {
@@ -262,12 +291,19 @@ function checkJs(dir, file, fail) {
   const code = stripJsComments(text);
   for (const { spec, index, kind } of jsSpecifiers(code)) {
     if (spec.includes("${")) continue;
-    const clean = spec.split("?")[0];
-    const abs = path.resolve(path.dirname(path.join(dir, file)), clean);
+    const clean = kind === "glob" ? globBase(spec.split("?")[0]) : spec.split("?")[0];
     const where = `${file}:${lineOf(code, index)}`;
+    if (!clean.startsWith(".")) {
+      // Vite reads "/x" from the app root; a drive letter, or an existing file-system path outside the app, is absolute.
+      const fsAbsolute = /^[A-Za-z]:[\\/]/.test(clean) || (path.isAbsolute(clean) && existsSync(clean) && !inside(dir, clean));
+      if (fsAbsolute) fail(where, `"${spec}" is an absolute path outside the app folder`);
+      continue;
+    }
+    const abs = path.resolve(path.dirname(path.join(dir, file)), clean);
     if (!inside(dir, abs)) fail(where, `"${spec}" points outside the app folder`);
     else if (kind === "import" && !resolvesToFile(abs)) fail(where, `"${spec}" does not resolve to a file`);
   }
+  checkNodeStrings(dir, file, code, fail);
 }
 
 function checkCss(dir, file, fail) {

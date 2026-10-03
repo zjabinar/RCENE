@@ -26,8 +26,10 @@
     },
     "deck": {
       "dependencies": [
-        "deck.gl",
-        "@deck.gl/mapbox"
+        "@deck.gl/core",
+        "@deck.gl/layers",
+        "@deck.gl/aggregation-layers",
+        "@deck.gl/maplibre"
       ]
     },
     "pwa": {

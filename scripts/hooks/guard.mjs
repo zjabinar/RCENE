@@ -13,16 +13,16 @@
  * Rules, in order:
  *   1. Always: no path or command may touch D:\monica (another person's
  *      project) or C:\lgu_portal (holds credentials). D:\lgu_portal - GIS is
- *      allowed: it is the GIS archive the data session converts. This rule is
- *      plain string matching and runs first; it is the only rule that fails
- *      closed.
+ *      allowed: it is the GIS archive the data session converts. ./ and ../ are
+ *      collapsed and relative paths resolved against the cwd and any earlier cd.
+ *      This rule runs first; it is the only rule that fails closed.
  *   2. Always: no reading or editing credential files (.env, .env.* except
  *      .env.example, *service-account*.json, gemini_api_key.txt, *.pem).
  *   3. Only on proj/<slug> branches (one worktree per project):
  *      - Edit/Write/MultiEdit/NotebookEdit targets must match the project's
  *        writeScope globs from docs/projects/projects.json (00-data: data/**
  *        and scripts/data/**; an app row: apps/<slug>/**).
- *      - Bash/PowerShell may not push, merge, rebase, reset --hard, manage
+ *      - Bash/PowerShell may not push, pull, merge, rebase, am, reset --hard, manage
  *        worktrees, leave or delete branches, or cherry-pick.
  *      - Dependency changes only for the project's own app:
  *        `pnpm --filter @rcene/<slug> add <pkg>` is fine, `pnpm add -w` is not;
@@ -49,17 +49,18 @@ function flatten(text) {
   return String(text).toLowerCase().replace(/\\/g, "/").replace(/\/{2,}/g, "/");
 }
 
-// A drive prefix written any common way: "d:", "/d", "/mnt/d", "/cygdrive/d".
+// A drive prefix written any common way: "d:", "/d", "/mnt/d", "/cygdrive/d", or the
+// Windows admin share ("\\host\d$\...").
 // The folder name must end at a separator, quote, space or end of string, so
 // "D:\monica" and "D:\monica - copy" are blocked but "D:\monica2" is not.
 const FORBIDDEN = [
   {
-    re: /(?:^|[^a-z0-9])(?:d:|\/mnt\/d|\/cygdrive\/d|\/d)\/monica(?=$|[^a-z0-9_])/,
+    re: /(?:^|[^a-z0-9])(?:d:|d\$|\/mnt\/d|\/cygdrive\/d|\/d)\/monica(?=$|[^a-z0-9_])/,
     label: "D:\\monica",
     why: "D:\\monica is another person's dissertation project and is off limits. Do not read, list or copy anything from it.",
   },
   {
-    re: /(?:^|[^a-z0-9])(?:c:|\/mnt\/c|\/cygdrive\/c|\/c)\/lgu_portal(?=$|[^a-z0-9_])/,
+    re: /(?:^|[^a-z0-9])(?:c:|c\$|\/mnt\/c|\/cygdrive\/c|\/c)\/lgu_portal(?=$|[^a-z0-9_])/,
     label: "C:\\lgu_portal",
     why: "C:\\lgu_portal holds credential files and is off limits. The GIS archive you may use is D:\\lgu_portal - GIS.",
   },
@@ -73,6 +74,68 @@ function inputStrings(toolInput) {
   const out = [];
   for (const key of PATH_FIELDS) {
     if (typeof toolInput[key] === "string") out.push(toolInput[key]);
+  }
+  return out;
+}
+
+/** Leading subshell/group openers and trailing closers: "(cd" -> "cd", "x)" -> "x". */
+function bare(token) {
+  return String(token).replace(/^[({]+/, "").replace(/[)}]+$/, "");
+}
+
+function isCd(token) {
+  return ["cd", "set-location", "sl", "chdir", "pushd", "push-location"].some((name) => isProgram(token, name));
+}
+
+/** A path named in a command, resolved against a directory (drive letters, Git Bash /c/... and ~ too). */
+function resolveAgainst(base, p) {
+  let s = String(p);
+  if (s === "~" || s.startsWith("~/") || s.startsWith("~\\")) s = path.join(os.homedir(), s.slice(1));
+  const target = normalizePath(s);
+  if (isAbsoluteAny(target)) return target;
+  const b = normalizePath(base);
+  return isAbsoluteAny(b) ? normalizePath(`${b}/${target}`) : normalizePath(path.resolve(base, s));
+}
+
+/**
+ * Every spelling of the locations an input names, for rule 1: the raw fields; each path with
+ * ./ and ../ collapsed; each path resolved against the working directory (in shell commands,
+ * the directory after any earlier cd / Set-Location); and the working directory itself.
+ * If this throws, the raw fields are still checked.
+ */
+function forbiddenCandidates(input) {
+  const toolInput = input.tool_input && typeof input.tool_input === "object" ? input.tool_input : {};
+  const out = inputStrings(toolInput);
+  try {
+    const cwd = typeof input.cwd === "string" && input.cwd ? input.cwd : null;
+    if (cwd) out.push(cwd);
+    const variants = (token, base) => {
+      const t = String(token);
+      out.push(path.posix.normalize(flatten(t)));
+      if (base && t && !t.startsWith("-")) out.push(resolveAgainst(base, t));
+    };
+    for (const key of ["file_path", "path", "notebook_path", "pattern", "glob"]) {
+      if (typeof toolInput[key] !== "string") continue;
+      variants(toolInput[key], cwd);
+      if ((key === "pattern" || key === "glob") && typeof toolInput.path === "string") {
+        variants(toolInput[key], cwd ? resolveAgainst(cwd, toolInput.path) : toolInput.path);
+      }
+    }
+    if (typeof toolInput.command === "string") {
+      let dir = cwd;
+      for (const segment of segments(toolInput.command)) {
+        const tokens = tokenize(segment).map(bare).filter(Boolean);
+        if (tokens.length === 0) continue;
+        if (isCd(tokens[0]) && tokens[1]) {
+          if (dir) dir = resolveAgainst(dir, tokens[1]);
+          variants(tokens[1], dir);
+          continue;
+        }
+        for (const t of tokens) variants(t, dir);
+      }
+    }
+  } catch {
+    // the raw fields above are still checked
   }
   return out;
 }
@@ -115,6 +178,28 @@ function words(command) {
     .filter(Boolean);
 }
 
+/**
+ * The words of a shell command that may name files. A git commit/tag message (-m "...",
+ * --message=...) only mentions names, so "chore: ignore .env files" is not a file access.
+ */
+function shellFileWords(command) {
+  const out = [];
+  for (const segment of segments(command)) {
+    const tokens = tokenize(segment);
+    const isGit = tokens.some((t) => isProgram(bare(t), "git"));
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (isGit && (t === "--message" || /^-[a-zA-Z]*m$/.test(t))) {
+        i++; // skip the message
+        continue;
+      }
+      if (isGit && t.startsWith("--message=")) continue;
+      out.push(...words(t));
+    }
+  }
+  return out;
+}
+
 function credentialReason(toolName, toolInput) {
   if (!toolInput || typeof toolInput !== "object") return null;
   const candidates = [];
@@ -125,7 +210,7 @@ function credentialReason(toolName, toolInput) {
   if (toolName === "Glob" && typeof toolInput.pattern === "string") candidates.push(baseName(toolInput.pattern));
   if (typeof toolInput.glob === "string") candidates.push(baseName(toolInput.glob));
   if ((toolName === "Bash" || toolName === "PowerShell") && typeof toolInput.command === "string") {
-    for (const w of words(toolInput.command)) candidates.push(baseName(w));
+    for (const w of shellFileWords(toolInput.command)) candidates.push(baseName(w));
   }
   const hit = candidates.find(isCredentialName);
   if (!hit) return null;
@@ -335,9 +420,11 @@ function gitReason(sub, args, row) {
   const plain = args.filter((a) => !a.startsWith("-"));
   switch (sub) {
     case "push":
+    case "pull":
     case "merge":
     case "rebase":
     case "cherry-pick":
+    case "am":
       return `Blocked: git ${sub} is not allowed in a project session. ${fix}`;
     case "worktree":
       return `Blocked: git worktree is managed by scripts/launch-worktrees.ps1, not by project sessions. ${fix}`;
@@ -359,10 +446,13 @@ function gitReason(sub, args, row) {
       return null;
     case "checkout":
     case "switch": {
-      // Allowed: restoring files (`git checkout -- <paths>`) or naming the own branch.
-      // Anything else (a sha, HEAD~0, another branch, -b/--detach) would move HEAD off
-      // the project branch, and a detached HEAD turns these project rules off.
-      const restoresFiles = sub === "checkout" && args.includes("--");
+      // Allowed: restoring files (`git checkout [<tree>] -- <paths>`, at least one path) or
+      // naming the own branch. Anything else (a sha, HEAD~0, another branch, -b/--detach,
+      // `git checkout main --`) would move HEAD off the project branch, and a detached HEAD
+      // turns these project rules off.
+      const dashes = args.indexOf("--");
+      const movesHead = args.some((a) => /^-[a-zA-Z]*[bB]/.test(a) || ["--orphan", "--detach"].includes(a.split("=")[0]));
+      const restoresFiles = sub === "checkout" && dashes !== -1 && dashes < args.length - 1 && !movesHead;
       const staysOnOwn = plain.length === 1 && plain[0] === own && !args.some((a) => a.startsWith("-"));
       if (!restoresFiles && !staysOnOwn) {
         return `Blocked: this session must stay on ${own}. Use git restore <file> to discard changes; switching or creating branches is the orchestrator's job.`;
@@ -493,12 +583,12 @@ function readPackageName(root, row) {
 function commandReason(command, ctx) {
   let cwd = ctx.cwd;
   for (const segment of segments(command)) {
-    const tokens = tokenize(segment);
+    const tokens = tokenize(segment).map(bare).filter(Boolean);
     if (tokens.length === 0) continue;
-    // Track `cd dir` / `Set-Location dir` so `cd apps/x && pnpm add y` resolves correctly.
-    if ((isProgram(tokens[0], "cd") || isProgram(tokens[0], "set-location") || isProgram(tokens[0], "pushd")) && tokens[1]) {
-      const target = normalizePath(tokens[1]); // also maps Git Bash /c/... to c:/... on Windows
-      cwd = isAbsoluteAny(target) ? target : path.resolve(cwd, tokens[1]);
+    // Track `cd dir` / `Set-Location dir` (also "(cd x && ...)") so `cd apps/x && pnpm add y`
+    // resolves correctly. Conservative: a subshell's cd is kept.
+    if (isCd(tokens[0]) && tokens[1]) {
+      cwd = resolveAgainst(cwd, tokens[1]);
       continue;
     }
     for (let i = 0; i < tokens.length; i++) {
@@ -559,7 +649,7 @@ async function main() {
   }
 
   // Rule 1 first, failing closed: if the input can't be parsed, scan the raw text.
-  const strings = input ? inputStrings(input.tool_input) : [raw.replace(/\\\\/g, "\\")];
+  const strings = input && typeof input === "object" ? forbiddenCandidates(input) : [raw.replace(/\\\\/g, "\\")];
   const forbidden = forbiddenReason(strings);
   if (forbidden) return forbidden;
   if (!input) return null;

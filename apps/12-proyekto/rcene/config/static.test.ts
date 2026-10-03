@@ -18,11 +18,12 @@ function tempDirs() {
   writeFileSync(path.join(fixtures, "barangays.geojson"), "fixture");
   writeFileSync(path.join(fixtures, "derived", "barangay-hazard.json"), "fixture");
   writeFileSync(path.join(fixtures, "README.md"), "ignored");
+  writeFileSync(path.join(fixtures, "model.onnx.part"), "interrupted download");
   return { real, fixtures };
 }
 
 describe("rceneStatic mounts", () => {
-  it("lists files recursively, skipping .gitkeep and READMEs", () => {
+  it("lists files recursively, skipping .gitkeep, READMEs and .part downloads", () => {
     const { fixtures } = tempDirs();
     expect(listFiles(fixtures)).toEqual(["barangays.geojson", "boundary.geojson", "derived/barangay-hazard.json"]);
   });

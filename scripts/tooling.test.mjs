@@ -261,10 +261,12 @@ describe("new-app", () => {
   });
 
   it("refuses to overwrite a started app without --force", () => {
-    write("apps/02-two/STATUS.md", "Phase: features\n");
+    // The template's STATUS.md comment mentions "Not started"; only a line that is exactly that counts.
+    const started = 'Phase: features\n\n<!-- Keep the "Not started" line until work begins -->\n';
+    write("apps/02-two/STATUS.md", started);
     const r = run("new-app.mjs", ["02", "--root", repo]);
     expect(r.out).toContain("skip");
-    expect(read("apps/02-two/STATUS.md")).toBe("Phase: features\n");
+    expect(read("apps/02-two/STATUS.md")).toBe(started);
   });
 });
 
@@ -278,7 +280,14 @@ describe("check-standalone, lockfiles --check, stack", () => {
   });
 
   it("reports paths that leave the app, ranges, leftovers and symlinks", () => {
-    write("apps/01-one/src/bad.ts", 'import x from "../../../outside.ts";\nconst m = "assets/models";\n// import y from "../../../commented.ts";\n');
+    const outsideAbs = path.join(repo, "data").split(path.sep).join("/");
+    write(
+      "apps/01-one/src/bad.ts",
+      'import x from "../../../outside.ts";\nconst m = "assets/models";\n// import y from "../../../commented.ts";\n' +
+        'const g = import.meta.glob(["./ok/*.ts", "../../../escape/*.ts"]);\n' +
+        `const a = await import("${outsideAbs}");\n`,
+    );
+    write("apps/01-one/rcene/config/leak.ts", 'import path from "node:path";\nexport const d = (dir: string) => path.join(dir, "../../data/files");\n');
     write("apps/01-one/tsconfig.app.json", json({ extends: "../../tsconfig.base.json" }));
     const pkg = JSON.parse(read("apps/01-one/package.json"));
     pkg.dependencies.react = "^19.3.0";
@@ -292,10 +301,14 @@ describe("check-standalone, lockfiles --check, stack", () => {
     has(/dependencies\.react "\^19\.3\.0" is not an exact version/);
     has(/package-lock\.json dependencies: react is \^19\.3\.0 in package\.json but 19\.3\.0 in the lock/);
     has(/src\/data-link is a symlink/);
+    has(/src\/bad\.ts:4 "\.\.\/\.\.\/\.\.\/escape\/\*\.ts" points outside/);
+    has(/src\/bad\.ts:5 ".+" is an absolute path outside/);
+    has(/rcene\/config\/leak\.ts:2 path "\.\.\/\.\.\/data\/files" can leave the app folder/);
     expect(failures.some((f) => f.includes("commented.ts"))).toBe(false);
     expect(run("stack.mjs", ["--check", "--root", repo]).status).toBe(1);
     // restore
     rmSync(path.join(repo, "apps/01-one/src/bad.ts"));
+    rmSync(path.join(repo, "apps/01-one/rcene/config/leak.ts"));
     rmSync(path.join(repo, "apps/01-one/tsconfig.app.json"));
     rmSync(path.join(repo, "apps/01-one/src/data-link"));
     pkg.dependencies.react = "19.3.0";
@@ -349,6 +362,22 @@ describe("sync-shared", () => {
     expect(named.status, named.out).toBe(0);
     expect(read("apps/02-two/rcene/geo/index.ts")).toBe("export const geo = 2;\n");
     expect(run("sync-shared.mjs", ["--all", "--include-started", "--dry-run", "--root", repo]).out).toContain("0 open conflict(s)");
+  });
+
+  it("drops a package stack.json no longer has, without a false conflict", () => {
+    write("stack.json", json({ ...STACK, app: { dependencies: { react: "19.3.1" }, devDependencies: {} } }));
+    const r = run("sync-shared.mjs", ["01", "--only", "package", "--root", repo]);
+    expect(r.status, r.out).toBe(0);
+    let pkg = JSON.parse(read("apps/01-one/package.json"));
+    expect(pkg.dependencies).toEqual({ nanoid: "6.0.1", react: "19.3.1" });
+    expect(pkg.devDependencies).toEqual({});
+    expect(JSON.parse(read("apps/01-one/.sync.json")).packageKeys.packages).toEqual(["react"]);
+    // and back: vite is managed again, the app was not touched, so it is restored
+    write("stack.json", json(STACK));
+    expect(run("sync-shared.mjs", ["01", "--only", "package", "--root", repo]).status).toBe(0);
+    pkg = JSON.parse(read("apps/01-one/package.json"));
+    expect(pkg.dependencies).toEqual({ nanoid: "6.0.1", react: "19.3.0" });
+    expect(pkg.devDependencies).toEqual({ vite: "8.3.2" });
   });
 });
 

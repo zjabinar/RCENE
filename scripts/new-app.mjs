@@ -49,6 +49,7 @@ import {
   isText,
   json,
   packageManagedHash,
+  packageManagedKeys,
   projectJson,
   readJson,
   readManifest,
@@ -125,11 +126,14 @@ export function generate(row, { srcRoot, outRoot, force = false, dryRun = false,
 
   // Baseline for sync-shared: the hash of every managed file exactly as written here.
   const baseline = {};
+  let packageKeys = null;
   for (const [file, want] of desiredManagedFiles(srcRoot, row)) {
-    if (want.packageJson) baseline[file] = packageManagedHash(pkg, want.managed);
-    else if (existsSync(path.join(dir, ...file.split("/")))) baseline[file] = contentHash(file, readFileSync(path.join(dir, ...file.split("/"))));
+    if (want.packageJson) {
+      baseline[file] = packageManagedHash(pkg, want.managed);
+      packageKeys = packageManagedKeys(want.managed);
+    } else if (existsSync(path.join(dir, ...file.split("/")))) baseline[file] = contentHash(file, readFileSync(path.join(dir, ...file.split("/"))));
   }
-  writeFile(dir, SYNC_FILE, syncStateJson(baseline));
+  writeFile(dir, SYNC_FILE, syncStateJson(baseline, packageKeys));
 
   log(
     `wrote  ${rel(outRoot, dir)}  (port ${row.port}${row.ai ? ", AI" : ""}; ${files.length} template files, ${docs.size} docs, data ${data.files} files; ${lockNote})`,

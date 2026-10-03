@@ -9,7 +9,7 @@ import { BaseMap, ZoneLayer, PointLayer, SelectedPoint, Legend, useFlyTo } from 
 <BaseMap onClick={(lngLat) => select(lngLat)}>
   <ZoneLayer hazard="flood" zones={zones.flood} minLevel="moderate" />
   <PointLayer id="centers" data={centers} />
-  {selected && <SelectedPoint lngLat={selected} label="Selected point" />}
+  {selected && <SelectedPoint lngLat={selected} label={t("home.selectedPoint")} />}
 </BaseMap>
 <Legend hazard="flood" />
 ```
