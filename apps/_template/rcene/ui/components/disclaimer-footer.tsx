@@ -1,6 +1,6 @@
 import { InfoIcon } from "lucide-react";
 import { Link } from "react-router";
-import { common, useT } from "@rcene/i18n";
+import { useAppStrings, useT } from "@rcene/i18n";
 
 import { cn } from "../lib/utils.ts";
 
@@ -11,7 +11,7 @@ export interface DisclaimerFooterProps {
 
 /** The preparedness disclaimer plus a link to /sources. */
 export function DisclaimerFooter({ className }: DisclaimerFooterProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   return (
     <footer data-slot="disclaimer-footer" className="border-t bg-muted/40">
       <div

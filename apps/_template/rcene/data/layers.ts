@@ -12,7 +12,9 @@ import type {
 
 /**
  * Every layer an app can request, mapped to its file under /data/ and its type.
- * Add new layers here (in a package window between batches), never ad hoc in apps.
+ * A new shipped layer is added here (and listed in NOTES.md under "Shared-code
+ * changes (for the template)"). A file that may not exist is read with
+ * useOptionalLayer instead.
  */
 export interface LayerTypes {
   boundary: BoundaryCollection;

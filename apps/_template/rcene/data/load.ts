@@ -21,16 +21,36 @@ async function fetchJson<T>(url: string, layer: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** Fetches a layer once per page load; later calls share the same promise. */
-export function fetchLayer<N extends LayerName>(name: N): Promise<LayerTypes[N]> {
-  const url = layerUrl(name);
+/** One request per URL per page load; a failure is not cached, so a retry fetches again. */
+function cachedJson<T>(url: string, label: string): Promise<T> {
   let pending = cache.get(url);
   if (!pending) {
-    pending = fetchJson<LayerTypes[N]>(url, name);
+    pending = fetchJson<T>(url, label);
     pending.catch(() => cache.delete(url));
     cache.set(url, pending);
   }
-  return pending as Promise<LayerTypes[N]>;
+  return pending as Promise<T>;
+}
+
+/** Fetches a layer once per page load; later calls share the same promise. */
+export function fetchLayer<N extends LayerName>(name: N): Promise<LayerTypes[N]> {
+  return cachedJson<LayerTypes[N]>(layerUrl(name), name);
+}
+
+/** "/data/landcover.geojson" or "landcover.geojson" → "landcover.geojson" (the manifest key). */
+export function dataFileKey(file: string): string {
+  return file.replace(/^\/data\//, "").replace(/^\/+/, "");
+}
+
+/**
+ * Fetches any JSON file under /data/ (not only a `LayerName`), once per page
+ * load. Rejects with `LayerMissingError` when the file is not served. Prefer
+ * `useOptionalLayer`, which checks the manifest first so an absent file never
+ * causes a 404.
+ */
+export function fetchDataFile<T = unknown>(file: string): Promise<T> {
+  const key = dataFileKey(file);
+  return cachedJson<T>(`/data/${key}`, key);
 }
 
 export function fetchManifest(): Promise<DataManifest> {

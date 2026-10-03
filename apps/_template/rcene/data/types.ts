@@ -1,7 +1,7 @@
 /**
- * Shared data contracts. The B0 data session (docs/projects/00-data.md) writes
- * files that match these shapes into packages/data/files/. The committed
- * fixtures in packages/data/fixtures/ match them too, so apps work before the
+ * Shared data contracts. The data session writes files that match these
+ * shapes into the app's data/files/. The committed fixtures in
+ * data/fixtures/ match them too, so apps work before the
  * real data lands.
  */
 import type { Feature, FeatureCollection, MultiPolygon, Point, Polygon } from "geojson";

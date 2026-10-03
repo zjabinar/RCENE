@@ -29,7 +29,7 @@ import {
 import { area, pointOnFeature } from "@turf/turf";
 import { useLayer, type BarangayCollection } from "@rcene/data";
 import { featureBounds, type LngLat } from "@rcene/geo";
-import { common, useT } from "@rcene/i18n";
+import { useAppStrings, useT } from "@rcene/i18n";
 import {
   BARANGAY_LINE_COLOR,
   BOUNDARY_COLOR,
@@ -111,7 +111,7 @@ export function BaseMap({
   ...rest
 }: BaseMapProps) {
   const { onLoad, onError, onMouseEnter, onMouseLeave, maxBounds: maxBoundsProp, ...mapProps } = rest;
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const [webgl] = useState(hasWebGL2);
   const [loaded, setLoaded] = useState(false);
   const [online, setOnline] = useState(false);

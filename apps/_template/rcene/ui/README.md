@@ -1,28 +1,34 @@
 # @rcene/ui
 
-Shared UI kit for every RCENE app: theme tokens, shadcn/ui primitives, app chrome, UI states, the hazard-answer components and the motion layer.
+Shared UI kit for every RCENE app: theme tokens, shadcn/ui primitives, app chrome, UI states, the hazard-answer components, toasts, downloads and the motion layer.
 
-> **Frozen during a batch.** Don't edit `packages/ui` from an app session. If you need a change, write it in your app's `NOTES.md`. For anything app-specific, build it in your app (see "App-local shadcn components" below).
+> **This folder is the app's own copy of the shared code.** Use it as-is where you can. If you change it, keep the change minimal and list it in `NOTES.md` under "Shared-code changes (for the template)", so it can be carried back to the template. Anything app-specific belongs in `src/` (see "App-local shadcn components" below).
 
-## Setup (already done in `apps/_template`)
+## Setup (already done in the template)
 
 ```css
-/* apps/<slug>/src/index.css */
-@import "@rcene/ui/globals.css";
+/* src/index.css */
+@import "tailwindcss" source(none);
+@import "../rcene/ui/styles/globals.css";
+
+@source "./";
+@source "../rcene";
+@source "../index.html";
 /* app-only styles below */
 ```
 
-`globals.css` loads Tailwind v4, `tw-animate-css` and the self-hosted Inter font (the demo runs offline, so never add a font CDN). It also tells Tailwind to scan `packages/ui` and `packages/map`. Dark mode is class-based: put `.dark` on `<html>`.
+`globals.css` loads `tw-animate-css` and the self-hosted Inter font (the demo runs offline, so never add a font CDN). Tailwind scans only `src/`, `rcene/` and `index.html`. Dark mode is class-based: put `.dark` on `<html>`.
 
-Import paths:
+Import paths (Vite aliases and tsconfig `paths` map them to this app's `rcene/` folder):
 
 | Path | What |
 |---|---|
-| `@rcene/ui` | `cn` and every custom component below, plus `Toaster` |
-| `@rcene/ui/components/<name>` | one shadcn primitive, e.g. `@rcene/ui/components/card` |
+| `@rcene/ui` | `cn`, every custom component below, `Toaster`, `toast`, `downloadText` / `downloadCsv` / `downloadBlob` |
+| `@rcene/ui/components/<name>` | one shadcn primitive, e.g. `@rcene/ui/components/card` (file `rcene/ui/components/ui/<name>.tsx`) |
 | `@rcene/ui/lib/utils` | `cn` |
 | `@rcene/ui/motion` | GSAP (with plugins registered), `CountUp`, `SmoothScroll`, `useReducedMotion` |
-| `@rcene/ui/globals.css` | the theme |
+
+Inside `rcene/`, imports within a package are relative (with the `.ts`/`.tsx` extension) and other packages are imported as `@rcene/<pkg>`. `@/` means the app's `src/` and is for app code only.
 
 ## The hazard rules
 
@@ -39,7 +45,7 @@ Import paths:
 | `outsideCoverage` | `status.outsideCoverage` | gray `status-outside`, dashed border | `MapPinOff` |
 | layer missing | `state.dataMissing` | muted, dotted border | `FileQuestionMark` |
 
-The `--level-*` and `--status-*` hex values equal `LEVEL_HEX` / `STATUS_HEX` in `@rcene/data` (the map uses those), and `src/tokens.test.ts` checks that they match.
+The `--level-*` and `--status-*` hex values equal `LEVEL_HEX` / `STATUS_HEX` in `@rcene/data` (the map uses those), and `rcene/ui/tokens.test.ts` checks that they match.
 
 ## Theme tokens (Tailwind color names)
 
@@ -49,22 +55,35 @@ Hazard colors are the same in light and dark mode: `level-low`, `level-moderate`
 
 ## Custom components (`@rcene/ui`)
 
-All built-in text comes from `useT(common)` (`@rcene/i18n`), so it follows the language picker. Props marked `?` are optional. Every component also takes `className?` unless noted.
+All built-in text is translated and follows the language picker. Shared components read the **app's** string table with `useT(useAppStrings())` (`@rcene/i18n`), so when the app overrides a `common` key (e.g. `app.disclaimer`) in its `extendStrings(common, {...})` and passes `strings` to `AppShell`, the override shows up in the footer, `/sources`, the state views, the hazard badges and the map legend. Props marked `?` are optional. Every component also takes `className?` unless noted.
 
 ### Chrome
 
-**`AppShell`**: `{ title: string; tagline?: string; nav?: NavItem[]; actions?: ReactNode; layers?: LayerName[]; width?: "phone" | "wide" | "full"; showReset?: boolean; children: ReactNode }`
+**`AppShell`**: `{ title: string; tagline?: string; nav?: NavItem[]; actions?: ReactNode; layers?: LayerName[]; width?: "phone" | "wide" | "full"; showReset?: boolean; strings?: AppStrings; disclaimer?: string; toaster?: boolean; children: ReactNode }`
 - `NavItem = { to: string; label: string; end?: boolean }`. It renders a react-router `NavLink`, which sets `aria-current="page"`. Use `end: true` for `"/"`.
-- Layout: a skip link (`app.skipToContent`) that moves focus to `<main id="main" tabIndex={-1}>`, then a sticky header. The header holds the title (links to `/`) and tagline, then `SampleDataBadge layers={layers}`, your `actions`, the optional **Reset demo** button and `LangToggle`. Below that comes a horizontally scrolling nav row, then main, then `DisclaimerFooter`.
+- Layout: a skip link (`app.skipToContent`) that moves focus to `<main id="main" tabIndex={-1}>`, then a sticky header. The header holds the title (links to `/`) and tagline, then `SampleDataBadge layers={layers}`, your `actions`, the optional **Reset demo** button and `LangToggle`. Below that comes a horizontally scrolling nav row, then main, then `DisclaimerFooter`, then the toast region.
 - `width`: `"phone"` = `max-w-md` centered (resident views, designed at 390 px). `"wide"` (default) = `max-w-7xl`. `"full"` = full-bleed with no padding: `<main>` is `flex flex-col`, so a `flex-1` child fills it (boards, full-screen maps).
 - `showReset`: calls `resetDemo({ keep: ["lang"] })` from `@rcene/store`, which clears every persisted store except the language and reloads every open window.
+- `strings`: the app's table (`extendStrings(common, …)`, from `src/i18n/strings.ts`). AppShell wraps everything inside it in `<StringsProvider value={strings}>`. The template's `AppLayout` already passes it.
+- `disclaimer`: an explicit, already-translated disclaimer (e.g. `t("app.myDisclaimer")`) for the footer and `/sources`. It wins over `strings`.
+- `toaster` (default `true`): mounts the themed `Toaster` once. Don't mount a second one; pass `toaster={false}` if the app needs its own (e.g. `position="top-center"`).
 - Sets `document.title = title`. Works down to 360 px wide and is fully keyboard operable.
+
+```tsx
+// src/AppLayout.tsx
+const t = useT(strings);
+<AppShell title={t("app.title")} nav={…} layers={["boundary", "hazard-flood"]} strings={strings}>
+  <Outlet />
+</AppShell>
+```
+
+Components rendered outside the shell (e.g. `RouteError` as a route `errorElement`) see `common` unless you also wrap the router in `<StringsProvider value={strings}>` in `main.tsx`.
 
 **`LangToggle`**: `{ className? }`. A compact select for en / war / fil, labelled with `LANG_LABELS`, with the accessible name `app.language`. The choice persists and syncs across windows.
 
 **`SampleDataBadge`**: `{ layers?: readonly LayerName[] }`. An amber "Sample data" badge (`app.sampleData`) with a tooltip (`app.sampleDataHint`). It shows when `usesFixtures(manifest, layers)` is true, or when any served file is a fixture if `layers` is omitted. Otherwise it renders `null`.
 
-**`DisclaimerFooter`**: `{ className? }`. Shows `app.disclaimer` and a link to `/sources` (`app.sources`). `className` styles the inner container.
+**`DisclaimerFooter`**: `{ className? }`. Shows `app.disclaimer` and a link to `/sources` (`app.sources`), from the app's strings. `className` styles the inner container.
 
 ### States
 
@@ -83,6 +102,8 @@ const zones = useZones(HAZARDS);
 <LoadGate state={zones}>{({ zones, missing }) => <HazardStatusList status={lookup(zones)} missing={missing} />}</LoadGate>
 ```
 
+For a layer that may not exist at all, use `useOptionalLayer` from `@rcene/data` instead (no 404, see its README).
+
 ### Hazard answers
 
 **`HazardStatusBadge`**: `{ hazard: Hazard; status: HazardStatus; size?: "sm" | "md" }` (default `"md"`). Shows the color, the icon and "**Flood** · In a mapped risk zone — High". It sets `data-hazard`, `data-status` and `data-level` for tests.
@@ -95,26 +116,61 @@ const zones = useZones(HAZARDS);
 
 **`LEVEL_ICONS`**: `Record<Level, LucideIcon>`. **`STATUS_ICONS`**: `Record<"notInZone" | "outsideCoverage", LucideIcon>`. Use these for custom legends so the icons match.
 
+### Sources
+
+**`SourcesPage`**: `{ extra?: readonly SourceEntry[]; children?: ReactNode }`. This is the `/sources` route. It shows an h1 (`sources.title`), then the entries of `sources.json` (through `LoadGate`), then your `extra` entries with the same card, then your `children` as an app section, then the disclaimer.
+- `extra`: the app's own sources. Use tier `"synthetic"` for data the app generates, and say how (seed, codes, no names). `extra` still shows when `sources.json` is missing.
+- `children`: e.g. "How the sample households are made", model credits for the AI apps, a methods note.
+
+```tsx
+<SourcesPage
+  extra={[{ file: "generated in the browser", title: "Sample households", tier: "synthetic",
+            attribution: "createRng(7): 240 households coded HH-0001…, no names" }]}
+>
+  <h2 className="text-lg font-semibold">{t("sources.aboutModel")}</h2>
+</SourcesPage>
+```
+
+**`SourceCard`**: `{ entry: SourceEntry }`. One source as a card: title (h2), tier badge (`sources.tier.<tier>`), attribution, file, license, URL link and notes. Use it for a custom sources layout.
+
+### Toasts
+
+**`toast`** (sonner's, re-exported) and **`Toaster`** (sonner's `Toaster`, themed with the tokens, every sonner prop passed through, region label translated). `AppShell` mounts the `Toaster` once, so just call:
+
+```ts
+import { toast } from "@rcene/ui";
+toast.success(t("household.saved"));            // always pass translated text
+toast.error(t("export.failed"), { description: String(error) });
+```
+
+### Downloads
+
+Client-side, offline: a Blob, an object URL and a temporary `<a download>` (the URL is revoked after the click).
+
+- **`downloadText(filename, text, mime = "text/plain;charset=utf-8")`**
+- **`downloadCsv(filename, csv)`**: `text/csv;charset=utf-8`. Build the CSV with `toCsv(rows, columns, { bom: true })` from `@rcene/data` so Excel reads ₱ and ñ correctly.
+- **`downloadBlob(filename, blob)`**: anything else (a PNG from a canvas, a JSON backup).
+
+```ts
+downloadCsv("households.csv", toCsv(rows, [{ key: "code", header: t("col.code") }], { bom: true }));
+```
+
 ### Other
 
 **`StatTile`**: `{ label: ReactNode; value: number | string; hint?: ReactNode; tone?: "default" | "warning" | "danger"; countUp?: boolean; format?: (n: number) => string }`. Shows a big number in a `<dl>`.
-- Numbers are formatted for the current locale: 0 decimals for integers, 1 otherwise, or your own `format`.
+- Numbers are formatted for the current locale: 0 decimals for integers, 1 otherwise, or your own `format` (e.g. `useFormat().currency` for ₱).
 - `countUp` animates numbers with `CountUp`.
 - `warning` and `danger` add an icon as well as the color.
-
-**`SourcesPage`**: no props. This is the `/sources` route. It shows an h1 (`sources.title`) and loads `useLayer("sources")` through `LoadGate`. Each `SourceEntry` is shown with its title, a tier badge (`sources.tier.<tier>`), the attribution, the file, the license, a URL link and notes. The disclaimer comes last.
 
 **`RouteError`**: no props. Use it as the route `errorElement`. It shows `ErrorState` for `useRouteError()` with a **Home** link to `/`, and a reload button unless the error is a 404.
 
 **`ErrorBoundary`**: `{ fallback?: ReactNode; onError?: (error, info) => void; children }`. Catches render errors, for example around a map or a chart. By default it shows `ErrorState`, whose **Try again** re-mounts the children.
 
-**`Toaster`**: sonner's `Toaster`, themed with the tokens, with every sonner prop passed through. Mount it once (e.g. in `AppLayout`) and call `toast("…")` from `"sonner"`.
-
 **`cn(...classes)`**: clsx + tailwind-merge.
 
 ## shadcn primitives (`@rcene/ui/components/<name>`)
 
-These are hand-written in the shadcn **new-york v4** style: function components, `data-slot`, `cn()` and cva variants. The exports match upstream shadcn.
+These are hand-written in the shadcn **new-york v4** style: function components, `data-slot`, `cn()` and cva variants, on the unified `radix-ui` package. The exports match upstream shadcn.
 
 | `<name>` | Exports |
 |---|---|
@@ -123,7 +179,12 @@ These are hand-written in the shadcn **new-york v4** style: function components,
 | `card` | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter` |
 | `alert` | `Alert` (`variant`: default, destructive, **warning**), `AlertTitle`, `AlertDescription` |
 | `dialog` | `Dialog`, `DialogTrigger`, `DialogContent` (`showCloseButton?`, `closeLabel?`), `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose`, `DialogOverlay`, `DialogPortal` |
+| `alert-dialog` | `AlertDialog`, `AlertDialogTrigger`, `AlertDialogContent`, `AlertDialogHeader`, `AlertDialogFooter`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogAction` (`variant?`, e.g. destructive), `AlertDialogCancel`, `AlertDialogOverlay`, `AlertDialogPortal` |
 | `sheet` | `Sheet`, `SheetTrigger`, `SheetContent` (`side?`: top, right, bottom, left; `showCloseButton?`; `closeLabel?`), `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`, `SheetClose` |
+| `popover` | `Popover`, `PopoverTrigger`, `PopoverContent` (`align?` center, `sideOffset?` 4), `PopoverAnchor` |
+| `accordion` | `Accordion` (`type`: single, multiple; `collapsible?`), `AccordionItem`, `AccordionTrigger`, `AccordionContent` |
+| `collapsible` | `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` |
+| `command` | `Command` (`label?`), `CommandDialog` (`title?`, `description?`, `showCloseButton?`, plus Dialog props), `CommandInput` (with a search icon), `CommandList` (`label?`), `CommandEmpty`, `CommandGroup` (`heading?`), `CommandItem` (`value?`, `keywords?`, `onSelect?`), `CommandSeparator`, `CommandShortcut` (cmdk 1.1) |
 | `tabs` | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` |
 | `input` / `textarea` / `label` | `Input` / `Textarea` / `Label` |
 | `select` | `Select`, `SelectTrigger` (`size?`: sm, default), `SelectValue`, `SelectContent`, `SelectItem`, `SelectGroup`, `SelectLabel`, `SelectSeparator`, `SelectScrollUpButton`, `SelectScrollDownButton` |
@@ -139,31 +200,44 @@ These are hand-written in the shadcn **new-york v4** style: function components,
 | `scroll-area` | `ScrollArea`, `ScrollBar` |
 | `sonner` | `Toaster`, `type ToasterProps` |
 
-The close button's screen-reader label in `DialogContent` and `SheetContent` is translated: "Close" in English, "Isara" in Filipino. Waray falls back to English for now.
+Built-in text in the primitives is translated (strings in `rcene/ui/i18n.ts`) and can be overridden with props or children:
+
+| Where | Default (`en` / `fil`) |
+|---|---|
+| `DialogContent`, `SheetContent` close button (screen readers) | "Close" / "Isara" (Waray falls back to English for now) |
+| `AlertDialogCancel` / `AlertDialogAction` without children | "Cancel" / "Kanselahin", "Confirm" / "Kumpirmahin" |
+| `Command` / `CommandDialog` label and title, `CommandDialog` description | "Search" / "Maghanap", a "Type to search…" hint |
+| `CommandList` label, `CommandEmpty` without children | "Suggestions" / "Mga mungkahi", "No results found." / "Walang nakitang resulta." |
+| `Toaster` region | "Notifications" / "Mga abiso" |
+
+Always give `AlertDialogContent` an `AlertDialogTitle` and an `AlertDialogDescription`, and give `AlertDialogAction` a specific verb ("Reset demo", "Delete report") when you can. `Command` needs no network: it filters in memory.
 
 ### App-local shadcn components
 
-Need a component that isn't listed (e.g. `accordion`, `popover`, `calendar`, `command`)? Add it **in your app**, not here:
+Need a component that isn't listed (e.g. `calendar`, `drawer`, `hover-card`)? Add it **in your app**, not in `rcene/`:
 
-- Put it in `apps/<slug>/src/components/ui/<name>.tsx`. Each app has its own `components.json`, whose `ui` alias is `@/components/ui` and whose `utils` alias is `@rcene/ui/lib/utils`.
-- The shadcn registry isn't reachable from the build machine, so write the component by hand in the same new-york v4 style. Import primitives from the unified package (`import { Popover as PopoverPrimitive } from "radix-ui"`), and import `cn` from `@rcene/ui/lib/utils`.
-- Import it as `@/components/ui/<name>`. Inside `packages/*`, imports are always relative; `@/` belongs to the app.
+- Put it in `src/components/ui/<name>.tsx`. The app's `components.json` has `ui` = `@/components/ui` and `utils` = `@rcene/ui/lib/utils`.
+- The shadcn registry isn't reachable offline, so write the component by hand in the same new-york v4 style. Import primitives from the unified package (`import { HoverCard as HoverCardPrimitive } from "radix-ui"`), and import `cn` from `@rcene/ui/lib/utils`.
+- Import it as `@/components/ui/<name>`.
 
 ## Motion (`@rcene/ui/motion`)
 
-Follow `.claude/skills/gsap-motion/SKILL.md`. **Import GSAP from here, never from `"gsap"`**, so the plugins are registered.
+Follow the `gsap-motion` skill. **Import GSAP from here, never from `"gsap"`**, so the plugins are registered.
 
 - `gsap`, `ScrollTrigger`, `SplitText`, `DrawSVGPlugin`, `useGSAP`: registered once.
 - **`CountUp`**: `{ value: number; duration?: number /* 1.2 s */; format?: (n: number) => string; className? }`. Tweens from the number currently shown to `value` and writes `textContent` through a ref, with no per-frame React state. Screen readers get the final value only. With reduced motion it shows the final value at once.
 - **`SmoothScroll`**: `{ children }`. Lenis on GSAP's ticker, synced with ScrollTrigger. Use it on story and landing pages only (not dashboards or map screens), and add `data-lenis-prevent` to a map container on a Lenis page. With reduced motion it renders the children with native scrolling.
 - **`useReducedMotion()`** returns a `boolean` that updates live. **`prefersReducedMotion()`** is the non-hook version.
 
-**Tests (jsdom):** jsdom has no `window.matchMedia`, which ScrollTrigger needs. When it is missing, `@rcene/ui/motion` installs a stub that reports `prefers-reduced-motion: reduce`. In vitest, GSAP animations are therefore skipped, `CountUp` shows its final value and items are never left hidden mid-tween. Stub `matchMedia` yourself if a test needs motion.
+**Tests (jsdom):** jsdom has no `window.matchMedia`, which ScrollTrigger needs. When it is missing, `@rcene/ui/motion` installs a stub that reports `prefers-reduced-motion: reduce`. In vitest, GSAP animations are therefore skipped, `CountUp` shows its final value and items are never left hidden mid-tween. Stub `matchMedia` yourself if a test needs motion. cmdk and floating-ui also need a `ResizeObserver` stub and `Element.prototype.scrollIntoView` in jsdom (see `components/ui/primitives.test.tsx`).
 
-## Package tests
+## Tests
 
-`pnpm exec vitest run --project packages packages/ui` covers:
+`npm run test -- rcene/ui` (or `pnpm exec vitest run rcene/ui`) covers:
 
 - the hazard tokens (they must match `LEVEL_HEX` / `STATUS_HEX`, and each foreground must reach WCAG AA);
 - the hazard badges and list (order, missing layers, all three languages, no "safe");
-- AppShell, LoadGate and StatTile smoke tests.
+- AppShell (strings override, `disclaimer`, toaster), LoadGate and StatTile;
+- SourcesPage (`extra`, `children`, missing `sources.json`) and SourceCard;
+- the accordion, collapsible, alert-dialog, popover and command primitives;
+- `downloadCsv` / `downloadText`.

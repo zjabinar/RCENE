@@ -1,14 +1,23 @@
-# @rcene/config
+# rcene/config
 
-Shared build config. Apps don't import it at runtime.
+This app's build config (Node-side; the browser never imports it). It reads only this folder.
 
-- `tsconfig.app.json` / `tsconfig.node.json` — bases that each app's and package's tsconfig extends (TypeScript 6, strict, bundler resolution, `erasableSyntaxOnly`: no enums, no parameter properties).
-- `@rcene/config/vite` → `rceneApp({ dir, plugins?, overrides?, port?, ai? })` — React + Tailwind v4 + the static plugin, `@` → `src/`, `strictPort`, preview on port + 1000, vitest defaults (jsdom, `src/**/*.test.ts(x)`). **The port and `ai` flag are read from `docs/projects/projects.json` by folder name**, so they live in one place.
-- `@rcene/config/static` → `rceneStatic(mounts)` — serves `/data/` from `packages/data/files` then `packages/data/fixtures` (plus `/data/manifest.json`), and `/models/` from `assets/models` for AI apps. In builds the files are emitted into `dist/`, so `vite preview` works offline.
+- `vite.config.ts` → `rceneApp({ dir, plugins?, overrides?, port?, ai? })` from `./rcene/config/vite.ts`:
+  React + Tailwind v4 + the `/data/` plugin, the `@rcene/*` and `@/` aliases (see `rceneAliases`), `strictPort`,
+  preview on port + 1000, vitest defaults (jsdom; `src/`, `rcene/`, `scripts/` tests).
+  **The port and `ai` flag come from `./project.json`.**
+- `static.ts` → `rceneStatic(mounts)`: serves `/data/` from `data/files` (real) then `data/fixtures` (fake), file by file,
+  plus `/data/manifest.json` (which drives the "Sample data" badge); and `/models/` from `models/` when `project.json` has
+  `"ai": true`. In builds the files are emitted into `dist/`, so `vite preview` works offline.
+- TypeScript: `tsconfig.base.json` (shared options + `@rcene/*` paths), `tsconfig.app.json` (`src` + `rcene`, browser),
+  `tsconfig.test.json` (tests), `tsconfig.node.json` (`vite.config.ts` + this folder).
 
-Adding a Vite plugin (e.g. PWA for app 06):
+`overrides` are deep-merged with Vite's `mergeConfig`. Adding a Vite plugin (e.g. a PWA):
 
 ```ts
 import { VitePWA } from "vite-plugin-pwa";
 export default rceneApp({ dir: fileURLToPath(new URL(".", import.meta.url)), plugins: [VitePWA({ /* … */ })] });
 ```
+
+This folder is the app's own copy of the shared code; keep changes minimal and list them in `NOTES.md` under
+"Shared-code changes (for the template)".

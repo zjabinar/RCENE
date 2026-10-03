@@ -2,14 +2,14 @@ import { HouseIcon } from "lucide-react";
 import { isRouteErrorResponse, Link, useRouteError } from "react-router";
 import { useT } from "@rcene/i18n";
 
-import { uiStrings } from "../i18n.ts";
+import { useUiStrings } from "../i18n.ts";
 import { Button } from "./ui/button.tsx";
 import { ErrorState } from "./states.tsx";
 
 /** For a route's `errorElement`: the translated error state with a link home (and a reload unless it's a 404). */
 export function RouteError() {
   const error = useRouteError();
-  const t = useT(uiStrings);
+  const t = useT(useUiStrings());
   const response = isRouteErrorResponse(error) ? error : null;
   const detail = response ? `${response.status} ${response.statusText}`.trim() : error;
 

@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { LEVEL_HEX, LEVELS, type Hazard, type Level } from "@rcene/data";
-import { common, useT } from "@rcene/i18n";
+import { useAppStrings, useT } from "@rcene/i18n";
 import { BOUNDARY_COLOR, COVERAGE_COLOR, LAND_COLOR } from "./style.ts";
 
 export interface LegendProps {
@@ -21,7 +21,7 @@ export interface LegendProps {
  * outline, "not in zone" as plain coverage, "outside coverage" as land.
  */
 export function Legend({ hazard, levels = LEVELS, showStates = true, opacity = 0.45, className }: LegendProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const titleId = useId();
   const title = hazard ? t(`hazard.${hazard}`) : t("map.legend");
   const percent = Math.round(Math.min(1, Math.max(0, opacity)) * 100);

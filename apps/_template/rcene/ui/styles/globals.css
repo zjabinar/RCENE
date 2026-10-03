@@ -46,7 +46,7 @@
 
   /*
    * Hazard tokens. Values MUST equal LEVEL_HEX / STATUS_HEX in
-   * packages/data/src/levels.ts (src/tokens.test.ts checks). They are the same
+   * rcene/data/levels.ts (rcene/ui/tokens.test.ts checks). They are the same
    * in light and dark mode so the UI always matches the map paint.
    * Foregrounds meet WCAG AA (>= 4.5:1) on their fill.
    */

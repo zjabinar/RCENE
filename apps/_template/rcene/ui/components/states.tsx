@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { CircleXIcon, FileQuestionMarkIcon, InboxIcon, LoaderCircleIcon, RotateCcwIcon } from "lucide-react";
 import type { LoadState } from "@rcene/data";
-import { common, useT } from "@rcene/i18n";
+import { useAppStrings, useT } from "@rcene/i18n";
 
 import { cn } from "../lib/utils.ts";
 import { Button } from "./ui/button.tsx";
@@ -14,7 +14,7 @@ export interface LoadingStateProps {
 
 /** Spinner + text, announced politely (role="status"). */
 export function LoadingState({ label, className }: LoadingStateProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   return (
     <div
       role="status"
@@ -36,7 +36,7 @@ export interface EmptyStateProps {
 }
 
 export function EmptyState({ title, children, className }: EmptyStateProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   return (
     <div
       role="status"
@@ -71,7 +71,7 @@ export interface ErrorStateProps {
 
 /** Translated "Something went wrong." + optional detail and retry, announced assertively (role="alert"). */
 export function ErrorState({ error, onRetry, children, className }: ErrorStateProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const detail = errorDetail(error);
   return (
     <div
@@ -110,7 +110,7 @@ export interface DataMissingProps {
 
 /** Translated "This data layer is not available yet." for a layer whose file is absent. */
 export function DataMissing({ layer, className }: DataMissingProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   return (
     <div
       role="status"

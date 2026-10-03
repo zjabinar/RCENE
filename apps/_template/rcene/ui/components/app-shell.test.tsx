@@ -2,8 +2,11 @@ import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { LayerMissingError, type LoadState } from "@rcene/data";
+import { common, extendStrings, useLangStore } from "@rcene/i18n";
 import { AppShell } from "./app-shell.tsx";
+import { SourcesPage } from "./sources-page.tsx";
 import { LoadGate } from "./states.tsx";
 import { StatTile } from "./stat-tile.tsx";
 
@@ -24,6 +27,7 @@ afterEach(() => {
   act(() => root.unmount());
   host.remove();
   vi.unstubAllGlobals();
+  act(() => useLangStore.setState({ lang: "en" }));
 });
 
 async function renderAt(path: string, element: ReactNode) {
@@ -66,6 +70,64 @@ describe("AppShell", () => {
   it("uses the phone frame when width='phone'", async () => {
     await renderAt("/", <AppShell title="Phone" width="phone">x</AppShell>);
     expect(host.querySelector("main")!.className).toContain("max-w-md");
+  });
+});
+
+describe("AppShell strings, disclaimer and toaster", () => {
+  const strings = extendStrings(common, {
+    en: { "app.disclaimer": "Practice tool for barangay drills.", "app.sources": "Where the data comes from" },
+    war: { "app.disclaimer": "Gamit para han pagbansay." },
+    fil: { "app.disclaimer": "Kasangkapan para sa pagsasanay." },
+  });
+
+  it("shows the app's override of common keys in the footer and inside its children", async () => {
+    await renderAt(
+      "/sources",
+      <AppShell title="Test app" strings={strings}>
+        <SourcesPage />
+      </AppShell>,
+    );
+    const footer = host.querySelector("footer")!;
+    expect(footer.textContent).toContain("Practice tool for barangay drills.");
+    expect(footer.querySelector("a[href='/sources']")!.textContent).toBe("Where the data comes from");
+    expect(host.querySelector("[data-slot='sources-page']")!.textContent).toContain("Practice tool for barangay drills.");
+    expect(host.textContent).not.toContain("CDRRMO advisories");
+
+    await act(async () => useLangStore.setState({ lang: "fil" }));
+    expect(footer.textContent).toContain("Kasangkapan para sa pagsasanay.");
+  });
+
+  it("lets an explicit `disclaimer` win over `strings`", async () => {
+    await renderAt(
+      "/sources",
+      <AppShell title="Test app" strings={strings} disclaimer="Explicit disclaimer.">
+        <SourcesPage />
+      </AppShell>,
+    );
+    expect(host.querySelector("footer")!.textContent).toContain("Explicit disclaimer.");
+    expect(host.querySelector("[data-slot='sources-page']")!.textContent).toContain("Explicit disclaimer.");
+    expect(host.textContent).not.toContain("Practice tool");
+  });
+
+  it("mounts one toaster by default, so toast() works without setup", async () => {
+    await renderAt("/", <AppShell title="Test app">x</AppShell>);
+    const regions = host.querySelectorAll("section[aria-label^='Notifications']");
+    expect(regions).toHaveLength(1);
+    // sonner adds a toast on the next task (setTimeout), so let the act scope wait for it.
+    await act(async () => {
+      toast("Saved offline");
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(regions[0]!.textContent).toContain("Saved offline");
+  });
+
+  it("translates the toast region label and can leave the toaster out", async () => {
+    await act(async () => useLangStore.setState({ lang: "fil" }));
+    await renderAt("/", <AppShell title="Test app">x</AppShell>);
+    expect(host.querySelector("section[aria-label^='Mga abiso']")).not.toBeNull();
+
+    await renderAt("/", <AppShell title="Test app" toaster={false}>x</AppShell>);
+    expect(host.querySelector("section[aria-label]")).toBeNull();
   });
 });
 

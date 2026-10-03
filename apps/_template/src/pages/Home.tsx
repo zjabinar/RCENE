@@ -1,5 +1,5 @@
 /**
- * Demo page proving the shared packages work: tap the map, get the three-state
+ * Demo page proving the shared code (rcene/) works: tap the map, get the three-state
  * hazard answer. Replace it with the project's real first screen.
  */
 import { useMemo } from "react";

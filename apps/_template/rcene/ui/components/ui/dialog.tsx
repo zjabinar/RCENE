@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 import { useT } from "@rcene/i18n";
 
 import { cn } from "../../lib/utils.ts";
-import { uiStrings } from "../../i18n.ts";
+import { useUiStrings } from "../../i18n.ts";
 
 function Dialog({ ...props }: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -46,7 +46,7 @@ function DialogContent({
   /** Screen-reader label of the X button. Defaults to the translated "Close". */
   closeLabel?: string;
 }) {
-  const t = useT(uiStrings);
+  const t = useT(useUiStrings());
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />

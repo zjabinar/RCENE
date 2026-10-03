@@ -1,6 +1,6 @@
 import { FlaskConicalIcon } from "lucide-react";
 import { useDataManifest, usesFixtures, type LayerName } from "@rcene/data";
-import { common, useT } from "@rcene/i18n";
+import { useAppStrings, useT } from "@rcene/i18n";
 
 import { Badge } from "./ui/badge.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip.tsx";
@@ -13,7 +13,7 @@ export interface SampleDataBadgeProps {
 
 /** Amber "Sample data" badge, shown only while fixtures stand in for real data. */
 export function SampleDataBadge({ layers, className }: SampleDataBadgeProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const manifest = useDataManifest();
   const show = layers
     ? usesFixtures(manifest, layers)

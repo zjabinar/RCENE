@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 import { useT } from "@rcene/i18n";
 
 import { cn } from "../../lib/utils.ts";
-import { uiStrings } from "../../i18n.ts";
+import { useUiStrings } from "../../i18n.ts";
 
 function Sheet({ ...props }: ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -48,7 +48,7 @@ function SheetContent({
   /** Screen-reader label of the X button. Defaults to the translated "Close". */
   closeLabel?: string;
 }) {
-  const t = useT(uiStrings);
+  const t = useT(useUiStrings());
   return (
     <SheetPortal>
       <SheetOverlay />

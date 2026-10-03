@@ -1,5 +1,5 @@
 import { LanguagesIcon } from "lucide-react";
-import { common, LANG_LABELS, LANGS, useLang, useT, type Lang } from "@rcene/i18n";
+import { LANG_LABELS, LANGS, useAppStrings, useLang, useT, type Lang } from "@rcene/i18n";
 
 import { cn } from "../lib/utils.ts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx";
@@ -12,7 +12,7 @@ export interface LangToggleProps {
 
 /** Compact language picker (English / Winaray / Filipino). Persists and syncs across windows. */
 export function LangToggle({ className }: LangToggleProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const [lang, setLang] = useLang();
   return (
     <Select value={lang} onValueChange={(value) => isLang(value) && setLang(value)}>

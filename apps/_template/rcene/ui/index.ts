@@ -1,10 +1,11 @@
 /**
  * @rcene/ui — shared app chrome, UI states and hazard answer components.
  * shadcn primitives are NOT re-exported here; import them from
- * "@rcene/ui/components/<name>" (Toaster is the one exception).
+ * "@rcene/ui/components/<name>" (Toaster and sonner's `toast` are the exceptions).
  * Motion lives in "@rcene/ui/motion".
  */
 export { cn } from "./lib/utils.ts";
+export { downloadBlob, downloadCsv, downloadText } from "./lib/download.ts";
 
 export { AppShell, type AppShellProps, type AppShellWidth, type NavItem } from "./components/app-shell.tsx";
 export { LangToggle, type LangToggleProps } from "./components/lang-toggle.tsx";
@@ -33,7 +34,13 @@ export {
   type LevelBadgeProps,
 } from "./components/hazard-status.tsx";
 export { StatTile, type StatTileProps } from "./components/stat-tile.tsx";
-export { SourcesPage } from "./components/sources-page.tsx";
+export {
+  SourcesPage,
+  SourceCard,
+  type SourcesPageProps,
+  type SourceCardProps,
+} from "./components/sources-page.tsx";
 export { RouteError } from "./components/route-error.tsx";
 export { ErrorBoundary, type ErrorBoundaryProps } from "./components/error-boundary.tsx";
 export { Toaster, type ToasterProps } from "./components/ui/sonner.tsx";
+export { toast } from "sonner";

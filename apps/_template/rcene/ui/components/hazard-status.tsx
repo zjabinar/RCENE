@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { HAZARDS, type Hazard, type HazardStatus, type Level } from "@rcene/data";
-import { common, useT } from "@rcene/i18n";
+import { useAppStrings, useT } from "@rcene/i18n";
 
 import { cn } from "../lib/utils.ts";
 import { gsap, useGSAP } from "../motion/gsap.ts";
@@ -63,7 +63,7 @@ export interface HazardStatusBadgeProps {
  * outsideCoverage is gray with a dashed border.
  */
 export function HazardStatusBadge({ hazard, status, size = "md", className }: HazardStatusBadgeProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const Icon = status.kind === "inZone" ? LEVEL_ICONS[status.level] : STATUS_ICONS[status.kind];
   const phrase =
     status.kind === "inZone"
@@ -100,7 +100,7 @@ export interface LevelBadgeProps {
 
 /** A bare level chip (color + icon + translated level name), for tables and legends. */
 export function LevelBadge({ level, size = "sm", className }: LevelBadgeProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const Icon = LEVEL_ICONS[level];
   return (
     <span
@@ -127,7 +127,7 @@ export interface HazardStatusListProps {
 
 /** One HazardStatusBadge per hazard, staggering in with GSAP (skipped under reduced motion). */
 export function HazardStatusList({ status, missing = [], order = HAZARDS, size = "md", className }: HazardStatusListProps) {
-  const t = useT(common);
+  const t = useT(useAppStrings());
   const root = useRef<HTMLUListElement>(null);
   const reduced = useReducedMotion();
   const rows = order.filter((hazard) => status[hazard] || missing.includes(hazard));

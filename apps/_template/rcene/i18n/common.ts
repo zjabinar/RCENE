@@ -3,7 +3,7 @@
  * the three hazard-answer phrases.
  *
  * Waray (war) and Filipino (fil) entries were drafted by AI and MUST be
- * reviewed by a fluent speaker. Track corrections in packages/i18n/REVIEW.md;
+ * reviewed by a fluent speaker. Track corrections in rcene/i18n/REVIEW.md;
  * the before/after list is poster material for the "how AI built it" panel.
  *
  * Rule (tested): no `status.*` string, in any language, may say "safe".

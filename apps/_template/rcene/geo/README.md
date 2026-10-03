@@ -2,6 +2,8 @@
 
 Pure geometry helpers (no React). Coordinates are `[lon, lat]` (`LngLat`).
 
+> **This folder is the app's own copy of the shared code.** Use it as-is where you can. If you change it, keep the change minimal and list it in `NOTES.md` under "Shared-code changes (for the template)".
+
 ```ts
 import { lookupHazards, nearest, barangayAt, featureAt, pointInArea, zoneLevelAt,
          classifyPoints, randomPointsIn, featureBounds, type LngLat } from "@rcene/geo";

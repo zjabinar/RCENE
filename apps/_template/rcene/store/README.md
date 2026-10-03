@@ -2,6 +2,8 @@
 
 Zustand stores persisted to `localStorage` and synced across every open window of the same app — no server.
 
+> **This folder is the app's own copy of the shared code.** Use it as-is where you can. If you change it, keep the change minimal and list it in `NOTES.md` under "Shared-code changes (for the template)".
+
 ```ts
 import { createSyncedStore, useHydrated, resetDemo } from "@rcene/store";
 

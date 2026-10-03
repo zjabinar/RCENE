@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HAZARDS, LEVELS } from "@rcene/data";
-import { common, extendStrings, FORBIDDEN_ANSWER_WORDS, LANGS, translate } from "./index.ts";
+import { common, extendStrings, FORBIDDEN_ANSWER_WORDS, formatCurrency, LANGS, translate } from "./index.ts";
 
 describe("common strings", () => {
   it("has the same keys in every language (drafts may lag, but never invent keys)", () => {
@@ -47,5 +47,21 @@ describe("translate", () => {
 
   it("still serves the common strings through an extended table", () => {
     expect(translate(strings, "en", "status.notInZone")).toBe("Not in a mapped risk zone");
+  });
+});
+
+describe("formatCurrency", () => {
+  it("writes pesos with the ₱ sign and two decimals in English and Filipino", () => {
+    expect(formatCurrency(1728.75, "en")).toBe("₱1,728.75");
+    expect(formatCurrency(1728.75, "fil")).toBe("₱1,728.75");
+  });
+
+  it("formats Waray like Filipino (Intl has no Waray locale)", () => {
+    expect(formatCurrency(1728.75, "war")).toBe(formatCurrency(1728.75, "fil"));
+  });
+
+  it("honours the digits argument and rounds", () => {
+    expect(formatCurrency(1728.75, "en", 0)).toBe("₱1,729");
+    expect(formatCurrency(5, "en")).toBe("₱5.00");
   });
 });
