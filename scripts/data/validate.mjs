@@ -2,12 +2,12 @@
 /**
  * Checks the shipped data files before they are committed.
  *
- *   node scripts/data/validate.mjs              # packages/data/files (the real data)
- *   node scripts/data/validate.mjs --fixtures   # packages/data/fixtures
- *   node scripts/data/validate.mjs --dir <path> # any folder laid out like packages/data/files
+ *   node scripts/data/validate.mjs              # data/files (the real data)
+ *   node scripts/data/validate.mjs --fixtures   # data/fixtures
+ *   node scripts/data/validate.mjs --dir <path> # any folder laid out like data/files
  *
  * Errors (exit 1):
- *   - a file fails its zod schema in packages/data/src/schemas.ts
+ *   - a file fails its zod schema in apps/_template/rcene/data/schemas.ts
  *   - a coordinate falls outside lon 124..126 / lat 11..13 (Samar), e.g. UTM metres
  *     that were never reprojected, or [lat, lon] order
  *   - an unclosed polygon ring, a duplicate facility/heritage id, a zone whose
@@ -17,6 +17,8 @@
  *   - derived tables whose barangays, facilities or hazards no longer match their
  *     inputs (a coverage check, not a recomputation: always re-run derive.mjs
  *     after changing any layer)
+ * Schemas, layer names, hazards and levels come from the template's copy of the
+ * shared data module (apps/_template/rcene/data; zod resolves from apps/_template).
  * Warnings: total size over 3 MB, more than 5 decimals, properties that types.ts
  * does not define, unknown files, missing layers (the fixture is served instead).
  */
@@ -24,7 +26,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { LAYER_FILES } from "../../packages/data/src/layers.ts";
+import { LAYER_FILES } from "../../apps/_template/rcene/data/layers.ts";
 import {
   barangaysSchema,
   boundarySchema,
@@ -32,8 +34,8 @@ import {
   heritageSchema,
   sourcesSchema,
   zonesSchema,
-} from "../../packages/data/src/schemas.ts";
-import { HAZARDS, LEVELS } from "../../packages/data/src/types.ts";
+} from "../../apps/_template/rcene/data/schemas.ts";
+import { HAZARDS, LEVELS } from "../../apps/_template/rcene/data/types.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const { values } = parseArgs({
@@ -45,11 +47,11 @@ const { values } = parseArgs({
 const fixtures = values.fixtures;
 const dir = values.dir
   ? path.resolve(values.dir)
-  : path.join(root, "packages/data", fixtures ? "fixtures" : "files");
+  : path.join(root, "data", fixtures ? "fixtures" : "files");
 
 const MAX_TOTAL_BYTES = 3 * 1024 * 1024;
 const BBOX = { minLon: 124, maxLon: 126, minLat: 11, maxLat: 13 };
-const IGNORED = new Set([".gitkeep", "README.md", ".DS_Store", "Thumbs.db"]); // same as @rcene/config static.ts
+const IGNORED = new Set([".gitkeep", "README.md", ".DS_Store", "Thumbs.db"]); // same as rcene/config/static.ts in the apps
 const RAW_EXT = new Set([".shp", ".shx", ".dbf", ".prj", ".cpg", ".sbn", ".sbx", ".qix", ".kml", ".kmz", ".gpkg", ".tif", ".tiff", ".zip", ".qgz", ".qgs", ".xml"]);
 
 /** Allowed property keys per layer kind, from types.ts. Anything else should have been dropped. */
@@ -220,7 +222,7 @@ for (const rel of files) {
   if (RAW_EXT.has(path.extname(rel).toLowerCase())) {
     errors.push("raw GIS source file: keep raw .shp/.kml/.kmz outside the repo, ship only converted GeoJSON");
   } else if (kind === "unknown") {
-    warnings.push("not a layer in packages/data/src/layers.ts: not validated");
+    warnings.push("not a layer in apps/_template/rcene/data/layers.ts: not validated");
   } else {
     let data;
     try {

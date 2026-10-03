@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "10",
+  "slug": "10-reklamo",
+  "title": "Reklamo",
+  "tagline": "Public complaints and business-violation lookup",
+  "port": 5110,
+  "ai": true,
+  "brief": "docs/brief.md",
+  "branch": "proj/10-reklamo",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

@@ -1,11 +1,13 @@
 ---
 name: geo-data-prep
-description: Converting the local GIS archive into the shipped data layers in packages/data/files — shapefiles, KML/KMZ and GeoJSON with mapshaper (inspect with -info, reproject UTM 51N / EPSG:32651 to WGS84, fix a missing or wrong .prj, clip to the Catbalogan boundary, map hazard categories to levels, dissolve, simplify, filter fields, 5-decimal precision), OSM facilities, the land outline, heritage/eco-tourism KML points, the UP NOAH fallback, writing sources.json and packages/data/README.md, running derive.mjs and validate.mjs, and keeping the data under 3 MB. Use this whenever working on data prep, the 00-data session, mapshaper commands, hazard level mapping, data attribution, or a data file that fails validation.
+description: Converting the local GIS archive into the shipped data layers in the repo's root data/files (copied into every app with pnpm sync-data) — shapefiles, KML/KMZ and GeoJSON with mapshaper (inspect with -info, reproject UTM 51N / EPSG:32651 to WGS84, fix a missing or wrong .prj, clip to the Catbalogan boundary, map hazard categories to levels, dissolve, simplify, filter fields, 5-decimal precision), OSM facilities, the land outline, heritage/eco-tourism KML points, the UP NOAH fallback, writing sources.json and data/README.md, running derive.mjs and validate.mjs, and keeping the data under 3 MB. Use this whenever working on data prep, the 00-data session, mapshaper commands, hazard level mapping, data attribution, or a data file that fails validation.
 ---
 
-# Geo data prep (packages/data/files)
+# Geo data prep (root data/files)
 
-The data session (`docs/projects/00-data.md`) runs on the user's Windows PC, where the archive lives under `D:\lgu_portal - GIS\`. It reads the archive, writes converted GeoJSON into `packages/data/files/`, and commits only that output. Apps serve `/data/<file>` from `packages/data/files` first and fall back to the fake fixtures in `packages/data/fixtures` file by file. So you can replace one layer at a time. A layer that is still a fixture shows a "Sample data" badge.
+The data session (`docs/projects/00-data.md`) runs at the monorepo root, on branch `proj/00-data`, on the user's Windows PC, where the archive lives under `D:\lgu_portal - GIS\`. It reads the archive, writes converted GeoJSON into the root `data/files/`, and commits only that output (plus `data/README.md` and `scripts/data/**`). Root `data/` is the canonical copy: `pnpm sync-data` (run on main after the merge) mirrors it into every app's own `data/`, because each app folder is self-contained. Apps serve `/data/<file>` from their `data/files` first and fall back to the fake fixtures in `data/fixtures` file by file. So you can replace one layer at a time. A layer that is still a fixture shows a "Sample data" badge.
+
+The data scripts in `scripts/data/` import the contracts (`LAYER_FILES`, types, zod schemas) from the reference copy of the shared code, `apps/_template/rcene/data/*.ts`.
 
 Every recipe below was run against fixture-based stand-ins for the archive files (a UTM 51N risk shapefile, OSM-style facility files, KML/KMZ), using mapshaper 0.6.121. The main ones are pinned in `scripts/data/data-tools.test.mjs`. Mapshaper's optional native modules (better-sqlite3, msgpackr-extract) are not built. Shapefile, GeoJSON, KML, CSV, FlatGeobuf and GeoPackage I/O work without them anyway, so no extra flag is needed.
 
@@ -15,12 +17,12 @@ Every recipe below was run against fixture-based stand-ins for the archive files
 - Use barangay-level and facility-level data only. No personal data, real or invented. Check KML descriptions for names and phone numbers (`--no-description` drops them).
 - Credit every source in `sources.json`. The `/sources` page and the poster render it.
 - 🟡 permission data (CDRRMO/CPDCO risk maps, CPDCO heritage KML) goes only into this **private** repo. Never push it to a public remote, gist or public deploy.
-- Never copy raw sources into the repo. `.shp/.dbf/.prj/.kmz` are gitignored, but `.kml` and raw `.geojson` copies are not. Read straight from `D:\`, and stage in `$env:TEMP` if you must. `validate.mjs` fails on raw GIS files inside `packages/data/files`.
+- Never copy raw sources into the repo. `.shp/.dbf/.prj/.kmz` are gitignored, but `.kml` and raw `.geojson` copies are not. Read straight from `D:\`, and stage in `$env:TEMP` if you must. `validate.mjs` fails on raw GIS files inside `data/files`.
 - 🟢 open data must be enough to ship. If a 🟡 layer is unusable, use the UP NOAH fallback (see the last section of this file).
 
 ## Output contract
 
-| File (`LAYER_FILES` in `packages/data/src/layers.ts`) | Geometry | Properties to keep (`types.ts`); drop everything else |
+| File (`LAYER_FILES` in `apps/_template/rcene/data/layers.ts`) | Geometry | Properties to keep (`types.ts`); drop everything else |
 |---|---|---|
 | `boundary.geojson` | 1 polygon | `name` |
 | `barangays.geojson` | 57 polygons | `name`, `psgc?`, `coastal?` |
@@ -31,7 +33,7 @@ Every recipe below was run against fixture-based stand-ins for the archive files
 | `derived/*.json` | generated by `derive.mjs`; never edit by hand | |
 | `sources.json` | one `SourceEntry` per file: `file, title, attribution, tier (open/permission), license?, url?, notes?` | |
 
-The output must be WGS84 lon/lat, use 5 decimals (`precision=0.00001`), and total **under 3 MB**. Record the canonical layer chosen per hazard and the category→level mapping in the "Canonical layer per hazard and level mapping" section of `packages/data/README.md`. The templates are in [reference.md](reference.md).
+The output must be WGS84 lon/lat, use 5 decimals (`precision=0.00001`), and total **under 3 MB**. Record the canonical layer chosen per hazard and the category→level mapping in the "Canonical layer per hazard and level mapping" section of `data/README.md`. The templates are in [reference.md](reference.md).
 
 ## Setup (PowerShell, repo root)
 
@@ -40,7 +42,7 @@ $GIS  = 'D:\lgu_portal - GIS'
 $ADM  = "$GIS\data\region8\administrative_boundaries"
 $RISK = "$GIS\gis_data\CATBALOGAN\Shapefiles (Mappers)\Risk Map"   # Flood, Landslide, Stormsurge, Groundshaking, Liquifaction
 $FAC  = "$GIS\data\region8\critical_facilities"
-$OUT  = 'packages/data/files'
+$OUT  = 'data/files'
 ```
 
 **Quoting rule.** Never pass a double quote inside an argument. Embedded `"` can be stripped on the way through `pnpm.cmd` to node.
@@ -129,7 +131,7 @@ pnpm exec mapshaper "$RISK\Flood\Population to Flood Risk.shp" `
 - Keep the source's order and don't add severity it doesn't have. A 3-class layer maps to `low`/`moderate`/`high`, never `veryHigh`.
 - "None", "Not susceptible", "No data" and "Safe" map to `null`. Those features are dropped, so the area becomes **notInZone**, which is never "safe".
 - When a value is ambiguous (a numeric code, or ground-shaking intensity), read the layer's legend or ask the user. Don't guess.
-- Write every source value and its level, including the dropped ones, in `packages/data/README.md`. [reference.md](reference.md) has the table template and typical patterns.
+- Write every source value and its level, including the dropped ones, in `data/README.md`. [reference.md](reference.md) has the table template and typical patterns.
 
 ## 5. Facilities (OSM GeoJSON, clipped to the city)
 
@@ -160,7 +162,7 @@ The script keeps Point placemarks only, gives each the id `<prefix>NNN`, and dro
 
 ## 7. Attribution and README
 
-Write `$OUT/sources.json` with one entry for every file except `derived/*`, and write `packages/data/README.md`. Templates are in [reference.md](reference.md). Use the PRD credit lines word for word:
+Write `$OUT/sources.json` with one entry for every file except `derived/*`, and fill in the data session's sections of `data/README.md`. Templates are in [reference.md](reference.md). Use the PRD credit lines word for word:
 - *Risk maps: Catbalogan City CDRRMO / CPDCO, used with permission.*
 - *Boundaries: OCHA/HDX.*
 - *Facilities: © OpenStreetMap contributors (ODbL).*
@@ -171,11 +173,12 @@ Write `$OUT/sources.json` with one entry for every file except `derived/*`, and 
 ```powershell
 node scripts/data/derive.mjs           # derived/barangay-hazard.json + derived/facility-hazard.json
 node scripts/data/validate.mjs         # schemas, Samar bbox, ids, sources entries, sizes; exit 1 on errors
+pnpm sync-data                         # copy data/ into every app's data/ (the template included) to look at it
 pnpm --filter @rcene/template dev      # http://localhost:5100: real layers lose the "Sample data" badge
-node scripts/smoke.mjs --app template  # build + offline browser check
+pnpm --filter @rcene/template smoke    # the template's own smoke test: build + offline browser check
 Get-ChildItem $OUT -Recurse -File | Sort-Object Length -Descending | Select-Object Name, @{n='KB';e={[math]::Round($_.Length/1KB,1)}}
 ```
-Re-run `derive.mjs` after any change to boundary, barangays, facilities or hazards. `validate.mjs` reports derived tables that no longer match their inputs. Over 3 MB, raise the hazard `interval=` first, then simplify `barangays`.
+On the `proj/00-data` branch, commit only `data/**` and `scripts/data/**`: leave the app copies that `pnpm sync-data` wrote uncommitted. They are regenerated and committed on main after the merge. Re-run `derive.mjs` after any change to boundary, barangays, facilities or hazards. `validate.mjs` reports derived tables that no longer match their inputs. Over 3 MB, raise the hazard `interval=` first, then simplify `barangays`.
 
 ## Fallback: UP NOAH layer per hazard
 

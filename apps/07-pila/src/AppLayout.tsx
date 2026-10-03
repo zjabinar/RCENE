@@ -14,6 +14,7 @@ export function AppLayout() {
         { to: "/sources", label: t("app.sources") },
       ]}
       layers={["boundary", "barangays", "hazard-flood"]}
+      strings={strings}
     >
       <Outlet />
     </AppShell>

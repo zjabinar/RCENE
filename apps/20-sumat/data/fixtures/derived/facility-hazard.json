@@ -1,0 +1,268 @@
+[
+ {
+  "id": "F-001",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "liquefaction": {
+    "kind": "inZone",
+    "level": "high"
+   }
+  }
+ },
+ {
+  "id": "F-002",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "notInZone"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-003",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "stormSurge": {
+    "kind": "notInZone"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-004",
+  "status": {
+   "flood": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "notInZone"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-005",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-006",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "notInZone"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-007",
+  "status": {
+   "flood": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-008",
+  "status": {
+   "flood": {
+    "kind": "inZone",
+    "level": "low"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "notInZone"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-009",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "stormSurge": {
+    "kind": "notInZone"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-010",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-011",
+  "status": {
+   "flood": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "inZone",
+    "level": "low"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "moderate"
+   },
+   "liquefaction": {
+    "kind": "notInZone"
+   }
+  }
+ },
+ {
+  "id": "F-012",
+  "status": {
+   "flood": {
+    "kind": "notInZone"
+   },
+   "landslide": {
+    "kind": "notInZone"
+   },
+   "stormSurge": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "groundShaking": {
+    "kind": "inZone",
+    "level": "high"
+   },
+   "liquefaction": {
+    "kind": "inZone",
+    "level": "low"
+   }
+  }
+ }
+]

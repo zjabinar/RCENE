@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "04",
+  "slug": "04-bantay",
+  "title": "Bantay Barangay",
+  "tagline": "Explainable barangay risk dashboard",
+  "port": 5104,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/04-bantay",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

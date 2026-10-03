@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "11",
+  "slug": "11-bayanihan",
+  "title": "Bayanihan Budget",
+  "tagline": "Participatory budgeting with live results",
+  "port": 5111,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/11-bayanihan",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

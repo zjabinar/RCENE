@@ -11,8 +11,15 @@
       "Bash(pnpm test *)",
       "Bash(pnpm typecheck *)",
       "Bash(pnpm build *)",
-      "Bash(pnpm dev *)",
       "Bash(pnpm lint *)",
+      "Bash(pnpm smoke *)",
+      "Bash(pnpm new-app *)",
+      "Bash(pnpm sync-shared *)",
+      "Bash(pnpm sync-data *)",
+      "Bash(pnpm lockfiles *)",
+      "Bash(pnpm check-standalone *)",
+      "Bash(pnpm stack:check *)",
+      "Bash(pnpm data:fixtures *)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
@@ -22,7 +29,6 @@
       "Bash(git rev-parse *)",
       "Bash(git branch --show-current)",
       "Bash(node scripts/*)",
-      "Bash(node ../../scripts/*)",
       "Bash(ls *)",
       "PowerShell(pnpm install *)",
       "PowerShell(pnpm --filter *)",
@@ -30,8 +36,15 @@
       "PowerShell(pnpm test *)",
       "PowerShell(pnpm typecheck *)",
       "PowerShell(pnpm build *)",
-      "PowerShell(pnpm dev *)",
       "PowerShell(pnpm lint *)",
+      "PowerShell(pnpm smoke *)",
+      "PowerShell(pnpm new-app *)",
+      "PowerShell(pnpm sync-shared *)",
+      "PowerShell(pnpm sync-data *)",
+      "PowerShell(pnpm lockfiles *)",
+      "PowerShell(pnpm check-standalone *)",
+      "PowerShell(pnpm stack:check *)",
+      "PowerShell(pnpm data:fixtures *)",
       "PowerShell(git status *)",
       "PowerShell(git diff *)",
       "PowerShell(git log *)",
@@ -41,7 +54,6 @@
       "PowerShell(git rev-parse *)",
       "PowerShell(git branch --show-current)",
       "PowerShell(node scripts/*)",
-      "PowerShell(node ../../scripts/*)",
       "mcp__playwright__*"
     ],
     "deny": [
@@ -67,7 +79,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/scripts/hooks/session-context.mjs"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/scripts/hooks/session-context.mjs"
+            ],
             "timeout": 600,
             "statusMessage": "Loading RCENE project context"
           }
@@ -81,12 +95,16 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/scripts/hooks/guard.mjs"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/scripts/hooks/guard.mjs"
+            ],
             "timeout": 30
           }
         ]
       }
     ]
   },
-  "enabledMcpjsonServers": ["playwright"]
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
 }

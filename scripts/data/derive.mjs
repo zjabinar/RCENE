@@ -8,8 +8,11 @@
  *   derived/facility-hazard.json  three-state hazard status of every facility
  *
  * Usage:
- *   node scripts/data/derive.mjs              # reads and writes packages/data/files
- *   node scripts/data/derive.mjs --fixtures   # reads and writes packages/data/fixtures
+ *   node scripts/data/derive.mjs              # reads and writes data/files
+ *   node scripts/data/derive.mjs --fixtures   # reads and writes data/fixtures
+ *
+ * Apps get the result through `pnpm sync-data` (root data/ -> apps/<slug>/data/),
+ * which the orchestrator runs after merging.
  *
  * Levels can overlap in source layers, so a barangay's shares across levels can
  * sum to more than 1. Each share answers "how much of the barangay is inside a
@@ -19,11 +22,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as turf from "@turf/turf";
-// Single source of truth for hazards and levels (Node >= 22.18 strips the types).
-import { HAZARDS, LEVELS } from "../../packages/data/src/types.ts";
+// Single source of truth for hazards and levels: the template's copy of the shared
+// data module (Node >= 22.18 strips the types; its imports resolve from apps/_template).
+import { HAZARDS, LEVELS } from "../../apps/_template/rcene/data/types.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const dir = path.join(root, "packages/data", process.argv.includes("--fixtures") ? "fixtures" : "files");
+const dir = path.join(root, "data", process.argv.includes("--fixtures") ? "fixtures" : "files");
 const read = (file) => {
   const p = path.join(dir, file);
   return existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : null;

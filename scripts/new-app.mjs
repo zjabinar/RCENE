@@ -1,167 +1,196 @@
 #!/usr/bin/env node
 /**
- * Generates apps/<slug>/ from apps/_template for rows of docs/projects/projects.json.
+ * Generates self-contained apps/<slug>/ folders from apps/_template, one per
+ * app row of docs/projects/projects.json.
  *
- *   node scripts/new-app.mjs 01-ligtas            # one app
+ *   node scripts/new-app.mjs 01-ligtas            # one app (slug or id)
  *   node scripts/new-app.mjs --all                # every app row
- *   node scripts/new-app.mjs --all --force        # regenerate, even started apps (careful)
- *   node scripts/new-app.mjs --template           # only rewrite apps/_template/package.json
+ *   node scripts/new-app.mjs --all --force        # regenerate started apps too (careful)
+ *   node scripts/new-app.mjs --all --out /tmp/x   # write into another repo copy (e.g. a scratch clone)
  *
- * An app counts as "started" when its STATUS.md no longer says "Not started";
- * started apps are skipped unless --force is given. After generating, run
- * `pnpm install` so the lockfile picks up the new workspace package.
+ * For each app:
+ *   1. copies the template (no node_modules, dist, caches, downloaded models,
+ *      screenshots, local settings, lockfile or data/) and fills the
+ *      placeholders __ID__ __SLUG__ __TITLE__ __TAGLINE__ __PORT__ __BRIEF__
+ *      in every text file (__BRIEF__ becomes docs/brief.md);
+ *   2. writes project.json (the app's own metadata) and package.json (exact
+ *      versions from stack.json, the template's scripts, no packageManager);
+ *   3. writes docs/brief.md (the brief), docs/DISCLOSURE.md, docs/proposal.md
+ *      (its section of docs/PROPOSALS.md) and, for 01/03/05, docs/PRD.md;
+ *   4. mirrors root data/ into the app's data/ (scripts/sync-data.mjs);
+ *   5. copies the template's package-lock.json under the app's name, when the
+ *      template has one (scripts/lockfiles.mjs is the real tool);
+ *   6. writes .sync.json, the baseline scripts/sync-shared.mjs compares against.
  *
- * Placeholders replaced in every text file: __ID__ __SLUG__ __TITLE__
- * __TAGLINE__ __PORT__ __BRIEF__. Placeholders only ever sit inside strings or
- * prose, so apps/_template itself still typechecks and builds. The dev port is
- * not stamped into vite.config.ts: @rcene/config/vite reads it from projects.json.
+ * A started app (STATUS.md no longer says "Not started") is skipped unless
+ * --force. Regenerating keeps the app's node_modules/ and downloaded models/.
+ *
+ * Options:
+ *   --root <repo>  read the template, manifest, docs and data from this repo (default: this one)
+ *   --out <repo>   write apps/<slug> into this repo copy instead (default: --root)
+ *   --dry-run      list what would be generated, write nothing
  */
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import {
+  GENERATED_DOCS,
+  ROOT,
+  SYNC_FILE,
+  appPackageJson,
+  appRows,
+  cli,
+  contentHash,
+  desiredManagedFiles,
+  fillPlaceholders,
+  findApp,
+  generatedDocs,
+  isStarted,
+  isMain,
+  isText,
+  json,
+  packageManagedHash,
+  packageManagedKeys,
+  projectJson,
+  readJson,
+  readManifest,
+  rel,
+  repoPaths,
+  syncStateJson,
+  templateFiles,
+} from "./lib/apps.mjs";
+import { mirrorData } from "./lib/data.mjs";
+import { lockText, renameLock } from "./lib/lock.mjs";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const manifest = JSON.parse(readFileSync(path.join(root, "docs/projects/projects.json"), "utf8"));
-const templateDir = path.join(root, "apps/_template");
+const USAGE = `Usage: node scripts/new-app.mjs <slug|id>... | --all [--force] [--dry-run] [--root <repo>] [--out <repo>]`;
 
-const CORE = {
-  dependencies: [
-    "@gsap/react",
-    "@hookform/resolvers",
-    "@turf/turf",
-    "gsap",
-    "lucide-react",
-    "maplibre-gl",
-    "motion",
-    "react",
-    "react-dom",
-    "react-hook-form",
-    "react-map-gl",
-    "react-router",
-    "zod",
-    "zustand",
-  ],
-  workspace: ["@rcene/data", "@rcene/geo", "@rcene/i18n", "@rcene/map", "@rcene/store", "@rcene/ui"],
-  devDependencies: [
-    "@tailwindcss/vite",
-    "@types/geojson",
-    "@types/node",
-    "@types/react",
-    "@types/react-dom",
-    "@vitejs/plugin-react",
-    "jsdom",
-    "tailwindcss",
-    "typescript",
-    "vite",
-    "vitest",
-  ],
-  devWorkspace: ["@rcene/config"],
-};
+/** Template paths new-app never copies verbatim: generated per app, or owned by another tool. */
+function skipFromTemplate(file) {
+  return file === "project.json" || file === "package.json" || file.startsWith("data/") || GENERATED_DOCS.has(file);
+}
 
-const sorted = (obj) => Object.fromEntries(Object.entries(obj).sort(([a], [b]) => a.localeCompare(b)));
-
-function packageJson(project) {
-  const deps = {};
-  const devDeps = {};
-  for (const name of CORE.dependencies) deps[name] = "catalog:";
-  for (const name of CORE.workspace) deps[name] = "workspace:*";
-  for (const name of CORE.devDependencies) devDeps[name] = "catalog:";
-  for (const name of CORE.devWorkspace) devDeps[name] = "workspace:*";
-  for (const extra of project.extras ?? []) {
-    const spec = manifest.extras[extra];
-    if (!spec) throw new Error(`Unknown extra "${extra}" for ${project.slug}`);
-    for (const name of spec.dependencies ?? []) deps[name] = "catalog:";
-    for (const name of spec.devDependencies ?? []) devDeps[name] = "catalog:";
+/** Keeps node_modules and downloaded models; removes everything else in the app folder. */
+function clearApp(dir) {
+  for (const entry of readdirSync(dir)) {
+    if (entry === "node_modules") continue;
+    if (entry === "models") continue; // large downloads (gitignored); models/.gitkeep is rewritten below
+    rmSync(path.join(dir, entry), { recursive: true, force: true });
   }
-  return {
-    name: `@rcene/${project.slug}`,
-    private: true,
-    version: "0.0.0",
-    type: "module",
-    description: project.tagline,
-    scripts: {
-      dev: "vite",
-      build: "tsc -b && vite build",
-      typecheck: "tsc -b",
-      preview: "vite preview",
-      test: "vitest run",
+}
+
+function writeFile(dir, file, data) {
+  const abs = path.join(dir, ...file.split("/"));
+  mkdirSync(path.dirname(abs), { recursive: true });
+  writeFileSync(abs, data);
+}
+
+export function generate(row, { srcRoot, outRoot, force = false, dryRun = false, log = console.log }) {
+  const src = repoPaths(srcRoot);
+  const dir = path.join(repoPaths(outRoot).apps, row.slug);
+  const existed = existsSync(dir);
+  if (existed && isStarted(dir) && !force) {
+    log(`skip   ${row.slug}  (started: STATUS.md no longer says "Not started"; --force overwrites)`);
+    return "skipped";
+  }
+  // Placeholders land inside "..." in TS and HTML attributes: refuse values that would break them.
+  for (const key of ["title", "tagline"]) {
+    if (/["\\`<>&]/.test(String(row[key] ?? ""))) throw new Error(`${key} "${row[key]}" contains one of " \\ \` < > & (it is pasted into TS strings and HTML)`);
+  }
+  const files = templateFiles(srcRoot).filter((f) => !skipFromTemplate(f));
+  const docs = generatedDocs(srcRoot, row);
+  if (dryRun) {
+    log(`would  ${row.slug}  (${files.length} template files, ${docs.size} docs, port ${row.port}${existed ? ", replacing the existing folder" : ""})`);
+    return "dry-run";
+  }
+
+  if (existed) clearApp(dir);
+  mkdirSync(dir, { recursive: true });
+
+  for (const file of files) {
+    let buf = readFileSync(path.join(src.template, ...file.split("/")));
+    if (isText(file, buf)) buf = Buffer.from(fillPlaceholders(buf.toString("utf8"), row), "utf8");
+    writeFile(dir, file, buf);
+  }
+  const pkg = appPackageJson(row, srcRoot);
+  writeFile(dir, "project.json", json(projectJson(row, srcRoot)));
+  writeFile(dir, "package.json", json(pkg));
+  for (const [file, text] of docs) writeFile(dir, file, text);
+
+  const data = mirrorData(srcRoot, dir);
+
+  const templateLock = path.join(src.template, "package-lock.json");
+  let lockNote = "no template lock yet: run node scripts/lockfiles.mjs";
+  if (existsSync(templateLock)) {
+    writeFile(dir, "package-lock.json", lockText(renameLock(readJson(templateLock), pkg.name)));
+    lockNote = "lock copied from the template";
+  }
+
+  // Baseline for sync-shared: the hash of every managed file exactly as written here.
+  const baseline = {};
+  let packageKeys = null;
+  for (const [file, want] of desiredManagedFiles(srcRoot, row)) {
+    if (want.packageJson) {
+      baseline[file] = packageManagedHash(pkg, want.managed);
+      packageKeys = packageManagedKeys(want.managed);
+    } else if (existsSync(path.join(dir, ...file.split("/")))) baseline[file] = contentHash(file, readFileSync(path.join(dir, ...file.split("/"))));
+  }
+  writeFile(dir, SYNC_FILE, syncStateJson(baseline, packageKeys));
+
+  log(
+    `wrote  ${rel(outRoot, dir)}  (port ${row.port}${row.ai ? ", AI" : ""}; ${files.length} template files, ${docs.size} docs, data ${data.files} files; ${lockNote})`,
+  );
+  return "written";
+}
+
+function main() {
+  const { values, positionals } = cli(
+    process.argv.slice(2),
+    {
+      all: { type: "boolean" },
+      force: { type: "boolean" },
+      "dry-run": { type: "boolean" },
+      root: { type: "string" },
+      out: { type: "string" },
     },
-    dependencies: sorted(deps),
-    devDependencies: sorted(devDeps),
-  };
-}
-
-function walkFiles(dir) {
-  const out = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const abs = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === "dist") continue;
-      out.push(...walkFiles(abs));
-    } else out.push(abs);
-  }
-  return out;
-}
-
-const TEXT = /\.(tsx?|jsx?|mjs|json|md|html|css|svg|txt)$/;
-
-function fill(text, project) {
-  return text
-    .replaceAll("__ID__", project.id)
-    .replaceAll("__SLUG__", project.slug)
-    .replaceAll("__TITLE__", project.title)
-    .replaceAll("__TAGLINE__", project.tagline)
-    .replaceAll("__PORT__", String(project.port))
-    .replaceAll("__BRIEF__", project.brief);
-}
-
-function isStarted(appDir) {
-  const status = path.join(appDir, "STATUS.md");
-  return existsSync(status) && !readFileSync(status, "utf8").includes("Not started");
-}
-
-function generate(project, force) {
-  const appDir = path.join(root, project.app);
-  if (existsSync(appDir) && isStarted(appDir) && !force) {
-    console.log(`skip ${project.slug} (started; use --force to overwrite)`);
-    return;
-  }
-  if (existsSync(appDir)) {
-    // Keep node_modules (pnpm links) so a regenerate doesn't force a reinstall.
-    for (const entry of readdirSync(appDir)) {
-      if (entry !== "node_modules") rmSync(path.join(appDir, entry), { recursive: true, force: true });
+    USAGE,
+  );
+  const srcRoot = path.resolve(values.root ?? ROOT);
+  const outRoot = path.resolve(values.out ?? srcRoot);
+  const manifest = readManifest(srcRoot);
+  let rows;
+  if (values.all) rows = appRows(manifest);
+  else {
+    rows = [];
+    for (const key of positionals) {
+      const row = findApp(manifest, key);
+      if (!row) {
+        console.error(`No app "${key}" in docs/projects/projects.json.\n${USAGE}`);
+        process.exit(2);
+      }
+      if (!rows.includes(row)) rows.push(row);
     }
   }
-  cpSync(templateDir, appDir, {
-    recursive: true,
-    filter: (src) => !/[\\/](node_modules|dist)([\\/]|$)/.test(src),
-  });
-  for (const file of walkFiles(appDir)) {
-    if (!TEXT.test(file) || statSync(file).size > 512_000) continue;
-    const before = readFileSync(file, "utf8");
-    const after = fill(before, project);
-    if (after !== before) writeFileSync(file, after);
+  if (rows.length === 0) {
+    console.error(USAGE);
+    process.exit(2);
   }
-  writeFileSync(path.join(appDir, "package.json"), JSON.stringify(packageJson(project), null, 2) + "\n");
-  const extras = project.extras?.length ? `, extras: ${project.extras.join(", ")}` : "";
-  console.log(`wrote ${project.app} (port ${project.port}${extras})`);
-}
-
-const args = process.argv.slice(2);
-const force = args.includes("--force");
-const apps = manifest.projects.filter((p) => p.kind === "app");
-
-if (args.includes("--template")) {
-  const template = { id: "00", slug: "template", title: "RCENE template", tagline: "Generic app template", port: 5100, extras: [] };
-  const pkg = packageJson(template);
-  writeFileSync(path.join(templateDir, "package.json"), JSON.stringify(pkg, null, 2) + "\n");
-  console.log("wrote apps/_template/package.json");
-} else {
-  const wanted = args.includes("--all") ? apps : apps.filter((p) => args.includes(p.slug) || args.includes(p.id));
-  if (wanted.length === 0) {
-    console.error("Usage: node scripts/new-app.mjs <slug|id>... | --all [--force] | --template");
+  if (!existsSync(path.join(repoPaths(srcRoot).template, "package.json"))) {
+    console.error(`No template at ${repoPaths(srcRoot).template}`);
     process.exit(1);
   }
-  for (const project of wanted) generate(project, force);
-  console.log("Next: pnpm install");
+  const counts = { written: 0, skipped: 0, "dry-run": 0, failed: 0 };
+  for (const row of rows) {
+    try {
+      counts[generate(row, { srcRoot, outRoot, force: values.force, dryRun: values["dry-run"] })]++;
+    } catch (err) {
+      counts.failed++;
+      console.error(`FAIL   ${row.slug}: ${err.message}`);
+    }
+  }
+  console.log(`\n${counts.written} written, ${counts.skipped} skipped (started), ${counts.failed} failed${values["dry-run"] ? `, ${counts["dry-run"]} planned (dry run)` : ""}.`);
+  if (counts.written) {
+    console.log("Next: pnpm install (workspace links), node scripts/lockfiles.mjs (if no lock was copied), node scripts/check-standalone.mjs --all");
+  }
+  if (counts.failed) process.exit(1);
 }
+
+if (isMain(import.meta.url)) main();

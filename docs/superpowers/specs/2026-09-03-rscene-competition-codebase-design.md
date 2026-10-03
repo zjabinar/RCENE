@@ -7,6 +7,7 @@
 - **Status:** Approved; implemented 2026-10-03 as a pnpm monorepo (see the revision notes and `docs/PARALLEL.md`)
 - **Revised:** 2026-10-02 — §4 stack updated after the proposal review (see `docs/PROPOSALS.md`)
 - **Revised:** 2026-10-03 — pre-build decision: all 20 single-feature proposals are built before the event, one is continued on the day (`docs/PRD.md` §11, `docs/DISCLOSURE.md`). §1–§8 updated for the pnpm monorepo and the parallel build.
+- **Revised:** 2026-10-03 (later) — every app is **self-contained**: `packages/` was folded into each app's own `rcene/` copy (reference copy: `apps/_template`), data moved to root `data/` and is synced into each app, and each app carries its own `package.json` (full stack, exact pins from `stack.json`), `package-lock.json`, Claude setup and scripts. A copied app folder runs with `npm ci`. Where this document still says `packages/…`, read `apps/<slug>/rcene/…`; the layout below is current.
 
 ## 1. Context
 
@@ -50,7 +51,7 @@ The official competition site returned HTTP 403 and could not be retrieved. All 
 
 ### Non-goals
 
-- No feature code in the shared layer. `packages/*` and `apps/_template` stay generic: shared contracts and helpers, no project's features. Feature code lives only in `apps/NN-slug/`, pre-built before the event by the 2026-10-03 decision and disclosed (`docs/DISCLOSURE.md`). If the organizers disallow pre-built code, the entry starts from the shared layer alone.
+- No feature code in the shared layer. `apps/_template` (with its `rcene/` shared code) stays generic: shared contracts and helpers, no project's features. Feature code lives only in `apps/NN-slug/`, pre-built before the event by the 2026-10-03 decision and disclosed (`docs/DISCLOSURE.md`). If the organizers disallow pre-built code, the entry starts from the shared layer alone.
 - No deployment configuration. The demo is local.
 - No runtime AI integration, no API keys, no server routes.
 - No backend or database. State is client-side.
@@ -61,25 +62,21 @@ The official competition site returned HTTP 403 and could not be retrieved. All 
 C:\RSCENE\
 ├─ CLAUDE.md              Scaffold inventory and rules of engagement
 ├─ README.md              What this repo is, quick start, the 20 apps
-├─ package.json           Root scripts: typecheck, test, build, smoke
-├─ pnpm-workspace.yaml    Workspace and catalog (every version pinned here)
+├─ package.json           Root scripts: typecheck, test, build, smoke, new-app, sync-shared, sync-data, lockfiles, check-standalone
+├─ stack.json             Single exact-version table for every app (full stack) and the root tools
+├─ pnpm-workspace.yaml    Workspace (apps/* only) for daily development
 ├─ .gitignore
 ├─ .claude/
-│  ├─ settings.json       Hooks (write scope, path guards) and env
-│  └─ skills/             Project skills (gsap-motion, r3f-scenes, …)
+│  ├─ settings.json       Orchestrator and 00-data session hooks (path guards, write scope)
+│  └─ skills/             geo-data-prep only (app skills live inside each app)
+├─ data/                  Canonical data: files/ (real, from the 00-data session), fixtures/ (fake); synced into each app
 ├─ apps/
-│  ├─ _template/          Generic starter, port 5100, no project feature code
-│  └─ NN-slug/            20 single-feature apps, ports 5101–5120
-│                         (each with AI-LOG.md, STATUS.md, NOTES.md, DEMO.md)
-├─ packages/
-│  ├─ config/             Shared Vite/TS config; serves /data/
-│  ├─ data/               Data contracts and loaders; files/ (real), fixtures/ (fake)
-│  ├─ geo/                Pure geometry: lookupHazards, nearest, …
-│  ├─ store/              createSyncedStore: Zustand + localStorage, cross-window
-│  ├─ i18n/               EN / Waray / Filipino strings and useLang
-│  ├─ ui/                 shadcn/ui components, app shell, motion
-│  └─ map/                MapLibre components
-├─ scripts/               new-app, launch-worktrees.ps1, smoke, data/, hooks/
+│  ├─ _template/          Reference app, port 5100, no project feature code; source of the shared code
+│  └─ NN-slug/            20 self-contained apps, ports 5101–5120. Each holds: package.json + package-lock.json,
+│                         project.json, rcene/ (own copy of the shared code), data/, models/ (gitignored),
+│                         scripts/ (smoke, fetch-models, hooks), .claude/ (settings, skills), .mcp.json,
+│                         CLAUDE.md, docs/brief.md, AI-LOG.md, STATUS.md, NOTES.md, DEMO.md
+├─ scripts/               new-app, sync-shared, sync-data, lockfiles, check-standalone, stack, launch-worktrees.ps1, smoke and fetch-models wrappers, data/, hooks/
 ├─ docs/
 │  ├─ PRD.md              Andam Catbalogan requirements
 │  ├─ PROPOSALS.md        The 30 proposals and the decisions log
@@ -96,7 +93,7 @@ C:\RSCENE\
 └─ assets/event/          Event images
 ```
 
-The single `app/` of the first design is replaced by a pnpm workspace: one folder per app, sharing the packages above. Pre-event build work happens in git worktrees on `proj/NN-slug` branches, one per app (`docs/PARALLEL.md`).
+The single `app/` of the first design is replaced by a pnpm workspace of self-contained apps: each app folder can be copied out and run alone (`npm ci`). Pre-event build work happens in git worktrees on `proj/NN-slug` branches, one per app (`docs/PARALLEL.md`).
 
 The ECC clone is no longer in the repository. A local copy, if kept, lives in `reference/` and is gitignored. It is 108 MB of reading material and is not part of the project; the installed plugin operates from its own cache at `~/.claude/plugins/marketplaces/ecc/` and does not depend on this clone.
 
@@ -154,9 +151,9 @@ A fat scaffold is a liability if it must be rediscovered or if unused parts ling
 
 ### 4.4 Data
 
-All apps share one data foundation. The **Andam Catbalogan** PRD (platform P1), `docs/PRD.md` §8, is the source of truth for which layers ship in `packages/data/files/`, their sources, and the data rules. The foundation is Catbalogan barangays, hazard layers and critical facilities.
+All apps share one data foundation. The **Andam Catbalogan** PRD (platform P1), `docs/PRD.md` §8, is the source of truth for which layers ship in `data/files/`, their sources, and the data rules. The foundation is Catbalogan barangays, hazard layers and critical facilities.
 
-Apps fetch `/data/<file>`. `@rcene/config` serves `packages/data/files/` (real data) first and falls back, file by file, to the fake fixtures committed in `packages/data/fixtures/`, so every app runs before the real data lands and shows a "Sample data" badge while it does.
+Apps fetch `/data/<file>`. Each app's `rcene/config` serves its `data/files/` (real data) first and falls back, file by file, to the fake fixtures in `data/fixtures/` (both synced from root `data/`), so every app runs before the real data lands and shows a "Sample data" badge while it does.
 
 Conversion happens before the event, never during the four hours, in the local data session (batch B0, `docs/projects/00-data.md`) on the user's PC: `mapshaper` (via `npx`) simplifies the unsimplified NOAH/NAMRIA GeoJSON and reprojects the UTM 51N CPDCO shapefiles to WGS84. Source data is read from `D:\lgu_portal - GIS`. Nothing is copied from `C:\lgu_portal`, which holds credential files.
 
@@ -224,4 +221,4 @@ A scaffold that does not build on the day is worse than no scaffold. These check
 | Scaffold modules unused and in the way | Strip step at T+0:20: delete the chosen app's unneeded routes |
 | ECC hooks slow work under time pressure | `ECC_GATEGUARD=off` in `.claude/settings.json`; documented switch to minimal profile |
 | Dependency rot between now and October | Majors pinned in the pnpm catalog; re-run verification criteria before the event |
-| Pre-built code ruled out or marked down | Organizers asked by Oct 4; `pre-event-freeze` tag; open disclosure; fallback to `apps/_template` + `packages/*` (`docs/PRD.md` §11) |
+| Pre-built code ruled out or marked down | Organizers asked by Oct 4; `pre-event-freeze` tag; open disclosure; fallback to `apps/_template` (`docs/PRD.md` §11) |

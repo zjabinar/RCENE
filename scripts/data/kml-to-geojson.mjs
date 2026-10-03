@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Converts a KML or KMZ file of heritage / eco-tourism placemarks into the
- * heritage.geojson shape (HeritageProps in packages/data/src/types.ts):
+ * heritage.geojson shape (HeritageProps in apps/_template/rcene/data/types.ts):
  *
  *   FeatureCollection<Point, { id, name, category, description? }>
  *
@@ -23,8 +23,8 @@
  *   --no-description      drop descriptions (use when they hold names or phone numbers of people)
  *
  * Example (PowerShell, from the repo root):
- *   node scripts/data/kml-to-geojson.mjs "$GIS\...\heritage.kmz" packages/data/files/heritage.geojson --id-prefix H-
- *   node scripts/data/kml-to-geojson.mjs "$GIS\...\ecotourism.kml" packages/data/files/heritage.geojson --id-prefix H- --category eco-tourism --append
+ *   node scripts/data/kml-to-geojson.mjs "$GIS\...\heritage.kmz" data/files/heritage.geojson --id-prefix H-
+ *   node scripts/data/kml-to-geojson.mjs "$GIS\...\ecotourism.kml" data/files/heritage.geojson --id-prefix H- --category eco-tourism --append
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";

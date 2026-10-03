@@ -1,85 +1,69 @@
-# RCENE — 20 civic apps for Catbalogan City (RSCENE 2026 AI Vibe Coding Challenge, Oct 7)
+# RCENE monorepo — orchestrator notes
 
-pnpm monorepo. 20 pre-built React apps (one per proposal in `docs/PROPOSALS.md`) share seven packages. On Oct 7 one app is picked and continued for 4 hours. The demo runs **offline** (Wi-Fi off), with **no server and no runtime AI API**.
+> **If your working directory is `apps/<slug>` (or a copied app folder), ignore this file and follow that folder's `CLAUDE.md`.** Everything below is for the orchestrator on `main` and for the 00-data session, both at the repo root.
+
+20 pre-built React apps for Catbalogan City (RSCENE 2026 AI Vibe Coding Challenge, Oct 7). On the day one app is picked and continued for 4 hours; the demo runs **offline**, with no server and no runtime AI API. Every `apps/NN-slug/` is a **self-contained project** (own `package.json` and lockfile, its own copy of the shared code in `rcene/`, its own `data/`, `CLAUDE.md`, skills, hooks and smoke test), so it can be copied out and run with `npm ci`. There is no root `packages/` folder.
 
 ## Repo map
 
 | Path | What |
 |---|---|
-| `apps/NN-slug/` | One app per proposal (ports 5101–5120; preview = port + 1000). `apps/_template/` is the generator source |
-| `packages/data` | Types (`Hazard`, `Level`, `HazardStatus`), layer loaders (`useLayer`, `useZones`), `createRng`, fixtures, real data in `files/` |
-| `packages/geo` | `lookupHazards` (three states), `nearest`, `barangayAt`, `randomPointsIn` |
-| `packages/store` | `createSyncedStore` — persisted Zustand, synced across windows |
-| `packages/i18n` | `en`/`war`/`fil` tables, `useT`, `useLang`, `useFormat` |
-| `packages/ui` | Tailwind v4 theme, shadcn primitives (`@rcene/ui/components/<name>`), `AppShell`, `LoadGate`, `HazardStatusList`, `StatTile`, `SourcesPage`; motion at `@rcene/ui/motion` |
-| `packages/map` | Offline `BaseMap`, `ZoneLayer`, `PointLayer`, `Legend`, `useFlyTo` |
-| `packages/config` | tsconfig bases, `rceneApp()` Vite preset, `/data/` static plugin |
-| `docs/projects/` | `projects.json` (manifest) and one brief per project — **the brief is the spec** |
-| `scripts/` | `launch-worktrees.ps1`, `smoke.mjs`, `new-app.mjs`, `data/*`, `hooks/*` |
+| `apps/_template/` | The reference app: generator source, and the reference copy of the shared code (`rcene/`), app skills (`.claude/skills/`), hooks, scripts and app docs. Port 5100 |
+| `apps/NN-slug/` | One app per proposal (ports 5101–5120; preview = port + 1000), generated from the template |
+| `data/` | Canonical data: `files/` (real, from the 00-data session), `fixtures/` (fake), `README.md` (catalogue). Apps get a copy via `pnpm sync-data` |
+| `docs/projects/` | `projects.json` (manifest) and one brief per project; each brief is copied into its app as `docs/brief.md` |
+| `docs/` | `PRD.md`, `PROPOSALS.md`, `PARALLEL.md` (the build how-to), `SKILLS.md`, `DISCLOSURE.md` |
+| `scripts/` | Root tooling (below), `launch-worktrees.ps1`, `data/*` (data tools), `hooks/*` (root sessions) |
+| `stack.json` | The exact version table every app's `package.json` is generated from |
+| `.claude/` | Root settings (they do **not** apply inside an app folder) and the root-only skill `geo-data-prep` |
 
-Every package has a README with its API. Read the README, not the source.
+## Tooling (repo root)
 
-## Commands
+| Command | Does |
+|---|---|
+| `pnpm install` | Once per checkout or worktree: one install for every app |
+| `pnpm --filter @rcene/<slug> dev` | Run one app (or `pnpm dev` inside its folder); the template is `@rcene/template` |
+| `pnpm test` · `pnpm typecheck` · `pnpm build` | Whole repo |
+| `pnpm new-app <slug>` | Generate `apps/<slug>` from the template and its `projects.json` row (`--all`, `--dry-run`; started apps only with `--force`) |
+| `pnpm sync-shared --all` | Three-way push of the template's shared code, scripts, skills, config and docs (briefs included) into the apps. Files an app changed are skipped and reported unless `--force`; started apps only when named or with `--include-started`; `--dry-run`, `--only rcene,docs,…` |
+| `pnpm sync-data` | Mirror root `data/` into every app's `data/` (started apps included) |
+| `pnpm lockfiles` | Regenerate each app's `package-lock.json` (for standalone `npm ci`) |
+| `pnpm check-standalone --all` | Check that no app references anything outside its folder; `--install <slug>` copies the app to a temp folder and runs `npm ci`, typecheck, test, build and smoke there |
+| `pnpm stack:check` | Every app's versions against `stack.json` (`node scripts/stack.mjs --write` fixes them) |
+| `node scripts/smoke.mjs --app <slug>` | Wrapper over the app's own `npm run smoke` (`--app template`, `--all`; other flags pass through) |
+| `node scripts/fetch-models.mjs --app <slug>` | Fill an AI app's `models/` through a shared download cache (06, 10, 20) |
 
-```bash
-pnpm install                                  # once per worktree
-pnpm --filter @rcene/01-ligtas dev            # or `pnpm dev` inside the app folder
-pnpm test | pnpm typecheck | pnpm build       # whole repo (in an app folder: that app only)
-node scripts/smoke.mjs --app 01-ligtas        # definition-of-done gate: offline, console, axe, screenshots
+## The 00-data session
+
+Runs **at the repo root** (its own worktree, branch `proj/00-data`), only on the user's PC, where the GIS archive is. Brief `docs/projects/00-data.md`, skill `geo-data-prep`. Write scope: `data/**` and `scripts/data/**`. It commits the root `data/files/` only; after the merge, run `pnpm sync-data` on main and commit the app copies. Never read `D:\monica`; never copy from `C:\lgu_portal`.
+
+## Batches
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Batch 1 -DryRun   # look first
+powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Batch 1
+powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Status
 ```
 
-## Session protocol (on a `proj/NN-slug` branch)
+Each session starts **inside** `<worktree>\apps\<slug>` with that app's `CLAUDE.md`, settings (guard hooks), skills and Playwright MCP, exactly as a copied folder would on Oct 7. `-Resume` reopens a session, `-Remove` drops a worktree (keep the branch). Details: `docs/PARALLEL.md`.
 
-The SessionStart hook tells you your project, brief, app folder, port and current `STATUS.md`.
+## Review and merge (main checkout)
 
-1. **Read your brief** (`docs/projects/NN-slug.md`) and the READMEs of the packages it names. If `STATUS.md` shows earlier progress, continue from there.
-2. **Plan:** write `apps/NN-slug/docs/plan.md` (requirements → files → tests), then start. Don't wait for approval.
-3. **Domain first, test-first:** pure functions in `src/domain/` with `*.test.ts` beside them (`pnpm test`).
-4. **Build requirement by requirement, in the brief's order.** After each one: typecheck, test, commit (`feat(NN): R1.2 nearest eligible center`), add a row to `AI-LOG.md`, update `STATUS.md`. The first requirement alone must be a finished app.
-5. **Verify in a browser:** start `pnpm dev` in the background and use the Playwright MCP tools to click through the golden path at 390 px and 1280 px. Fix what you see.
-6. **Polish:** empty/loading/error states, motion (`gsap-motion`), accessibility (keyboard path, contrast, reduced motion), copy in all three languages.
-7. **Gate:** `node ../../scripts/smoke.mjs --app NN-slug` must pass. Write `DEMO.md` (golden path ≤ 2 min) and set `STATUS.md` to `Phase: done`. Then **stop**.
+1. `git switch proj/NN-slug`, then `/code-review` and `node scripts/smoke.mjs --app NN-slug`; look at `apps/NN-slug/docs/screenshots/`.
+2. Read the app's `NOTES.md`: "Shared-code changes (for the template)", "Requests for the data session", "Dependencies added", decisions.
+3. `git switch main`, `git merge --no-ff proj/NN-slug`. If `pnpm-lock.yaml` conflicts, run `pnpm install` and commit.
 
-## Rules
+## Package window (on main, between batches)
 
-- **Write only inside your app folder.** The guard hook blocks edits elsewhere. `packages/*` and `docs/` are frozen during a batch: put requests (new layer, new component, a bug in a package) in your app's `NOTES.md`, and work around them locally meanwhile.
-- **No git push, merge, rebase, reset --hard, worktree or branch switching.** Commit only. The human reviews and merges.
-- **Dependencies:** use what your `package.json` already has. If you truly need another catalog package, run `pnpm --filter @rcene/NN-slug add <pkg>` (catalog versions only) and justify it in `NOTES.md`. Never upgrade majors.
-- **Data:** read layers through `@rcene/data`. Never read `D:\monica` or `C:\lgu_portal`. Synthetic records use codes (`HH-0001`, `T-042`), **never personal names**. Seed all randomness (`createRng(seed)`) so demos repeat.
-- **Hazard answers have three states:** in a mapped zone (with level), not in a mapped zone, outside data coverage. **Never display "safe"**, in any language. Distances are straight-line and labelled so. OSM-derived evacuation sites are "Candidate — not verified by CDRRMO".
-- **Every UI string goes through `src/i18n/strings.ts`** (`extendStrings(common, {en, war, fil})`). Draft Waray and Filipino, and list AI-drafted strings in `NOTES.md` under "Translations to review".
-- **Offline:** no CDN fonts, scripts or tiles by default. The online OSM basemap is an opt-in toggle only.
-- **Accessibility:** color + icon + text label, never color alone. Every action works by keyboard. Respect `prefers-reduced-motion`. WCAG AA contrast.
-- **Credit sources** on `/sources` (`SourcesPage`). The disclaimer footer comes with `AppShell`.
+1. Apply what the apps asked for **in the template**: `apps/_template/rcene/**`, its skills, scripts or docs. Carry back good shared-code changes from merged apps.
+2. Check the template: `pnpm --filter @rcene/template test`, `typecheck`, `smoke`.
+3. `pnpm sync-shared --all --dry-run`, then without `--dry-run` (name apps or add `--include-started` for apps already in progress; review the conflicts it reports).
+4. `pnpm sync-data` if `data/` changed; `pnpm lockfiles` and `pnpm stack:check` if versions changed (edit `stack.json` first).
+5. `pnpm check-standalone --all`, then `pnpm test; pnpm typecheck; pnpm build`, and commit. Later batches start from the updated main.
 
-## Autonomy (overrides plugin workflows such as Superpowers)
+## Rules at the root
 
-- The brief is the approved design. **Skip brainstorming and clarifying questions.** Make reasonable choices and record them in `NOTES.md` under "Decisions".
-- You are already in an isolated worktree. Don't create another one.
-- Don't run branch-finishing, merge or PR flows. Stop when the definition of done is met.
-- Keep plans and notes in `apps/NN-slug/docs/`, not in the repo-level `docs/`.
-- Prefer working inline over spawning many subagents. Five sessions share one usage budget.
-
-## Code conventions
-
-- TypeScript 6 strict with `erasableSyntaxOnly`: no `enum`, no parameter properties, no namespaces. Use `import type` for types. Include the `.ts`/`.tsx` extension on relative imports.
-- React 19, function components, `react-router` **7** (`import … from "react-router"`, `createBrowserRouter`). Export the route table from `src/routes.tsx` so a platform can mount it later.
-- Pinned majors (in the pnpm catalog): motion 12 (`motion/react`), TanStack Table 8, vitest 4, lucide-react 0.577, maplibre-gl 6 (expressions only, e.g. `["get","level"]`), zod 4, Tailwind 4 (CSS-first, no config file).
-- In apps, `@/` maps to `src/`. Shared primitives come from `@rcene/ui/components/<name>`; app-only shadcn components go in `src/components/ui/`.
-- Stores: `createSyncedStore("NN-slug:<name>", …)`. Persist state only, never layers.
-
-## Skills
-
-| Task | Skill |
-|---|---|
-| Any map or GeoJSON code | `maplibre-gis` |
-| Motion, count-ups, scroll stories | `gsap-motion` (imports from `@rcene/ui/motion`) |
-| 3D (02, 17 only) | `r3f-scenes` |
-| In-browser AI (06, 10, 20) | `offline-ai` |
-| Charts and dashboards | `dataviz` |
-| Converting GIS data (00-data only) | `geo-data-prep` |
-| UI direction, critique, copy, accessibility | `frontend-design`, Design plugin (`design-critique`, `ux-copy`, `accessibility-review`) |
-
-## On `main` (orchestrator mode)
-
-Launch batches with `powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Batch 1`, and monitor with `-Status`. Review each branch (`/code-review`, smoke test), merge with `git merge --no-ff proj/NN-slug`, and apply `NOTES.md` package requests between batches. See `docs/PARALLEL.md` and `docs/SKILLS.md`.
+- Never read `D:\monica`. Never copy from `C:\lgu_portal`. Keep the repo private (permission-tier data in `data/files/`).
+- Apps never import from outside their folder. Shared code changes go to the template first, then `pnpm sync-shared`.
+- Briefs are the spec: edit `docs/projects/*.md`, then `pnpm sync-shared <slug> --only docs` (`docs/brief.md` is read-only in an app session).
+- Before the event: `pnpm check-standalone --install <slug>` for the shortlist, smoke every shortlisted app with Wi-Fi off, then tag `pre-event-freeze` (see `docs/PARALLEL.md` and `docs/DISCLOSURE.md`).

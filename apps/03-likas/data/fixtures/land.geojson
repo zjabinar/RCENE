@@ -1,0 +1,43 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample land (fixture)",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.84,
+       11.65
+      ],
+      [
+       125.1,
+       11.65
+      ],
+      [
+       125.1,
+       11.95
+      ],
+      [
+       124.86,
+       11.95
+      ],
+      [
+       124.83,
+       11.8
+      ],
+      [
+       124.84,
+       11.65
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

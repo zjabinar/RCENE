@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "12",
+  "slug": "12-proyekto",
+  "title": "Proyekto Watch",
+  "tagline": "Infrastructure project tracker",
+  "port": 5112,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/12-proyekto",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

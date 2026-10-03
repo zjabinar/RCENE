@@ -6,11 +6,17 @@
 .DESCRIPTION
   Reads docs\projects\projects.json (the manifest). For each selected project
   it creates or reuses the worktree <WorktreeRoot>\<slug> on branch
-  proj/<slug> (created from the local Base branch), runs pnpm install in it
-  (one worktree at a time), then opens a Windows Terminal tab that starts
-  claude with the project prompt. The SessionStart hook in the worktree tells
-  the session which project it is building; the PreToolUse guard keeps it
-  inside its write scope.
+  proj/<slug> (created from the local Base branch), runs pnpm install at the
+  worktree root (one worktree at a time), then opens a Windows Terminal tab
+  that starts claude with the project prompt.
+
+  App sessions start INSIDE the app folder, <worktree>\apps\<slug>: every app
+  is a self-contained project with its own CLAUDE.md, .claude\settings.json
+  (hooks, permissions, plugins), skills, .mcp.json and docs\brief.md, so the
+  session sees exactly what the copied folder will have on the day. The data
+  session (00-data, no app folder) starts at the worktree root and uses the
+  root hooks. In both cases the SessionStart hook tells the session which
+  project it is building and the PreToolUse guard keeps it in its write scope.
 
   Works in Windows PowerShell 5.1 (powershell.exe) and PowerShell 7 (pwsh).
   When run with -File, pass one value per array parameter (-Batch 1) or a
@@ -43,7 +49,9 @@
   Skip pnpm install in the worktrees.
 
 .PARAMETER Resume
-  Open each existing worktree with claude --continue instead of a new prompt.
+  Open each existing worktree with claude --continue instead of a new prompt,
+  from the same folder the session was started in (the app folder, or the
+  worktree root for 00-data), so it picks up that conversation.
 
 .PARAMETER Status
   Print progress for the selected projects (all when none selected) and exit.
@@ -224,9 +232,23 @@ function Get-WorktreePath($Row) {
   return [System.IO.Path]::Combine($WorktreeRoot, [string]$Row.slug)
 }
 
+# Where the session starts: the app folder for app rows, the worktree root otherwise.
+function Get-SessionPath($Row, [string]$Worktree) {
+  if ($Row.app) {
+    $parts = @($Worktree) + @(([string]$Row.app) -split '[\\/]' | Where-Object { $_ })
+    $p = $parts[0]
+    for ($k = 1; $k -lt $parts.Count; $k++) { $p = [System.IO.Path]::Combine($p, $parts[$k]) }
+    return $p
+  }
+  return $Worktree
+}
+
 function Get-LaunchPrompt($Row) {
   # No double quotes, %, &, | or ^: the prompt travels through several shells.
-  return "Begin project $($Row.slug) per the SessionStart context and its brief $($Row.brief). Follow the session protocol in CLAUDE.md."
+  if ($Row.app) {
+    return "Begin project $($Row.slug). Read docs/brief.md and follow CLAUDE.md in this folder."
+  }
+  return "Begin project $($Row.slug). Read $($Row.brief) and follow CLAUDE.md in this folder."
 }
 
 function Get-TabScript($Row, [string]$Path, [bool]$Continue) {
@@ -271,13 +293,43 @@ function Open-SessionTab($Row, [string]$Path, [bool]$Continue) {
   return $true
 }
 
+# Warns (never fails) when the plugins the app settings enable are not installed.
+function Test-ClaudePlugins {
+  $ErrorActionPreference = "Continue"
+  $listed = ""
+  try {
+    $listed = (& claude plugin list 2>&1 | Out-String)
+  } catch {
+    $listed = ""
+  }
+  $missingPlugins = @()
+  foreach ($name in @("frontend-design", "design", "superpowers")) {
+    $pattern = '(^|[^A-Za-z0-9-])' + [regex]::Escape($name) + '($|[^A-Za-z0-9-])'
+    if ($listed -notmatch $pattern) { $missingPlugins += $name }
+  }
+  if ($missingPlugins.Count -eq 0) {
+    Write-Host "  plugins: frontend-design, design, superpowers"
+    return
+  }
+  Write-Warn ("claude plugin list does not show: " + ($missingPlugins -join ", ") + ". Sessions work without them, but the app settings enable them. Install once per machine, while online:")
+  Write-Host "    claude plugin install frontend-design@claude-plugins-official"
+  Write-Host "    claude plugin marketplace add anthropics/knowledge-work-plugins"
+  Write-Host "    claude plugin install design@knowledge-work-plugins"
+  Write-Host "    claude plugin marketplace add obra/superpowers-marketplace"
+  Write-Host "    claude plugin install superpowers@superpowers-marketplace"
+}
+
 function Show-NextSteps {
   Write-Step "Next steps"
   Write-Host "  Watch progress:  powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Status"
-  Write-Host "  First run of each tab: Claude Code may ask you to trust the folder once; accept it."
-  Write-Host "  Review a branch: in the main checkout ($RepoRoot) run /code-review proj/<slug> in Claude Code."
+  Write-Host "  Folder trust:    trust the main checkout once (run claude in $RepoRoot and accept the prompt);"
+  Write-Host "                   worktrees share it. If a tab still asks (folder trust or the app's Playwright MCP), accept once."
+  Write-Host "  Review a branch: in the main checkout run /code-review proj/<slug>, node scripts/smoke.mjs --app <slug>,"
+  Write-Host "                   and pnpm check-standalone <slug>."
   Write-Host "  Merge:           git switch $Base; git merge --no-ff proj/<slug>"
   Write-Host "                   then pnpm install (resolve pnpm-lock.yaml conflicts by re-running pnpm install)."
+  Write-Host "  After merging:   pnpm sync-data (after 00-data), pnpm sync-shared --all (after template changes),"
+  Write-Host "                   pnpm lockfiles (after dependency changes); commit the results on $Base."
   Write-Host "  Resume a tab:    powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Project <slug> -Resume"
   Write-Host "  Clean up:        powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Project <slug> -Remove"
   Write-Host "                   (removes the worktree, keeps the branch; never delete worktrees by hand)"
@@ -465,6 +517,7 @@ if (Test-Tool "pnpm") {
 if (-not $NoClaude) {
   if (Test-Tool "claude") {
     Write-Host "  claude found"
+    Test-ClaudePlugins
   } elseif ($DryRun) {
     Write-Warn "claude is not on PATH (fine for -DryRun)."
   } else {
@@ -489,9 +542,17 @@ if (-not (Test-Branch $Base)) {
 
 $appRows = @($rows | Where-Object { [int]$_.batch -ge 1 })
 if ($appRows.Count -gt 0) {
-  $realData = @(Get-Git @("ls-tree", "-r", "--name-only", $Base, "--", "packages/data/files") | Where-Object { $_ -like "*.geojson" })
+  $realData = @(Get-Git @("ls-tree", "-r", "--name-only", $Base, "--", "data/files") | Where-Object { $_ -like "*.geojson" })
   if ($realData.Count -eq 0) {
-    Write-Warn "packages/data/files on $Base has no .geojson yet (the data session is not merged). App sessions will use the fixtures."
+    Write-Warn "data/files on $Base has no .geojson yet (the data session is not merged). App sessions will use the fixtures."
+  }
+  foreach ($row in $appRows) {
+    if ($row.app) {
+      $appPkg = @(Get-Git @("ls-tree", "--name-only", $Base, "--", ([string]$row.app + "/package.json")))
+      if ($appPkg.Count -eq 0) {
+        Write-Warn "$($row.app) does not exist on $Base yet. Generate it on $Base first: node scripts/new-app.mjs $($row.slug), commit, then launch."
+      }
+    }
   }
 }
 foreach ($row in $rows) {
@@ -544,7 +605,12 @@ foreach ($row in $rows) {
       continue
     }
   }
-  $ready.Add([PSCustomObject]@{ Row = $row; Path = $path; Existed = $existed })
+  $sessionPath = Get-SessionPath $row $path
+  if ((-not $DryRun) -and (-not (Test-Path -LiteralPath $sessionPath))) {
+    Write-Fail "$sessionPath does not exist in the worktree (is $($row.app) committed on $Base?); not starting a session for $($row.slug)."
+    continue
+  }
+  $ready.Add([PSCustomObject]@{ Row = $row; Path = $path; SessionPath = $sessionPath; Existed = $existed })
 }
 
 # ---------------------------------------------------------------------------
@@ -563,7 +629,7 @@ if (-not $NoClaude -and $ready.Count -gt 0) {
         Write-Warn "$($item.Row.slug) had no worktree yet, so there is nothing to resume; starting it fresh."
       }
     }
-    if (-not (Open-SessionTab $item.Row $item.Path $continue)) {
+    if (-not (Open-SessionTab $item.Row $item.SessionPath $continue)) {
       Write-Fail "could not open a tab for $($item.Row.slug)."
     }
     if (($i -lt ($ready.Count - 1)) -and ($StaggerSeconds -gt 0)) {

@@ -1,0 +1,12 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "00",
+  "slug": "_template",
+  "title": "RCENE template",
+  "tagline": "Generic app template",
+  "port": 5100,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "main",
+  "smokeRoutes": ["/", "/sources"]
+}

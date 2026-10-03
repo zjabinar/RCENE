@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "20",
+  "slug": "20-sumat",
+  "title": "Sumat",
+  "tagline": "Three-language accessible citizen service guide",
+  "port": 5120,
+  "ai": true,
+  "brief": "docs/brief.md",
+  "branch": "proj/20-sumat",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

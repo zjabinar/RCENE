@@ -1,6 +1,15 @@
 {
-  "_comment": "Editor-only root config so files outside apps/packages (scripts, vitest.config.ts) get types. Each app and package has its own tsconfig for real checks.",
-  "extends": "./packages/config/tsconfig.node.json",
-  "compilerOptions": { "allowJs": true, "checkJs": false },
+  "_comment": "Editor-only root config for scripts/ and vitest.config.ts. Apps have their own tsconfigs.",
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "nodenext",
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true
+  },
   "include": ["vitest.config.ts", "scripts/**/*.mjs"]
 }

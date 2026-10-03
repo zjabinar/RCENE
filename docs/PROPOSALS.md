@@ -22,6 +22,7 @@ Sources reviewed: `docs/event/VibeCoding_Challenge.txt` and the event poster; th
 | 2026-10-03 | **Parallel worktree build.** `docs/projects/projects.json` is the manifest, with one brief per project in `docs/projects/`. `scripts/launch-worktrees.ps1` opens a Claude Code session per project in a git worktree on `proj/NN-slug`, in batches: B0 data (local) · B1 01, 03, 04, 16, 18 · B2 05, 07, 09, 13, 20 · B3 08, 10, 11, 12, 14 · B4 02, 06, 15, 17, 19 (optional, riskiest). Each app keeps its own `AI-LOG.md`. See `docs/PARALLEL.md`. |
 | 2026-10-03 | **Platforms P1–P10 come later**, composed from the finished single-feature apps. P1 Andam = #1 (Core 1) + #5 (Core 2) + #3 (Core 3). |
 | 2026-10-03 | **Stack pinned** in the pnpm catalog to majors the coding model knows well (see Tech stack). Newer majors wait until after the event. |
+| 2026-10-03 | **Self-contained apps.** `packages/` is folded into each app: every `apps/NN-slug/` carries its own copy of the shared code (`rcene/`), data (`data/`, synced from root `data/`), full library stack with exact pins (`stack.json`) and `package-lock.json`, Claude setup and scripts, so the chosen app's folder runs on its own with `npm ci`. `apps/_template` is the reference copy (`pnpm sync-shared`). Scoped `@deck.gl/*` packages replace the `deck.gl` meta-package. Supersedes the `packages/` layout in the rows above. |
 
 ---
 
@@ -479,7 +480,7 @@ Proposals #1–#20 each solve one problem. These ten group related services into
 
 ## Tech stack
 
-Every version is pinned once, in the pnpm catalog (`pnpm-workspace.yaml`), and verified with a real install and production build. The pinned majors are ones the coding model knows well: React 19.3 · TypeScript 6.0 · Vite 8 · Tailwind CSS 4.3 · react-router 7.18 · motion 12.43 · TanStack Table 8 · vitest 4.1 · maplibre-gl 6.11 + react-map-gl 8.1 · lucide-react 0.577. Newer majors exist (TypeScript 7, react-router 8, motion 13+, TanStack Table 9, vitest 5, lucide-react 1) and are deliberately avoided until after the event.
+Every version is pinned once, in `stack.json` (copied as exact pins into each app's own `package.json` and `package-lock.json`), and verified with a real install and production build. The pinned majors are ones the coding model knows well: React 19.3 · TypeScript 6.0 · Vite 8 · Tailwind CSS 4.3 · react-router 7.18 · motion 12.43 · TanStack Table 8 · vitest 4.1 · maplibre-gl 6.11 + react-map-gl 8.1 · lucide-react 0.577. Newer majors exist (TypeScript 7, react-router 8, motion 13+, TanStack Table 9, vitest 5, lucide-react 1) and are deliberately avoided until after the event.
 
 **Core:** Vite · React 19 · TypeScript · Tailwind CSS v4 (`@tailwindcss/vite`) · shadcn/ui + lucide-react · React Router · Zustand (localStorage persist) · react-hook-form + zod · TanStack Table
 
