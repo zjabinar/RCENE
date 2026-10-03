@@ -14,8 +14,9 @@ everything-claude-code/
 apps/*/docs/screenshots/*.png
 !apps/*/docs/screenshots/.gitkeep
 
-# Offline AI model files (fetched with scripts/fetch-models.mjs)
-assets/models/
+# Offline AI model files live in each app's models/ (gitignored there)
+apps/*/models/*
+!apps/*/models/.gitkeep
 
 # Secrets — never commit
 .env

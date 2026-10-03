@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /**
- * SessionStart hook for RCENE (wired in .claude/settings.json).
+ * SessionStart hook for sessions at the REPO ROOT (wired in .claude/settings.json).
  *
- * On a proj/<slug> branch it tells the session which project it is building:
- * brief, write scope, ports, data status, the current STATUS.md and the commits
- * made so far, so a fresh or resumed session continues without asking.
- * On any other branch it prints a short orchestrator guide.
+ * Root sessions are the orchestrator (main) and the data session (proj/00-data).
+ * App sessions start inside apps/<slug> of their worktree and use that folder's
+ * own CLAUDE.md, hooks and settings, so this hook never runs for them.
+ *
+ *   - proj/00-data (any row without an app): brief, write scope, data status and
+ *     the commits so far, so a fresh or resumed data session continues.
+ *   - proj/<slug> of an app opened at the root by mistake: says to restart
+ *     Claude Code inside apps/<slug>, plus its STATUS.md.
+ *   - anything else: the orchestrator guide (batches, tooling, merge steps).
  *
  * Output: {"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"..."}}
  * Claude Code caps additionalContext at 10,000 characters, so long STATUS.md
@@ -24,7 +29,9 @@ import path from "node:path";
 
 const MAX_CONTEXT = 9500;
 const PROTOCOL =
-  "Follow the session protocol in CLAUDE.md. The brief is the approved spec: do not brainstorm or ask clarifying questions; make reasonable decisions and record them in NOTES.md.";
+  "The brief is the approved spec: do not brainstorm or ask clarifying questions; make reasonable decisions and record them (data session: in data/README.md and the commit messages).";
+const OFF_LIMITS =
+  "Off limits everywhere: D:\\monica, C:\\lgu_portal, and credential files (.env*, *service-account*.json, gemini_api_key.txt, *.pem).";
 
 function readStdin() {
   return new Promise((resolve) => {
@@ -77,7 +84,7 @@ function ensureInstalled(root) {
 
 const IGNORED_FILES = new Set([".gitkeep", "README.md", ".DS_Store", "Thumbs.db"]);
 
-/** Files under dir as POSIX paths relative to it (same rules as @rcene/config's static mount). */
+/** Files under dir as POSIX paths relative to it (same rules as the apps' /data/ mount). */
 function listFiles(dir) {
   const out = [];
   const walk = (abs, rel) => {
@@ -99,14 +106,14 @@ function listFiles(dir) {
 }
 
 function dataStatus(root) {
-  const real = listFiles(path.join(root, "packages", "data", "files"));
-  const fixtures = listFiles(path.join(root, "packages", "data", "fixtures"));
+  const real = listFiles(path.join(root, "data", "files"));
+  const fixtures = listFiles(path.join(root, "data", "fixtures"));
   const realSet = new Set(real);
   const fixtureOnly = fixtures.filter((f) => !realSet.has(f));
   return [
-    `- Real (packages/data/files): ${real.length ? real.join(", ") : "none yet (the data session has not been merged)"}`,
-    `- Fixture only (packages/data/fixtures, fake but schema-valid; the UI shows a "Sample data" badge): ${fixtureOnly.length ? fixtureOnly.join(", ") : "none"}`,
-    "- Load layers through @rcene/data; never fetch files ad hoc. Real files override fixtures file by file.",
+    `- Real (data/files): ${real.length ? real.join(", ") : "none yet (the data session has not been merged)"}`,
+    `- Fixture only (data/fixtures, fake but schema-valid; apps show a "Sample data" badge): ${fixtureOnly.length ? fixtureOnly.join(", ") : "none"}`,
+    "- Root data/ is the canonical copy; `pnpm sync-data` mirrors it into every apps/<slug>/data/. Real files override fixtures file by file.",
   ].join("\n");
 }
 
@@ -118,63 +125,64 @@ function readText(file) {
   }
 }
 
-function projectContext(root, branch, row, manifest) {
+function commitsSoFar(root, base, branch) {
+  const log = git(root, ["log", "--oneline", "--no-decorate", "-n", "15", `${base}..HEAD`]);
+  return `Commits on ${branch} so far: ${log ? `\n${log}` : "none (fresh start)"}`;
+}
+
+/** The data session (and any other row without an app), which runs at the repo root. */
+function dataContext(root, branch, row, manifest) {
   const base = manifest.base || "main";
   const lines = [];
-  lines.push(`RCENE project session: ${row.id} - ${row.title} (${row.slug})`);
+  lines.push(`RCENE data session: ${row.id} - ${row.title} (${row.slug}). It runs at the repo root, not in an app folder.`);
   if (row.tagline) lines.push(`Tagline: ${row.tagline}`);
   lines.push(`Branch: ${branch} (from ${base}) | Batch ${row.batch} | Kind: ${row.kind}`);
   const briefExists = row.brief && existsSync(path.join(root, row.brief));
-  lines.push(`Brief (the approved spec, read it first): ${row.brief}${briefExists ? "" : " (NOT FOUND in this checkout: tell the human in STATUS.md)"}`);
-  if (row.app) {
-    let pkgName = `@rcene/${row.slug}`;
-    try {
-      pkgName = JSON.parse(readFileSync(path.join(root, row.app, "package.json"), "utf8")).name || pkgName;
-    } catch {
-      // keep the default
-    }
-    lines.push(`App dir: ${row.app} (package ${pkgName})`);
-  }
+  lines.push(`Brief (the approved spec, read it first): ${row.brief}${briefExists ? "" : " (NOT FOUND in this checkout: tell the human)"}`);
   lines.push(
-    `Write scope (enforced by a PreToolUse guard): ${(row.writeScope || []).join(", ")}. Shared packages are frozen during a batch; put requests in ${row.app ? `${row.app}/NOTES.md` : "packages/data/README.md"}.`,
+    `Write scope (enforced by a PreToolUse guard): ${(row.writeScope || []).join(", ")}. Keep progress and decisions in data/README.md (its mapping and conversion-record sections) and in commit messages; requests for anything else go there too.`,
   );
-  if (row.port) {
-    lines.push(`Ports: dev ${row.port} (pnpm dev), preview ${row.port + 1000} (vite preview, used by the smoke test).`);
-    lines.push(`Definition of done: node scripts/smoke.mjs --app ${row.slug} passes (from ${row.app}: node ../../scripts/smoke.mjs --app ${row.slug}).`);
-  } else {
-    lines.push("Ports: none (data session).");
-  }
+  lines.push(
+    "Outputs go to the root data/files (canonical). Never edit apps/*/data by hand: after this branch is merged the orchestrator runs `pnpm sync-data` to copy data/ into every app.",
+  );
+  lines.push("Check before each commit: node scripts/data/validate.mjs (exit 0), then node scripts/data/derive.mjs. Tests: pnpm exec vitest run scripts/data.");
+  lines.push("Schemas, layer names and levels come from apps/_template/rcene/data (read-only here).");
   if (row.localOnly) {
     lines.push("Local only: the source GIS archive is D:\\lgu_portal - GIS on this PC (allowed). Never touch D:\\monica or C:\\lgu_portal.");
   }
-  if (row.extras && row.extras.length) lines.push(`Extras installed for this app: ${row.extras.join(", ")}`);
-  if (typeof row.ai === "boolean") lines.push(`In-browser AI: ${row.ai ? "yes (models under /models/)" : "no"}`);
-  if (row.dataNeeds && row.dataNeeds.length) lines.push(`Data needs: ${row.dataNeeds.join(", ")}`);
   lines.push("");
   lines.push("Data layers:");
   lines.push(dataStatus(root));
   lines.push("");
-  lines.push("Off limits everywhere: D:\\monica, C:\\lgu_portal, and credential files (.env*, *service-account*.json, gemini_api_key.txt, *.pem).");
-
-  const log = git(root, ["log", "--oneline", "--no-decorate", "-n", "15", `${base}..HEAD`]);
+  lines.push(OFF_LIMITS);
   lines.push("");
-  lines.push(`Commits on ${branch} so far: ${log ? `\n${log}` : "none (fresh start)"}`);
+  lines.push(commitsSoFar(root, base, branch));
+  lines.push("");
+  lines.push(PROTOCOL);
+  return lines.join("\n");
+}
 
+/** An app branch opened at the worktree root: app sessions belong inside apps/<slug>. */
+function appAtRootContext(root, branch, row, manifest) {
+  const base = manifest.base || "main";
+  const app = row.app || `apps/${row.slug}`;
+  const lines = [];
+  lines.push(`RCENE app worktree: ${row.id} - ${row.title} (${row.slug}), branch ${branch} (from ${base}), batch ${row.batch}.`);
+  lines.push(
+    `This session started at the worktree ROOT. App sessions run INSIDE ${app}: that folder has its own CLAUDE.md, hooks, settings, brief (${app}/docs/brief.md) and smoke test. Tell the human to restart Claude Code there (cd ${app}; claude, or claude --continue), or relaunch with scripts\\launch-worktrees.ps1 -Project ${row.slug} -Resume. Do not build the app from here.`,
+  );
+  lines.push(`Write scope here (enforced by the root guard): ${(row.writeScope || []).join(", ")}.`);
+  if (row.port) lines.push(`Ports: dev ${row.port}, preview ${row.port + 1000}. Done = npm run smoke passes inside ${app} (from the root: node scripts/smoke.mjs --app ${row.slug}).`);
+  lines.push(OFF_LIMITS);
+  lines.push("");
+  lines.push(commitsSoFar(root, base, branch));
   const head = lines.join("\n");
-  const statusPath = row.app ? `${row.app}/STATUS.md` : null;
-  const status = statusPath ? readText(path.join(root, statusPath)) : null;
-  let statusBlock;
-  if (!statusPath) statusBlock = "No STATUS.md for the data session: keep progress in packages/data/README.md and commit messages.";
-  else if (status === null) statusBlock = `${statusPath} is missing: create it from the template layout.`;
-  else {
-    const budget = MAX_CONTEXT - head.length - PROTOCOL.length - 200;
-    const body =
-      status.length > budget
-        ? `${status.slice(0, Math.max(0, budget))}\n[... truncated: read ${statusPath} for the rest]`
-        : status;
-    statusBlock = `Current ${statusPath} (read this first when resuming):\n-----\n${body}\n-----`;
-  }
-  return `${head}\n\n${statusBlock}\n\n${PROTOCOL}`;
+  const statusPath = `${app}/STATUS.md`;
+  const status = readText(path.join(root, statusPath));
+  if (status === null) return `${head}\n\n${statusPath} is missing: generate the app with node scripts/new-app.mjs ${row.slug} on main.`;
+  const budget = MAX_CONTEXT - head.length - 200;
+  const body = status.length > budget ? `${status.slice(0, Math.max(0, budget))}\n[... truncated: read ${statusPath} for the rest]` : status;
+  return `${head}\n\nCurrent ${statusPath}:\n-----\n${body}\n-----`;
 }
 
 function orchestratorContext(root, branch, manifest, note) {
@@ -184,19 +192,33 @@ function orchestratorContext(root, branch, manifest, note) {
     batches.get(p.batch).push(p.slug + (p.localOnly ? " (local only)" : ""));
   }
   const lines = [];
-  lines.push(`RCENE orchestrator mode (branch ${branch || "unknown"}). This checkout plans, reviews and merges; each project is built in its own worktree on proj/<slug> by its own Claude Code session.`);
+  lines.push(
+    `RCENE orchestrator mode (branch ${branch || "unknown"}). This checkout plans, reviews and merges. Each app is a self-contained folder apps/<slug> (own package.json + package-lock.json, own copy of the shared code in rcene/, own data/, scripts, hooks, CLAUDE.md and brief in docs/brief.md); apps/_template is the reference copy.`,
+  );
   if (note) lines.push(note);
+  lines.push(
+    "Each project is built in its own worktree on proj/<slug>. App sessions start INSIDE <worktree>/apps/<slug> and use that folder's own hooks and settings; this root's hooks apply only to the orchestrator and to the 00-data session (which runs at the worktree root).",
+  );
   lines.push("Batches (docs/projects/projects.json):");
   for (const [batch, slugs] of [...batches.entries()].sort((a, b) => a[0] - b[0])) {
     lines.push(`- Batch ${batch}: ${slugs.join(", ")}`);
   }
-  const real = listFiles(path.join(root, "packages", "data", "files")).filter((f) => f.endsWith(".geojson"));
-  lines.push(`Real data merged: ${real.length ? `${real.length} GeoJSON layers` : "no (batch 0 not merged yet; app sessions will use fixtures)"}`);
+  const real = listFiles(path.join(root, "data", "files")).filter((f) => f.endsWith(".geojson"));
+  lines.push(`Real data merged: ${real.length ? `${real.length} GeoJSON layers in data/files` : "no (batch 0 not merged yet; apps use the fixtures)"}`);
+  lines.push("Tooling (repo root; each accepts --help):");
+  lines.push("- pnpm new-app <slug|id>... | --all  generate apps/<slug> from apps/_template (skips started apps unless --force)");
+  lines.push("- pnpm sync-shared --all [--dry-run | --report]  three-way update of template-owned files (rcene/, scripts/, .claude, config, docs, package.json fields); conflicts are reported, not overwritten");
+  lines.push("- pnpm sync-data  mirror root data/ into every app (run after merging 00-data or changing fixtures)");
+  lines.push("- pnpm lockfiles [--check]  per-app package-lock.json so `npm ci` works in any app folder");
+  lines.push("- pnpm check-standalone --all [--install <slug>]  static standalone checks; --install does a real npm ci/typecheck/test/build/smoke in a temp copy");
+  lines.push("- pnpm stack:check (node scripts/stack.mjs --write to fix)  package.json versions vs stack.json");
+  lines.push("- pnpm smoke --app <slug>  runs that app's own smoke test (npm run smoke inside the app)");
   lines.push("Launch a batch (Windows PowerShell): powershell -ExecutionPolicy Bypass -File scripts\\launch-worktrees.ps1 -Batch 1");
   lines.push("Progress: powershell -ExecutionPolicy Bypass -File scripts\\launch-worktrees.ps1 -Status   (add -DryRun to any launch to preview it)");
-  lines.push("Review a branch: /code-review proj/<slug> here. Merge: git merge --no-ff proj/<slug> on main, then pnpm install if the lockfile conflicts.");
+  lines.push("Review a branch: /code-review proj/<slug> here, plus pnpm check-standalone <slug>. Merge: git merge --no-ff proj/<slug> on main.");
+  lines.push("After changing apps/_template: pnpm sync-shared --all. After changing stack.json: node scripts/stack.mjs --write, pnpm install, pnpm lockfiles --fresh.");
   lines.push("Clean up after merging: powershell -ExecutionPolicy Bypass -File scripts\\launch-worktrees.ps1 -Project <slug> -Remove (keeps the branch).");
-  lines.push("Off limits: D:\\monica, C:\\lgu_portal and credential files.");
+  lines.push(OFF_LIMITS);
   return lines.join("\n");
 }
 
@@ -228,14 +250,15 @@ async function main() {
     ? (manifest.projects || []).find((p) => p.branch === branch) ||
       (manifest.projects || []).find((p) => p.slug === branch.slice("proj/".length))
     : null;
-  if (row) context = projectContext(root, branch, row, manifest);
+  if (row && row.app) context = appAtRootContext(root, branch, row, manifest);
+  else if (row) context = dataContext(root, branch, row, manifest);
   else {
     const note = branch.startsWith("proj/") ? `Warning: ${branch} has no row in docs/projects/projects.json, so no write scope is enforced.` : "";
     context = orchestratorContext(root, branch, manifest, note);
   }
 
   process.stdout.write(
-    JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: context } }) + "\n",
+    JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: context.slice(0, MAX_CONTEXT) } }) + "\n",
   );
 }
 

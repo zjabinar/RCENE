@@ -53,5 +53,5 @@ export const LAYER_FILES: Record<LayerName, string> = {
 
 export const hazardLayer = (hazard: Hazard) => `hazard-${hazard}` as const satisfies LayerName;
 
-/** URL of a layer, served by @rcene/config's static plugin in dev and emitted into dist on build. */
+/** URL of a layer, served by this app's static plugin (rcene/config/static.ts) in dev and emitted into dist on build. */
 export const layerUrl = (name: LayerName): string => `/data/${LAYER_FILES[name]}`;

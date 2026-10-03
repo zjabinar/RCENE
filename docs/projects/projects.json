@@ -1,5 +1,5 @@
 {
-  "$comment": "Source of truth for the parallel build. Read by scripts/new-app.mjs, scripts/launch-worktrees.ps1, scripts/hooks/*.mjs and the briefs. Ports: template 5100, apps 5101-5120, platforms later 5201-5210. Preview port = dev port + 1000.",
+  "$comment": "Orchestration manifest (repo root only; apps never read it, each app has its own project.json). Read by scripts/new-app.mjs (generates apps/<slug> from apps/_template), scripts/sync-shared.mjs, sync-data.mjs, lockfiles.mjs, check-standalone.mjs, smoke.mjs, scripts/launch-worktrees.ps1 (worktrees, sessions, -Status) and the root hooks (write scope per proj/<slug> branch). Ports: template 5100, apps 5101-5120, platforms later 5201-5210. Preview port = dev port + 1000. `extras` and each row's `extras` are informational only: every app gets the full stack from stack.json.",
   "version": 1,
   "worktreeRoot": "C:/RSCENE-wt",
   "base": "main",
@@ -64,7 +64,7 @@
       "id": "00",
       "slug": "00-data",
       "title": "Data foundation",
-      "tagline": "Convert the local GIS archive into packages/data/files",
+      "tagline": "Convert the local GIS archive into the root data/files",
       "kind": "data",
       "batch": 0,
       "port": null,
@@ -72,8 +72,7 @@
       "brief": "docs/projects/00-data.md",
       "localOnly": true,
       "writeScope": [
-        "packages/data/files/**",
-        "packages/data/README.md",
+        "data/**",
         "scripts/data/**"
       ]
     },

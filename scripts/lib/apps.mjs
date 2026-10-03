@@ -1,0 +1,511 @@
+/**
+ * Shared helpers for the repo-root tooling (new-app, sync-shared, sync-data,
+ * lockfiles, check-standalone, stack, smoke, fetch-models).
+ *
+ * The model: apps/_template is the reference copy of everything an app needs.
+ * Each apps/<slug> is a self-contained copy of it (own package.json with exact
+ * versions from stack.json, own package-lock.json, own rcene/ shared code, own
+ * data/, scripts/, hooks and Claude settings). docs/projects/projects.json is
+ * the orchestration manifest; apps never read it (they read their project.json).
+ *
+ * Every function takes an explicit repo root so the tools can be pointed at a
+ * scratch copy (--root / --out).
+ */
+import { createHash } from "node:crypto";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { parseArgs } from "node:util";
+
+/** The repo this script lives in. */
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+export const TEMPLATE_SLUG = "_template";
+export const TEMPLATE_PACKAGE = "@rcene/template";
+
+export function repoPaths(root = ROOT) {
+  return {
+    root,
+    apps: path.join(root, "apps"),
+    template: path.join(root, "apps", TEMPLATE_SLUG),
+    manifest: path.join(root, "docs", "projects", "projects.json"),
+    stack: path.join(root, "stack.json"),
+    data: path.join(root, "data"),
+    docs: path.join(root, "docs"),
+  };
+}
+
+/** True when the module with this import.meta.url is the script node was started with. */
+export function isMain(metaUrl) {
+  return Boolean(process.argv[1]) && pathToFileURL(path.resolve(process.argv[1])).href === metaUrl;
+}
+
+export function readJson(file) {
+  return JSON.parse(readFileSync(file, "utf8"));
+}
+
+export function readManifest(root = ROOT) {
+  return readJson(repoPaths(root).manifest);
+}
+
+export function readStack(root = ROOT) {
+  return readJson(repoPaths(root).stack);
+}
+
+/** Manifest rows that are apps (kind "app"), in manifest order. */
+export function appRows(manifest) {
+  return (manifest.projects ?? []).filter((p) => p.kind === "app");
+}
+
+/** A pseudo-row for apps/_template, so the template can be targeted like an app. */
+export function templateRow(root = ROOT) {
+  let project = {};
+  try {
+    project = readJson(path.join(repoPaths(root).template, "project.json"));
+  } catch {
+    // keep defaults
+  }
+  return {
+    id: project.id ?? "00",
+    slug: TEMPLATE_SLUG,
+    title: project.title ?? "RCENE template",
+    tagline: project.tagline ?? "Generic app template",
+    port: project.port ?? 5100,
+    ai: Boolean(project.ai),
+    kind: "template",
+    app: `apps/${TEMPLATE_SLUG}`,
+    template: true,
+  };
+}
+
+export function isTemplateKey(key) {
+  return key === "template" || key === TEMPLATE_SLUG || key === "apps/_template";
+}
+
+/** Finds an app row by slug (01-ligtas), id (01 or 1), slug prefix or apps/<slug>. */
+export function findApp(manifest, key) {
+  const k = String(key).replace(/\\/g, "/").replace(/\/$/, "").replace(/^apps\//, "");
+  const id = /^\d{1,2}$/.test(k) ? k.padStart(2, "0") : k;
+  const rows = appRows(manifest);
+  return rows.find((p) => p.slug === k) ?? rows.find((p) => p.id === id) ?? rows.find((p) => p.slug.startsWith(`${k}-`)) ?? null;
+}
+
+/** Absolute app folder for a row (template rows included). */
+export function appDir(root, row) {
+  return path.join(repoPaths(root).apps, row.slug);
+}
+
+/**
+ * Resolves CLI targets to rows. `all` selects every app row (plus the template
+ * when `withTemplate`); otherwise each key must name an app or "template".
+ * Unknown keys throw.
+ */
+export function resolveTargets(root, keys, { all = false, withTemplate = false, allowTemplate = true } = {}) {
+  const manifest = readManifest(root);
+  const out = [];
+  const add = (row) => {
+    if (!out.some((r) => r.slug === row.slug)) out.push(row);
+  };
+  if (all) {
+    if (withTemplate) add(templateRow(root));
+    for (const row of appRows(manifest)) add(row);
+  }
+  for (const key of keys) {
+    if (isTemplateKey(key)) {
+      if (!allowTemplate) throw new Error(`"${key}": the template is the source here, not a target`);
+      add(templateRow(root));
+      continue;
+    }
+    const row = findApp(manifest, key);
+    if (!row) throw new Error(`No app "${key}" in docs/projects/projects.json (use a slug like 01-ligtas or an id like 01)`);
+    add(row);
+  }
+  return out;
+}
+
+/** node:util parseArgs with positionals; prints usage and exits 2 on a bad flag. */
+export function cli(argv, options, usage) {
+  try {
+    const { values, positionals } = parseArgs({ args: argv, options: { help: { type: "boolean", short: "h" }, ...options }, allowPositionals: true });
+    if (values.help) {
+      console.log(usage);
+      process.exit(0);
+    }
+    return { values, positionals };
+  } catch (err) {
+    console.error(`${err.message}\n\n${usage}`);
+    process.exit(2);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Placeholders, status
+// ---------------------------------------------------------------------------
+
+/** In-app path of the brief: every app carries its own copy. */
+export const APP_BRIEF = "docs/brief.md";
+
+/** Replaces __ID__ __SLUG__ __TITLE__ __TAGLINE__ __PORT__ __BRIEF__. */
+export function fillPlaceholders(text, row) {
+  return String(text)
+    .replaceAll("__ID__", String(row.id))
+    .replaceAll("__SLUG__", String(row.slug))
+    .replaceAll("__TITLE__", String(row.title))
+    .replaceAll("__TAGLINE__", String(row.tagline ?? ""))
+    .replaceAll("__PORT__", String(row.port ?? ""))
+    .replaceAll("__BRIEF__", APP_BRIEF);
+}
+
+/** An app counts as started once its STATUS.md no longer says "Not started". */
+export function isStarted(dir) {
+  const status = path.join(dir, "STATUS.md");
+  return existsSync(status) && !readFileSync(status, "utf8").includes("Not started");
+}
+
+// ---------------------------------------------------------------------------
+// Hashing and text detection
+// ---------------------------------------------------------------------------
+
+const BINARY_EXT = new Set([
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".bmp", ".avif",
+  ".woff", ".woff2", ".ttf", ".otf", ".eot",
+  ".onnx", ".wasm", ".bin", ".pbf", ".pdf", ".zip", ".gz", ".tgz", ".br", ".mp3", ".mp4", ".webm",
+]);
+
+/** True for files we treat as text: not a known binary extension and no NUL byte. */
+export function isText(rel, buf) {
+  if (BINARY_EXT.has(path.extname(rel).toLowerCase())) return false;
+  if (buf) {
+    const n = Math.min(buf.length, 8192);
+    for (let i = 0; i < n; i++) if (buf[i] === 0) return false;
+  }
+  return true;
+}
+
+export function sha256(data) {
+  return createHash("sha256").update(data).digest("hex");
+}
+
+/** Content hash; text is compared with LF line endings so a CRLF checkout is not "changed". */
+export function contentHash(rel, buf) {
+  if (isText(rel, buf)) return sha256(Buffer.from(buf.toString("utf8").replace(/\r\n/g, "\n"), "utf8"));
+  return sha256(buf);
+}
+
+export function hashFile(file, rel = file) {
+  if (!existsSync(file)) return null;
+  return contentHash(rel, readFileSync(file));
+}
+
+/** JSON with object keys sorted recursively: a stable hash input. */
+export function canonicalJson(value) {
+  const sort = (v) => {
+    if (Array.isArray(v)) return v.map(sort);
+    if (v && typeof v === "object") return Object.fromEntries(Object.keys(v).sort().map((k) => [k, sort(v[k])]));
+    return v;
+  };
+  return JSON.stringify(sort(value));
+}
+
+// ---------------------------------------------------------------------------
+// Template walk
+// ---------------------------------------------------------------------------
+
+const EXCLUDED_DIRS = new Set(["node_modules", "dist", ".vite", "coverage", ".playwright-mcp", ".git"]);
+const EXCLUDED_NAMES = new Set([".DS_Store", "Thumbs.db"]);
+
+/**
+ * True for paths that are never copied from the template: installs, build
+ * output, caches, downloaded models, smoke screenshots, local Claude settings,
+ * the lockfile (lockfiles.mjs owns it) and the sync baseline.
+ */
+export function isExcluded(rel) {
+  const parts = rel.split("/");
+  if (parts.some((p) => EXCLUDED_DIRS.has(p))) return true;
+  const base = parts[parts.length - 1];
+  if (EXCLUDED_NAMES.has(base)) return true;
+  if (base.endsWith(".tsbuildinfo")) return true;
+  if (parts[0] === "models" && parts.length > 1 && rel !== "models/.gitkeep") return true;
+  if (/^docs\/screenshots\/[^/]+\.png$/i.test(rel)) return true;
+  if (rel === ".claude/settings.local.json") return true;
+  if (rel === "package-lock.json" || rel === ".sync.json") return true;
+  return false;
+}
+
+/** Files under dir as sorted POSIX paths relative to it (no symlink following). */
+export function walk(dir, { exclude = isExcluded, prefix = "" } = {}) {
+  const out = [];
+  if (!existsSync(dir)) return out;
+  const recurse = (abs, rel) => {
+    for (const entry of readdirSync(abs, { withFileTypes: true })) {
+      const childRel = rel ? `${rel}/${entry.name}` : entry.name;
+      if (exclude(prefix + childRel)) continue;
+      if (entry.isDirectory()) recurse(path.join(abs, entry.name), childRel);
+      else if (entry.isFile()) out.push(childRel);
+    }
+  };
+  recurse(dir, "");
+  return out.sort();
+}
+
+/** Template files (exclusions applied), POSIX relative paths. */
+export function templateFiles(root = ROOT) {
+  return walk(repoPaths(root).template);
+}
+
+// ---------------------------------------------------------------------------
+// Generated files: package.json, project.json, docs
+// ---------------------------------------------------------------------------
+
+/** The package.json fields the sync owns; everything else (name, description, ...) is the app's. */
+export const MANAGED_PACKAGE_KEYS = ["engines", "scripts", "dependencies", "devDependencies"];
+
+function readTemplatePackage(root) {
+  return readJson(path.join(repoPaths(root).template, "package.json"));
+}
+
+/** The managed package.json fields every app gets: template scripts and engines, stack.json versions. */
+export function managedPackageFields(root = ROOT) {
+  const template = readTemplatePackage(root);
+  const stack = readStack(root);
+  return {
+    engines: template.engines ?? { node: ">=22.18" },
+    scripts: template.scripts ?? {},
+    dependencies: { ...stack.app.dependencies },
+    devDependencies: { ...stack.app.devDependencies },
+  };
+}
+
+export function packageName(row) {
+  return row.template ? TEMPLATE_PACKAGE : `@rcene/${row.slug}`;
+}
+
+/** A fresh package.json for an app row. No packageManager field: npm and pnpm both work. */
+export function appPackageJson(row, root = ROOT) {
+  const managed = managedPackageFields(root);
+  return {
+    name: packageName(row),
+    private: true,
+    version: "0.0.0",
+    type: "module",
+    description: row.tagline ?? "",
+    engines: managed.engines,
+    scripts: managed.scripts,
+    dependencies: managed.dependencies,
+    devDependencies: managed.devDependencies,
+  };
+}
+
+/**
+ * The part of a package.json the sync owns, given the wanted managed fields:
+ * engines; the scripts the template defines; and, in dependencies and
+ * devDependencies, the packages stack.json defines. Scripts and packages an app
+ * added itself (allowed when justified in its NOTES.md) are the app's and are
+ * neither compared nor touched. (Consequence: a package dropped from stack.json
+ * stays in existing apps as an extra; stack.mjs reports it.)
+ */
+export function packageManagedSubset(pkg, managed) {
+  const stackNames = new Set([...Object.keys(managed.dependencies ?? {}), ...Object.keys(managed.devDependencies ?? {})]);
+  const pick = (obj, names) => Object.fromEntries(Object.entries(obj ?? {}).filter(([k]) => names.has(k)));
+  return {
+    engines: pkg.engines ?? null,
+    scripts: pick(pkg.scripts, new Set(Object.keys(managed.scripts ?? {}))),
+    dependencies: pick(pkg.dependencies, stackNames),
+    devDependencies: pick(pkg.devDependencies, stackNames),
+  };
+}
+
+/** Hash of the managed subset of a package.json object (see packageManagedSubset). */
+export function packageManagedHash(pkg, managed) {
+  return sha256(canonicalJson(packageManagedSubset(pkg, managed)));
+}
+
+const sortKeys = (obj) => Object.fromEntries(Object.entries(obj).sort(([a], [b]) => a.localeCompare(b)));
+
+/** `pkg` with the managed fields applied; app-added scripts and packages, other fields and key order kept. */
+export function withManagedFields(pkg, managed) {
+  const out = { ...pkg };
+  const stackNames = new Set([...Object.keys(managed.dependencies), ...Object.keys(managed.devDependencies)]);
+  const extras = (obj, owned) => Object.fromEntries(Object.entries(obj ?? {}).filter(([k]) => !owned.has(k)));
+  out.engines = managed.engines;
+  out.scripts = { ...managed.scripts, ...extras(pkg.scripts, new Set(Object.keys(managed.scripts))) };
+  out.dependencies = sortKeys({ ...extras(pkg.dependencies, stackNames), ...managed.dependencies });
+  out.devDependencies = sortKeys({ ...extras(pkg.devDependencies, stackNames), ...managed.devDependencies });
+  // New keys land after "description" in the usual order when the app lacked them.
+  if (!pkg.engines || !pkg.scripts || !pkg.dependencies || !pkg.devDependencies) {
+    const order = ["name", "private", "version", "type", "description", ...MANAGED_PACKAGE_KEYS];
+    const sorted = {};
+    for (const k of order) if (k in out) sorted[k] = out[k];
+    for (const k of Object.keys(out)) if (!(k in sorted)) sorted[k] = out[k];
+    return sorted;
+  }
+  return out;
+}
+
+export function projectJson(row, root = ROOT) {
+  let comment;
+  try {
+    comment = readJson(path.join(repoPaths(root).template, "project.json")).$comment;
+  } catch {
+    comment = undefined;
+  }
+  return {
+    ...(comment ? { $comment: comment } : {}),
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    tagline: row.tagline,
+    port: row.port,
+    ai: Boolean(row.ai),
+    brief: APP_BRIEF,
+    branch: row.branch,
+    smokeRoutes: row.smokeRoutes ?? ["/", "/sources"],
+  };
+}
+
+export function json(value) {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+/** Ids that get a copy of docs/PRD.md (the P1 platform: cores 01, 05 and 03). */
+export const PRD_APPS = new Set(["01", "03", "05"]);
+
+/** The `### <n>. Title` section of PROPOSALS.md, as a standalone document. */
+export function proposalSection(text, n) {
+  const lines = String(text).replace(/\r\n/g, "\n").split("\n");
+  const start = lines.findIndex((l) => new RegExp(`^###\\s+${n}\\.\\s`).test(l));
+  if (start === -1) return null;
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^#{1,3}\s/.test(lines[i]) || /^---\s*$/.test(lines[i])) {
+      end = i;
+      break;
+    }
+  }
+  const body = lines.slice(start + 1, end).join("\n").trim();
+  const title = lines[start].replace(/^###\s+/, "").trim();
+  return (
+    `# Proposal ${title}\n\n` +
+    `_The original one-paragraph pitch for this app (proposal ${n} of 20). The approved spec is \`docs/brief.md\`; where they differ, the brief wins._\n\n` +
+    `${body}\n`
+  );
+}
+
+/**
+ * The docs every app carries, generated from the repo-level docs:
+ * docs/brief.md, docs/DISCLOSURE.md, docs/proposal.md and (01, 03, 05) docs/PRD.md.
+ * Returns Map<rel, string>. Missing sources throw, except PRD/DISCLOSURE which are skipped.
+ */
+export function generatedDocs(root, row) {
+  const p = repoPaths(root);
+  const docs = new Map();
+  const briefSrc = path.join(root, row.brief ?? `docs/projects/${row.slug}.md`);
+  if (!existsSync(briefSrc)) throw new Error(`brief not found: ${path.relative(root, briefSrc)}`);
+  docs.set("docs/brief.md", readFileSync(briefSrc, "utf8"));
+  const disclosure = path.join(p.docs, "DISCLOSURE.md");
+  if (existsSync(disclosure)) docs.set("docs/DISCLOSURE.md", readFileSync(disclosure, "utf8"));
+  const proposals = path.join(p.docs, "PROPOSALS.md");
+  if (existsSync(proposals)) {
+    const section = proposalSection(readFileSync(proposals, "utf8"), Number(row.id));
+    if (section) docs.set("docs/proposal.md", section);
+  }
+  const prd = path.join(p.docs, "PRD.md");
+  if (PRD_APPS.has(row.id) && existsSync(prd)) docs.set("docs/PRD.md", readFileSync(prd, "utf8"));
+  return docs;
+}
+
+/** Every docs/ file the sync may own for some app (so a template copy of them is ignored). */
+export const GENERATED_DOCS = new Set(["docs/brief.md", "docs/DISCLOSURE.md", "docs/proposal.md", "docs/PRD.md"]);
+
+// ---------------------------------------------------------------------------
+// Managed files (shared by new-app and sync-shared)
+// ---------------------------------------------------------------------------
+
+/** Groups for --only. A path in no group is app-owned and never synced. */
+export function managedGroup(rel) {
+  if (rel.startsWith("rcene/")) return "rcene";
+  if (rel.startsWith("scripts/")) return "scripts";
+  if (rel === ".claude/settings.json" || rel.startsWith(".claude/skills/") || rel === ".mcp.json" || rel === "CLAUDE.md") return "claude";
+  if ([".npmrc", ".gitignore", ".gitattributes", "vite.config.ts", "components.json", "index.html"].includes(rel)) return "config";
+  if (/^tsconfig[^/]*\.json$/.test(rel)) return "config";
+  if (GENERATED_DOCS.has(rel)) return "docs";
+  if (rel === "package.json") return "package";
+  return null;
+}
+
+export const GROUPS = ["rcene", "scripts", "claude", "config", "docs", "package"];
+
+/**
+ * What the sync wants each managed file of an app to be.
+ * Returns Map<rel, { group, hash, content?: Buffer, packageJson?: true }>.
+ * For package.json only the managed fields are compared and written: `hash`
+ * is the hash of that subset and `managed` holds the fields.
+ */
+export function desiredManagedFiles(root, row) {
+  const p = repoPaths(root);
+  const out = new Map();
+  for (const rel of templateFiles(root)) {
+    const group = managedGroup(rel);
+    if (!group || group === "docs" || group === "package") continue;
+    let buf = readFileSync(path.join(p.template, rel));
+    if (isText(rel, buf)) buf = Buffer.from(fillPlaceholders(buf.toString("utf8"), row), "utf8");
+    out.set(rel, { group, content: buf, hash: contentHash(rel, buf) });
+  }
+  for (const [rel, text] of generatedDocs(root, row)) {
+    const buf = Buffer.from(text, "utf8");
+    out.set(rel, { group: "docs", content: buf, hash: contentHash(rel, buf) });
+  }
+  const managed = managedPackageFields(root);
+  out.set("package.json", { group: "package", packageJson: true, managed, hash: packageManagedHash(managed, managed) });
+  return out;
+}
+
+/**
+ * Current hash of an app's copy of a managed file, or null if missing.
+ * package.json: the hash of its managed subset, which needs `want` (the desired entry).
+ */
+export function currentManagedHash(dir, rel, want) {
+  const file = path.join(dir, rel);
+  if (!existsSync(file)) return null;
+  if (rel === "package.json") {
+    try {
+      return packageManagedHash(readJson(file), want?.managed ?? managedPackageFields(path.resolve(dir, "..", "..")));
+    } catch {
+      return sha256(readFileSync(file)); // unparseable: never equal to a subset hash
+    }
+  }
+  return hashFile(file, rel);
+}
+
+export const SYNC_FILE = ".sync.json";
+
+export function readSyncState(dir) {
+  const file = path.join(dir, SYNC_FILE);
+  if (!existsSync(file)) return { files: {} };
+  try {
+    const state = readJson(file);
+    return { files: state.files ?? {} };
+  } catch {
+    return { files: {} };
+  }
+}
+
+export function syncStateJson(files) {
+  const sorted = Object.fromEntries(Object.keys(files).sort().map((k) => [k, files[k]]));
+  return json({
+    $comment:
+      "Written by the repo's scripts/sync-shared.mjs (and new-app.mjs): sha256 of each managed file as the sync last wrote it (package.json: its engines/scripts/dependencies/devDependencies only). A file whose hash still matches is updated from the template; a file you changed is reported as a conflict and left alone.",
+    files: sorted,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Formatting
+// ---------------------------------------------------------------------------
+
+export function rel(root, p) {
+  return path.relative(root, p).split(path.sep).join("/") || ".";
+}
+
+export function seconds(ms) {
+  return `${(ms / 1000).toFixed(1)} s`;
+}

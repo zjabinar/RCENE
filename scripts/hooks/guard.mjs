@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 /**
- * PreToolUse guard for RCENE sessions (wired in .claude/settings.json).
+ * PreToolUse guard for sessions at the REPO ROOT (wired in the root
+ * .claude/settings.json). Root sessions are the orchestrator (main) and the
+ * data session (proj/00-data). App sessions start inside apps/<slug> of their
+ * worktree and are guarded by that folder's own hooks (apps/<slug>/scripts/hooks),
+ * not by this file.
  *
  * Reads the hook input JSON from stdin ({ tool_name, tool_input, cwd }).
  * To block, it prints a reason to stderr and exits 2; Claude sees the reason.
@@ -16,11 +20,13 @@
  *      .env.example, *service-account*.json, gemini_api_key.txt, *.pem).
  *   3. Only on proj/<slug> branches (one worktree per project):
  *      - Edit/Write/MultiEdit/NotebookEdit targets must match the project's
- *        writeScope globs from docs/projects/projects.json.
+ *        writeScope globs from docs/projects/projects.json (00-data: data/**
+ *        and scripts/data/**; an app row: apps/<slug>/**).
  *      - Bash/PowerShell may not push, merge, rebase, reset --hard, manage
  *        worktrees, leave or delete branches, or cherry-pick.
  *      - Dependency changes only for the project's own app:
- *        `pnpm --filter @rcene/<slug> add <pkg>` is fine, `pnpm add -w` is not.
+ *        `pnpm --filter @rcene/<slug> add <pkg>` is fine, `pnpm add -w` is not;
+ *        the data session has no app, so it may not change dependencies at all.
  *
  * Rules 2 and 3 fail open: an internal error exits 0.
  *
@@ -254,6 +260,7 @@ function inScope(relPath, globs, opts) {
 
 function notesFile(row) {
   if (row.app) return `${row.app}/NOTES.md`;
+  if (row.kind === "data") return "data/README.md";
   const readme = (row.writeScope ?? []).find((g) => !/[*?]/.test(g) && g.endsWith(".md"));
   return readme ?? "your notes";
 }
@@ -284,7 +291,7 @@ function editReason(toolInput, ctx) {
   if (inScope(rel, row.writeScope ?? [])) return null;
   return (
     `Blocked: ${rel} is outside this session's write scope. This session may only edit ${scopeText(row)}. ` +
-    `Put requests for shared packages or other files in ${notesFile(row)}; they are applied between batches.`
+    `Put requests for anything else (the shared code in apps/_template, tooling, docs) in ${notesFile(row)}; the orchestrator applies them on main.`
   );
 }
 
@@ -321,8 +328,6 @@ function parseGit(tokens, start) {
   }
   return { sub: tokens[i], args: tokens.slice(i + 1) };
 }
-
-const PROTECTED_BRANCHES = new Set(["main", "master", "origin/main", "origin/master"]);
 
 function gitReason(sub, args, row) {
   const own = row.branch;
@@ -455,7 +460,7 @@ function pnpmReason(parsed, ctx, effectiveCwd) {
   const example = pkgName ? ` Use: pnpm --filter ${pkgName} add <pkg>.` : "";
   return (
     `Blocked: pnpm ${sub} here would change dependencies outside ${scopeText(row)}.${example} ` +
-    `Requests for root or shared-package dependencies go in ${notesFile(row)}.`
+    `Requests for root or template dependencies go in ${notesFile(row)}.`
   );
 }
 
@@ -468,7 +473,7 @@ function npmReason(tokens, start, ctx) {
   if (!changesDeps) return null;
   const pkgName = readPackageName(ctx.root, ctx.row);
   const example = pkgName ? `pnpm --filter ${pkgName} add <pkg>` : "nothing: record the request";
-  return `Blocked: this is a pnpm workspace; npm/yarn would break the lockfile. Use ${example} (or note it in ${notesFile(ctx.row)}).`;
+  return `Blocked: at the repo root this is a pnpm workspace; npm/yarn would break pnpm-lock.yaml. Use ${example} (or note it in ${notesFile(ctx.row)}).`;
 }
 
 const packageNames = new Map();

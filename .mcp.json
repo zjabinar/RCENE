@@ -3,7 +3,7 @@
     "playwright": {
       "command": "node",
       "args": [
-        "node_modules/@playwright/mcp/cli.js",
+        "apps/_template/node_modules/@playwright/mcp/cli.js",
         "--isolated",
         "--browser",
         "msedge",

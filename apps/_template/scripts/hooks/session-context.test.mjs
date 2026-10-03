@@ -125,11 +125,13 @@ describe("session-context", () => {
   });
 
   it("describes a standalone copy on main as free mode with npm rules", () => {
+    // The fixture copies this app's own project.json, so expect its values (the test runs in every generated app).
+    const own = JSON.parse(readFileSync(path.join(templateRoot, "project.json"), "utf8"));
     const ctx = contextOf(run(fx.standalone));
-    expect(ctx).toContain("RCENE app session: 00 - RCENE template (_template)");
+    expect(ctx).toContain(`RCENE app session: ${own.id} - ${own.title} (${own.slug})`);
     expect(ctx).toContain("Mode: free (standalone app folder; branch main)");
-    expect(ctx).toContain("dev 5100");
-    expect(ctx).toContain("preview 6100");
+    expect(ctx).toContain(`dev ${own.port}`);
+    expect(ctx).toContain(`preview ${own.port + 1000}`);
     expect(ctx).toContain("npm ci installs from package-lock.json");
     expect(ctx).toContain("chore: initial app copy");
     expect(ctx).not.toContain("pnpm equivalents");

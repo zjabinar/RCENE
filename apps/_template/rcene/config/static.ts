@@ -1,10 +1,9 @@
 /**
- * Serves shared static folders (data layers, AI models) to every app without
- * copying them into each app's public/ folder.
+ * Serves this app's static folders (data layers, AI models) at fixed URLs.
  *
  * A mount maps a URL prefix to one or more directories. Earlier directories win,
- * which is how real data in packages/data/files overrides the committed fake
- * fixtures in packages/data/fixtures, file by file.
+ * which is how real data in data/files overrides the fake fixtures in
+ * data/fixtures, file by file.
  *
  * With `manifest: true`, `<prefix>manifest.json` lists every file and whether it
  * came from the first directory ("real") or a later one ("fixture"). The UI uses

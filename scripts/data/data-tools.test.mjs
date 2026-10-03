@@ -4,7 +4,7 @@
  *   - scripts/data/kml-to-geojson.mjs
  *   - scripts/data/validate.mjs
  *
- * Run: pnpm exec vitest run --project scripts scripts/data
+ * Run (repo root): pnpm exec vitest run scripts/data
  *
  * Mapshaper runs as `node node_modules/mapshaper/bin/mapshaper` through
  * execFile/spawn with argument arrays, so no shell quoting is involved and the
@@ -18,14 +18,14 @@ import { fileURLToPath } from "node:url";
 import * as turf from "@turf/turf";
 import { strToU8, zipSync } from "fflate";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { boundarySchema, facilitiesSchema, heritageSchema, zonesSchema } from "../../packages/data/src/schemas.ts";
-import { LEVELS } from "../../packages/data/src/types.ts";
+import { boundarySchema, facilitiesSchema, heritageSchema, zonesSchema } from "../../apps/_template/rcene/data/schemas.ts";
+import { LEVELS } from "../../apps/_template/rcene/data/types.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const MAPSHAPER = path.join(root, "node_modules/mapshaper/bin/mapshaper");
 const KML_TO_GEOJSON = path.join(root, "scripts/data/kml-to-geojson.mjs");
 const VALIDATE = path.join(root, "scripts/data/validate.mjs");
-const fixture = (file) => path.join(root, "packages/data/fixtures", file);
+const fixture = (file) => path.join(root, "data/fixtures", file);
 
 /** Runs a Node script with an argument array; returns { status, stdout, stderr }. */
 function node(script, args) {
