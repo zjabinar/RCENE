@@ -868,7 +868,8 @@
         "boundary",
         "barangays",
         "hazard-*",
-        "facilities"
+        "facilities",
+        "derived/barangay-hazard"
       ],
       "feasibility": "Med-High",
       "roles": [
@@ -1366,7 +1367,9 @@
         "barangays",
         "hazard-stormSurge",
         "coastal-2015",
-        "coastal-2020"
+        "coastal-2020",
+        "facilities",
+        "derived/barangay-hazard"
       ],
       "feasibility": "Medium",
       "roles": [
