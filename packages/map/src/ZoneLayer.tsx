@@ -35,7 +35,9 @@ export function ZoneLayer({
   beforeId = SLOT.data,
 }: ZoneLayerProps) {
   const layerId = id ?? `zone-${hazard}`;
-  const filter = useMemo(() => (minLevel ? minLevelFilter(minLevel) : undefined), [minLevel]);
+  // Spread the filter only when set: maplibre 6 rejects `filter: undefined` ("array expected")
+  // and then never adds the layer.
+  const filterProps = useMemo(() => (minLevel ? { filter: minLevelFilter(minLevel) } : {}), [minLevel]);
   const fillPaint = useMemo(
     () => ({ "fill-color": levelColorExpression(), "fill-opacity": opacity }) satisfies FillLayerSpecification["paint"],
     [opacity],
@@ -55,9 +57,9 @@ export function ZoneLayer({
   // key: react-map-gl can't change a source or layer id in place, so a new id remounts.
   return (
     <Source key={layerId} id={layerId} type="geojson" data={zones}>
-      <Layer id={layerId} type="fill" paint={fillPaint} filter={filter} beforeId={beforeId} />
+      <Layer id={layerId} type="fill" paint={fillPaint} {...filterProps} beforeId={beforeId} />
       {outline && (
-        <Layer id={`${layerId}-outline`} type="line" paint={linePaint} filter={filter} beforeId={beforeId} />
+        <Layer id={`${layerId}-outline`} type="line" paint={linePaint} {...filterProps} beforeId={beforeId} />
       )}
     </Source>
   );
