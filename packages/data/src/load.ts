@@ -15,7 +15,8 @@ const cache = new Map<string, Promise<unknown>>();
 
 async function fetchJson<T>(url: string, layer: string): Promise<T> {
   const res = await fetch(url);
-  if (res.status === 404) throw new LayerMissingError(layer);
+  // `vite preview` answers unknown paths with index.html (HTTP 200), so HTML means "missing" too.
+  if (res.status === 404 || res.headers.get("content-type")?.includes("text/html")) throw new LayerMissingError(layer);
   if (!res.ok) throw new Error(`Failed to load ${url}: HTTP ${res.status}`);
   return (await res.json()) as T;
 }
@@ -34,12 +35,16 @@ export function fetchLayer<N extends LayerName>(name: N): Promise<LayerTypes[N]>
 
 export function fetchManifest(): Promise<DataManifest> {
   const url = "/data/manifest.json";
-  let pending = cache.get(url);
+  let pending = cache.get(url) as Promise<DataManifest> | undefined;
   if (!pending) {
-    pending = fetchJson<DataManifest>(url, "manifest").catch(() => ({ files: {} }));
+    // A failure is not cached, so a later call can still find out about fixtures.
+    pending = fetchJson<DataManifest>(url, "manifest").catch(() => {
+      cache.delete(url);
+      return { files: {} };
+    });
     cache.set(url, pending);
   }
-  return pending as Promise<DataManifest>;
+  return pending;
 }
 
 export type LoadState<T> =
@@ -49,16 +54,17 @@ export type LoadState<T> =
   | { status: "error"; data?: undefined; error: Error };
 
 function usePromise<T>(key: string, load: () => Promise<T>): LoadState<T> {
-  const [state, setState] = useState<LoadState<T>>({ status: "loading" });
+  // The state remembers which request it belongs to, so after `key` changes the
+  // previous layer's data is never returned under the new name (not even for one render).
+  const [state, setState] = useState<{ key: string; value: LoadState<T> }>({ key, value: { status: "loading" } });
   useEffect(() => {
     let alive = true;
-    setState({ status: "loading" });
     load().then(
-      (data) => alive && setState({ status: "ready", data }),
+      (data) => alive && setState({ key, value: { status: "ready", data } }),
       (error: unknown) => {
         if (!alive) return;
-        if (error instanceof LayerMissingError) setState({ status: "missing", error });
-        else setState({ status: "error", error: error instanceof Error ? error : new Error(String(error)) });
+        if (error instanceof LayerMissingError) setState({ key, value: { status: "missing", error } });
+        else setState({ key, value: { status: "error", error: error instanceof Error ? error : new Error(String(error)) } });
       },
     );
     return () => {
@@ -66,7 +72,7 @@ function usePromise<T>(key: string, load: () => Promise<T>): LoadState<T> {
     };
     // `key` identifies the request; `load` is a new closure every render.
   }, [key]);
-  return state;
+  return state.key === key ? state.value : { status: "loading" };
 }
 
 /** Loads one layer. Render <LoadingState/>, <DataMissing/> or the data based on `status`. */
@@ -113,7 +119,7 @@ export function useDataManifest(): DataManifest | null {
   return manifest;
 }
 
-/** True when any of the given layers is served from fixtures (or the manifest isn't loaded yet). */
+/** True when any of the given layers is served from fixtures. False until the manifest has loaded. */
 export function usesFixtures(manifest: DataManifest | null, layers: readonly LayerName[]): boolean {
   if (!manifest) return false;
   return layers.some((name) => {

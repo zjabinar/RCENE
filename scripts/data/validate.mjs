@@ -14,7 +14,9 @@
  *     `hazard` does not match its file name
  *   - a non-derived file with no sources.json entry (in fixtures, `"file": "*"` covers all)
  *   - raw GIS files (.shp, .kml, .kmz, ...) inside the data folder
- *   - derived tables that no longer match their inputs (re-run derive.mjs)
+ *   - derived tables whose barangays, facilities or hazards no longer match their
+ *     inputs (a coverage check, not a recomputation: always re-run derive.mjs
+ *     after changing any layer)
  * Warnings: total size over 3 MB, more than 5 decimals, properties that types.ts
  * does not define, unknown files, missing layers (the fixture is served instead).
  */

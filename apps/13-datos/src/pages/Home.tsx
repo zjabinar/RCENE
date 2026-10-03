@@ -39,14 +39,19 @@ export function Home() {
           <p className="text-sm text-muted-foreground">{t("home.hint")}</p>
         </CardHeader>
         <CardContent>
-          <LoadGate state={zones}>
-            {({ missing }) =>
-              status ? (
-                <HazardStatusList status={status} missing={missing} />
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("home.noPoint")}</p>
-              )
-            }
+          {/* The answer needs both the zones and the boundary (no boundary = no coverage = no answer). */}
+          <LoadGate state={boundary}>
+            {() => (
+              <LoadGate state={zones}>
+                {({ missing }) =>
+                  status ? (
+                    <HazardStatusList status={status} missing={missing} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("home.noPoint")}</p>
+                  )
+                }
+              </LoadGate>
+            )}
           </LoadGate>
         </CardContent>
       </Card>

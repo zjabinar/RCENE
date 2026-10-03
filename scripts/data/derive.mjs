@@ -19,9 +19,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as turf from "@turf/turf";
-
-const HAZARDS = ["flood", "landslide", "stormSurge", "groundShaking", "liquefaction"];
-const LEVELS = ["low", "moderate", "high", "veryHigh"];
+// Single source of truth for hazards and levels (Node >= 22.18 strips the types).
+import { HAZARDS, LEVELS } from "../../packages/data/src/types.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const dir = path.join(root, "packages/data", process.argv.includes("--fixtures") ? "fixtures" : "files");
@@ -56,7 +55,10 @@ function inside(pt, area) {
   return area.features.some((f) => turf.booleanPointInPolygon(pt, f));
 }
 
-/** Same rule as @rcene/geo lookupHazards: max level of all containing zones. */
+/**
+ * Same rule as @rcene/geo lookupHazards (max level of all containing zones). Kept
+ * as plain JS here so the script runs without a build; the geo tests pin the rule.
+ */
 function statusAt(pt, layer) {
   if (!inside(pt, boundary)) return { kind: "outsideCoverage" };
   let best = -1;
@@ -79,6 +81,7 @@ const barangayRows = barangays.features.map((b) => {
   const total = turf.area(b);
   const hazards = {};
   const exposedFacilities = {};
+  const inBarangay = (facilities?.features ?? []).filter((f) => turf.booleanPointInPolygon(f, b));
   for (const [h, byLevel] of Object.entries(unions)) {
     hazards[h] = {};
     for (const [level, union] of Object.entries(byLevel)) {
@@ -87,7 +90,6 @@ const barangayRows = barangays.features.map((b) => {
       const share = overlap ? turf.area(overlap) / total : 0;
       if (share > 0) hazards[h][level] = round(share);
     }
-    const inBarangay = (facilities?.features ?? []).filter((f) => turf.booleanPointInPolygon(f, b));
     const counts = {};
     for (const f of inBarangay) {
       const status = statusAt(f, zonesByHazard[h]);

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { atLeast, createRng, HAZARDS, LAYER_FILES, LEVELS, maxLevel } from "./index.ts";
 import {
   barangaysSchema,
@@ -74,5 +74,17 @@ describe("createRng", () => {
       expect(n).toBeGreaterThanOrEqual(2);
       expect(n).toBeLessThanOrEqual(4);
     }
+  });
+});
+
+describe("fetchLayer", () => {
+  it("treats the SPA html fallback (vite preview) as a missing layer, not an error", async () => {
+    const { fetchLayer, LayerMissingError } = await import("./load.ts");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("<!doctype html><html></html>", { status: 200, headers: { "content-type": "text/html" } })),
+    );
+    await expect(fetchLayer("heritage")).rejects.toBeInstanceOf(LayerMissingError);
+    vi.unstubAllGlobals();
   });
 });

@@ -64,3 +64,19 @@ describe("projectFor", () => {
     expect(() => projectFor(path.join(repo, "apps/99-nope"))).toThrow(/No port/);
   });
 });
+
+describe("rceneStatic dev middleware", () => {
+  it("refuses paths that would escape the mount on Windows, and malformed escapes", async () => {
+    const { real, fixtures } = tempDirs();
+    const { rceneStatic } = await import("./static.ts");
+    const plugin = rceneStatic([{ url: "/data/", dirs: [real, fixtures], manifest: true }]);
+    let handler: ((req: { url: string }, res: unknown, next: () => void) => void) | undefined;
+    const server = { middlewares: { use: (fn: typeof handler) => (handler = fn) } };
+    (plugin.configureServer as (s: unknown) => void)(server);
+    for (const url of ["/data/a%5C..%5C..%5Csecret.txt", "/data/C:%5Cwindows", "/data/%E0%A4%A", "/data/../x"]) {
+      let passed = false;
+      handler!({ url }, {}, () => (passed = true));
+      expect(passed, url).toBe(true);
+    }
+  });
+});

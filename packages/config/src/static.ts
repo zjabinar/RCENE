@@ -91,8 +91,15 @@ function contentType(file: string): string {
 
 /** Rejects path traversal and returns the relative path inside the mount. */
 function relativeRequest(urlPath: string, prefix: string): string | null {
-  const rel = decodeURIComponent(urlPath.slice(prefix.length));
-  if (!rel || rel.includes("\0")) return null;
+  let rel: string;
+  try {
+    rel = decodeURIComponent(urlPath.slice(prefix.length));
+  } catch {
+    return null; // malformed escape: not ours, let Vite answer
+  }
+  // Backslashes and drive letters would survive posix normalisation and then be
+  // interpreted by path.join on Windows, escaping the mount.
+  if (!rel || rel.includes("\0") || rel.includes("\\") || /^[a-zA-Z]:/.test(rel)) return null;
   const normalized = path.posix.normalize(rel);
   if (normalized.startsWith("..") || path.posix.isAbsolute(normalized)) return null;
   return normalized;

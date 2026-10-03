@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, type PluginOption, type UserConfig } from "vite";
+import { defineConfig, mergeConfig, type PluginOption, type UserConfig } from "vite";
 import type {} from "vitest/config";
 import { rceneStatic, type StaticMount } from "./static.ts";
 
@@ -26,7 +26,7 @@ export interface RceneAppOptions {
   ai?: boolean;
   /** Extra Vite plugins, e.g. VitePWA(...) for app 06. */
   plugins?: PluginOption[];
-  /** Escape hatch merged last. */
+  /** Escape hatch, deep-merged last with Vite's mergeConfig (nested keys merge, they don't replace). */
   overrides?: UserConfig;
 }
 
@@ -82,5 +82,5 @@ export function rceneApp(options: RceneAppOptions): UserConfig {
       passWithNoTests: true,
     },
   };
-  return defineConfig({ ...config, ...options.overrides });
+  return defineConfig(options.overrides ? mergeConfig(config, options.overrides) : config);
 }

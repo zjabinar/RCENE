@@ -342,15 +342,24 @@ function gitReason(sub, args, row) {
       }
       return null;
     case "branch":
-      if (args.some((a) => /^-[a-zA-Z]*[DMm]/.test(a) || a === "--move" || (a === "--delete" && args.includes("--force")))) {
+      if (
+        args.some(
+          (a) =>
+            /^-[a-zA-Z]*[dDmMcCf]/.test(a) ||
+            ["--delete", "--move", "--copy", "--force", "--set-upstream-to", "--unset-upstream"].includes(a.split("=")[0]),
+        )
+      ) {
         return `Blocked: deleting or renaming branches is not allowed in a project session. Stay on ${own}.`;
       }
       return null;
     case "checkout":
     case "switch": {
-      const creates = args.some((a) => /^-[a-zA-Z]*[bBcC]$/.test(a) || a === "--orphan" || a === "--detach" || a === "--create" || a === "--force-create");
-      const target = plain.find((a) => PROTECTED_BRANCHES.has(a) || (a.startsWith("proj/") && a !== own));
-      if (creates || target) {
+      // Allowed: restoring files (`git checkout -- <paths>`) or naming the own branch.
+      // Anything else (a sha, HEAD~0, another branch, -b/--detach) would move HEAD off
+      // the project branch, and a detached HEAD turns these project rules off.
+      const restoresFiles = sub === "checkout" && args.includes("--");
+      const staysOnOwn = plain.length === 1 && plain[0] === own && !args.some((a) => a.startsWith("-"));
+      if (!restoresFiles && !staysOnOwn) {
         return `Blocked: this session must stay on ${own}. Use git restore <file> to discard changes; switching or creating branches is the orchestrator's job.`;
       }
       return null;
@@ -404,6 +413,18 @@ function parsePnpm(tokens, start) {
       filters.push(tokens[++i] ?? "");
       continue;
     }
+    if (t.startsWith("--filter=")) {
+      filters.push(t.slice("--filter=".length));
+      continue;
+    }
+    if (t === "-C" || t === "--dir") {
+      dir = tokens[++i] ?? null;
+      continue;
+    }
+    if (t.startsWith("--dir=")) {
+      dir = t.slice("--dir=".length);
+      continue;
+    }
     subArgs.push(t);
   }
   return { sub, subArgs, filters, dir, workspaceRoot, recursive };
@@ -438,12 +459,12 @@ function pnpmReason(parsed, ctx, effectiveCwd) {
   );
 }
 
+const NPM_DEP_VERBS = new Set(["add", "uninstall", "remove", "rm", "un", "update", "up", "link", "install", "i", "in", "isntall", "ci"]);
+
 function npmReason(tokens, start, ctx) {
-  const sub = tokens.slice(start + 1).find((t) => !t.startsWith("-"));
-  const pkgArgs = tokens.slice(start + 1).filter((t) => !t.startsWith("-") && t !== sub);
-  const changesDeps =
-    ["add", "uninstall", "remove", "rm", "un", "update", "up", "link"].includes(sub) ||
-    (["install", "i", "in", "isntall"].includes(sub) && pkgArgs.length > 0);
+  // Any dependency verb anywhere: this is a pnpm workspace, so even a bare `npm install`
+  // is wrong, and option values (e.g. --prefix <dir>) can't hide the verb.
+  const changesDeps = tokens.slice(start + 1).some((t) => NPM_DEP_VERBS.has(t));
   if (!changesDeps) return null;
   const pkgName = readPackageName(ctx.root, ctx.row);
   const example = pkgName ? `pnpm --filter ${pkgName} add <pkg>` : "nothing: record the request";

@@ -188,6 +188,13 @@ describe("project branch rules (proj/01-ligtas)", () => {
       "git branch -D proj/02-tubig",
       "git cherry-pick abc123",
       "git -C . push",
+      // Bypasses found in review: a detached HEAD would switch the project rules off.
+      "git checkout HEAD~0",
+      "git checkout 1a2b3c4",
+      "git switch --detach",
+      "git branch -d -f proj/02-tubig",
+      "git branch --delete --force proj/02-tubig",
+      "git branch -m renamed",
     ]) {
       expect(run({ tool_name: "Bash", tool_input: { command }, cwd: projRepo }).status, command).toBe(2);
     }
@@ -218,7 +225,17 @@ describe("project branch rules (proj/01-ligtas)", () => {
     for (const command of ok) {
       expect(run({ tool_name: "Bash", tool_input: { command }, cwd: projRepo }).status, command).toBe(0);
     }
-    const blocked = ["pnpm add -w lodash", "pnpm add lodash", "pnpm --filter @rcene/ui add lodash", "npm install lodash"];
+    const blocked = [
+      "pnpm add -w lodash",
+      "pnpm add lodash",
+      "pnpm --filter @rcene/ui add lodash",
+      "npm install lodash",
+      // Bypasses found in review: options after the subcommand, and npm option values.
+      "cd apps/01-ligtas && pnpm add lodash --filter=@rcene/ui",
+      "cd apps/01-ligtas && pnpm add lodash -C ../../packages/ui",
+      "cd apps/01-ligtas && pnpm add lodash --dir=../../packages/ui",
+      "npm --prefix packages/ui install lodash",
+    ];
     for (const command of blocked) {
       expect(run({ tool_name: "Bash", tool_input: { command }, cwd: projRepo }).status, command).toBe(2);
     }

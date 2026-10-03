@@ -515,9 +515,12 @@ async function main() {
     for (const s of servers) await killTree(s.child).catch(() => {});
   };
   let interrupted = false;
+  // Once the summary is printed, Ctrl+C (with --keep-open) exits with the smoke result,
+  // not 130, so callers can still tell PASS from FAIL.
+  let resultCode = 130;
   process.once("SIGINT", () => {
     interrupted = true;
-    stopAll().finally(() => process.exit(130));
+    stopAll().finally(() => process.exit(resultCode));
   });
 
   const reports = [];
@@ -566,6 +569,7 @@ async function main() {
   }
 
   const ok = printSummary(reports);
+  resultCode = ok ? 0 : 1;
   if (opts.keepOpen && servers.some((s) => s.child.exitCode === null)) {
     console.log("\nPreview server(s) still running (--keep-open):");
     for (const rep of reports) if (rep.app.previewPort !== "-") console.log(`  http://127.0.0.1:${rep.app.previewPort}`);
