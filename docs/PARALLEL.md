@@ -1,6 +1,6 @@
 # Running the parallel build (Windows)
 
-You'll pre-build 20 apps with about 5 Claude Code sessions at a time. Each session runs in its own **git worktree**, on its own **branch** (`proj/NN-slug`), on its own **port**, and **starts inside its app folder** (`<worktree>\apps\<slug>`). `docs/projects/projects.json` is the manifest, and each project's brief in `docs/projects/` is its spec (copied into the app as `docs/brief.md`).
+You'll pre-build 20 single-feature apps and then 10 platforms (P1–P10), with about 5 Claude Code sessions at a time. Each session runs in its own **git worktree**, on its own **branch** (`proj/NN-slug`, `proj/pNN-slug`), on its own **port**, and **starts inside its app folder** (`<worktree>\apps\<slug>`). `docs/projects/projects.json` is the manifest, and each project's brief in `docs/projects/` is its spec (copied into the app as `docs/brief.md`).
 
 Every app folder is a self-contained project: its own `package.json` and `package-lock.json`, its own copy of the shared code (`rcene/`), data (`data/`), `CLAUDE.md`, skills, hooks (`.claude/settings.json`) and Playwright MCP (`.mcp.json`). A session inside it works exactly like the copied folder will on Oct 7.
 
@@ -8,7 +8,8 @@ Every app folder is a self-contained project: its own `package.json` and `packag
 main ──┬── proj/00-data      (batch 0, at the repo root: local data conversion — merge first)
        ├── proj/01-ligtas    C:\RSCENE-wt\01-ligtas\apps\01-ligtas   :5101
        ├── proj/03-likas     C:\RSCENE-wt\03-likas\apps\03-likas     :5103
-       └── …                 one worktree + one Claude tab per project, started in its app folder
+       ├── …                 one worktree + one Claude tab per project, started in its app folder
+       └── proj/p01-andam    C:\RSCENE-wt\p01-andam\apps\p01-andam   :5201  (batch 5, after its modules are merged)
 ```
 
 ## One-time setup
@@ -44,6 +45,7 @@ main ──┬── proj/00-data      (batch 0, at the repo root: local data co
 | Merge | `git switch main` then `git merge --no-ff proj/01-ligtas` | If `pnpm-lock.yaml` conflicts, run `pnpm install` and commit. That regenerates it |
 | Package window | on main, between batches | See below |
 | Batches 2–4 | `… -Batch 2`, `… -Batch 3`, `… -Batch 4` | B4 (02 Tubig, 06 Snap, 15 Bakhaw, 17 Banig, 19 Ayuda) is the riskiest. Treat it as optional |
+| Batches 5–6 (platforms) | `… -Batch 5`, `… -Batch 6` | B5: P1 Andam, P3 Kalinga, P5 Serbisyo, P6 Negosyo, P10 Barangay 360. B6: P2 Response, P4 Isla Link, P7 Bukas, P8 Libot+, P9 Luntian. Start a platform **after its module apps are merged into main** (its row's `modules`; see "Platforms" below). A platform whose modules aren't done still runs: it builds those modules from their briefs, which costs more |
 | Resume | `… -Project "05" -Resume` | Reopens the tab with `claude --continue`, e.g. after a usage limit or a reboot |
 | Clean up | `… -Project "01" -Remove` | Removes the worktree and keeps the branch. Never delete a worktree folder by hand: pnpm uses junctions |
 
@@ -74,9 +76,21 @@ The launcher opens `claude --permission-mode acceptEdits "Begin project NN-slug 
 
 Turn on a terminal bell or notification (`/config`) so a tab flags when it's waiting for you.
 
-## In-browser AI models (06, 10, 20)
+## Platforms (P1–P10)
 
-Models are large (> 100 MB each), gitignored and never committed. Before the batch that needs them, while online, fill each AI app's own `models/`: inside the app, `npm run fetch-models -- --model e5|clip|all`, or from the root, `node scripts/fetch-models.mjs --app 20-sumat`. Every download also lands in a shared cache (`~/.cache/rcene-models`), so e5 is downloaded once for 10 and 20, and a worktree's app folder fills from the cache (`--from cache`) instead of the network.
+A platform is one workflow across several roles (for example CDRRMO console → resident phone → evacuation staff → public board), built from finished single-feature apps. `apps/pNN-slug/` is generated like an app, with three additions:
+
+- `docs/modules/NN-slug.md`: the briefs of its module apps (`modules` in its row), kept in step by `pnpm sync-shared` (group `docs`).
+- A starting `src/`: the role launcher at `/` (`RoleLauncher`: each role opens here or in its own sized window), one placeholder page per role route, the nav, role strings in three languages (from the row's `roles`) and a spine store (`<slug>:spine`). `smokeRoutes` covers `/`, every role route and `/sources`.
+- `project.json` has `kind: "platform"`, `modules` and `roles`; the session hook says which module apps are done in the worktree.
+
+The session **lifts** each finished module (`../NN-slug`, `STATUS.md` at `Phase: done`) into `src/modules/<name>/` by copying, never by importing across folders, and records it in `NOTES.md` under "Lifted modules". So: merge a platform's module apps first, then launch it from the updated main. Its first requirement is its first module on its own, so a platform that runs out of time is still a finished single-feature entry.
+
+Port 5201–5210 (preview +1000). The ★AI platforms are P2 (06's photo suggestion) and P5 (20's semantic search): fill their `models/` as for the AI apps.
+
+## In-browser AI models (06, 10, 20, P2, P5)
+
+Models are large (> 100 MB each), gitignored and never committed. Before the batch that needs them, while online, fill each AI app's own `models/` (also P2 and P5): inside the app, `npm run fetch-models -- --model e5|clip|all`, or from the root, `node scripts/fetch-models.mjs --app 20-sumat`. Every download also lands in a shared cache (`~/.cache/rcene-models`), so e5 is downloaded once for 10 and 20, and a worktree's app folder fills from the cache (`--from cache`) instead of the network.
 
 ## Capacity planning
 
@@ -86,7 +100,7 @@ Models are large (> 100 MB each), gitignored and never committed. Before the bat
 | Disk | The monorepo with every app installed through pnpm: about 1–2 GB, mostly in the shared store; each worktree adds little because pnpm hard-links. A **standalone** app folder installed with `npm ci` takes about 1.0–1.2 GB on its own | Under ~2 GB for the worktrees; plan another ~1.2 GB per copied-out app, plus models (~0.3 GB per AI app) |
 | Usage | Each session works for hours | Watch `/usage`. Stagger starts. Use `-Resume` after a limit |
 
-Each app has a fixed port (5101–5120, preview +1000) and `strictPort`, so two sessions never steal each other's port.
+Each app has a fixed port (5101–5120, platforms 5201–5210, preview +1000) and `strictPort`, so two sessions never steal each other's port.
 
 ## Merge order and conflicts
 

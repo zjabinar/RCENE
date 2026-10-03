@@ -115,7 +115,7 @@ describe("session-context", () => {
     const ctx = contextOf(run(fx[key]));
     expect(ctx).toContain("Brief (the approved spec, read it first): docs/brief.md");
     expect(ctx).not.toContain("NOT FOUND");
-    expect(ctx).toMatch(/Ports: dev 51\d\d \(npm run dev\), preview 61\d\d/);
+    expect(ctx).toMatch(/Ports: dev 5\d{3} \(npm run dev\), preview 6\d{3}/);
     expect(ctx).toContain("Next: R1.3 evacuation link");
     expect(ctx).toMatch(/Real \(data\/files\): boundary\.geojson/);
     expect(ctx).toMatch(/Fixture only[^\n]*barangays\.geojson, derived\/barangay-hazard\.json/);
@@ -162,9 +162,37 @@ describe("session-context", () => {
     expect(ctx).toContain("Commits on proj/01-x since main:\n");
     expect(ctx).toContain("feat(01): R1.1 first slice");
     expect(ctx).toContain("stay on proj/01-x");
-    expect(ctx).toContain("data/** and docs/brief.md are synced");
+    expect(ctx).toContain("data/**, docs/brief.md and docs/modules/** are synced");
     expect(ctx).toContain("pnpm add <pkg> inside this folder");
     expect(ctx).not.toContain("WARNING");
+  });
+
+  it("lists a platform's roles and which module apps are done", () => {
+    const project = path.join(fx.project.app, "project.json");
+    const original = readFileSync(project, "utf8");
+    const siblings = path.join(fx.project.root, "apps");
+    try {
+      writeFileSync(
+        project,
+        JSON.stringify({
+          ...JSON.parse(original),
+          kind: "platform",
+          modules: ["02-y", "03-z"],
+          roles: [{ id: "console", path: "/console", width: "full" }, { id: "resident", path: "/resident", width: "phone" }],
+        }),
+      );
+      mkdirSync(path.join(siblings, "02-y"), { recursive: true });
+      writeFileSync(path.join(siblings, "02-y", "STATUS.md"), "# Status\n\nPhase: done\nDone: R1, R2\n");
+      mkdirSync(path.join(siblings, "03-z"), { recursive: true });
+      writeFileSync(path.join(siblings, "03-z", "STATUS.md"), "# Status\n\nNot started\n");
+      const ctx = contextOf(run(fx.project));
+      expect(ctx).toContain("Platform roles: / (role launcher), /console console, /resident resident.");
+      expect(ctx).toContain("02-y (done: lift it), 03-z (not done: build from docs/modules)");
+    } finally {
+      writeFileSync(project, original);
+      rmSync(path.join(siblings, "02-y"), { recursive: true, force: true });
+      rmSync(path.join(siblings, "03-z"), { recursive: true, force: true });
+    }
   });
 
   it("warns when the checkout is on another project's branch", () => {

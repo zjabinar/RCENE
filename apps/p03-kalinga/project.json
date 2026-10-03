@@ -1,0 +1,33 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P3",
+  "slug": "p03-kalinga",
+  "title": "Kalinga Catbalogan",
+  "tagline": "Vulnerability-aware social protection before the storm",
+  "port": 5203,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p03-kalinga",
+  "smokeRoutes": [
+    "/",
+    "/planner",
+    "/field",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "18-kalinga"
+  ],
+  "roles": [
+    {
+      "id": "planner",
+      "path": "/planner",
+      "width": "full"
+    },
+    {
+      "id": "field",
+      "path": "/field",
+      "width": "phone"
+    }
+  ]
+}

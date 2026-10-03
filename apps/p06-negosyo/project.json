@@ -1,0 +1,41 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P6",
+  "slug": "p06-negosyo",
+  "title": "Negosyo Catbalogan",
+  "tagline": "Hazard-aware business permits, from first question to appointment",
+  "port": 5206,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p06-negosyo",
+  "smokeRoutes": [
+    "/",
+    "/applicant",
+    "/bplo",
+    "/registry",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "09-negosyo",
+    "07-pila",
+    "10-reklamo"
+  ],
+  "roles": [
+    {
+      "id": "applicant",
+      "path": "/applicant",
+      "width": "phone"
+    },
+    {
+      "id": "bplo",
+      "path": "/bplo",
+      "width": "full"
+    },
+    {
+      "id": "registry",
+      "path": "/registry",
+      "width": "wide"
+    }
+  ]
+}

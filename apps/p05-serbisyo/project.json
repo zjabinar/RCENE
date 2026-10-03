@@ -1,0 +1,41 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P5",
+  "slug": "p05-serbisyo",
+  "title": "Serbisyo Catbalogan",
+  "tagline": "One-stop citizen services in Waray, Filipino and English",
+  "port": 5205,
+  "ai": true,
+  "brief": "docs/brief.md",
+  "branch": "proj/p05-serbisyo",
+  "smokeRoutes": [
+    "/",
+    "/resident",
+    "/staff",
+    "/display",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "20-sumat",
+    "08-sertipiko",
+    "07-pila"
+  ],
+  "roles": [
+    {
+      "id": "resident",
+      "path": "/resident",
+      "width": "phone"
+    },
+    {
+      "id": "staff",
+      "path": "/staff",
+      "width": "wide"
+    },
+    {
+      "id": "display",
+      "path": "/display",
+      "width": "full"
+    }
+  ]
+}

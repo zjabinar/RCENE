@@ -63,9 +63,16 @@ export function readStack(root = ROOT) {
   return readJson(repoPaths(root).stack);
 }
 
-/** Manifest rows that are apps (kind "app"), in manifest order. */
+/** Row kinds that are generated into apps/<slug>: single-feature apps and platforms. */
+export const APP_KINDS = new Set(["app", "platform"]);
+
+/** Manifest rows that get an app folder (kind "app" or "platform"), in manifest order. */
 export function appRows(manifest) {
-  return (manifest.projects ?? []).filter((p) => p.kind === "app");
+  return (manifest.projects ?? []).filter((p) => APP_KINDS.has(p.kind));
+}
+
+export function isPlatform(row) {
+  return row?.kind === "platform";
 }
 
 /** A pseudo-row for apps/_template, so the template can be targeted like an app. */
@@ -93,10 +100,11 @@ export function isTemplateKey(key) {
   return key === "template" || key === TEMPLATE_SLUG || key === "apps/_template";
 }
 
-/** Finds an app row by slug (01-ligtas), id (01 or 1), slug prefix or apps/<slug>. */
+/** Finds an app row by slug (01-ligtas, p01-andam), id (01 or 1, P1 or p01), slug prefix or apps/<slug>. */
 export function findApp(manifest, key) {
   const k = String(key).replace(/\\/g, "/").replace(/\/$/, "").replace(/^apps\//, "");
-  const id = /^\d{1,2}$/.test(k) ? k.padStart(2, "0") : k;
+  const platform = /^p0?(\d{1,2})$/i.exec(k);
+  const id = /^\d{1,2}$/.test(k) ? k.padStart(2, "0") : platform ? `P${Number(platform[1])}` : k;
   const rows = appRows(manifest);
   return rows.find((p) => p.slug === k) ?? rows.find((p) => p.id === id) ?? rows.find((p) => p.slug.startsWith(`${k}-`)) ?? null;
 }
@@ -128,7 +136,7 @@ export function resolveTargets(root, keys, { all = false, withTemplate = false, 
       continue;
     }
     const row = findApp(manifest, key);
-    if (!row) throw new Error(`No app "${key}" in docs/projects/projects.json (use a slug like 01-ligtas or an id like 01)`);
+    if (!row) throw new Error(`No app "${key}" in docs/projects/projects.json (use a slug like 01-ligtas or p01-andam, or an id like 01 or P1)`);
     add(row);
   }
   return out;
@@ -395,17 +403,35 @@ export function projectJson(row, root = ROOT) {
     brief: APP_BRIEF,
     branch: row.branch,
     smokeRoutes: row.smokeRoutes ?? ["/", "/sources"],
+    ...(isPlatform(row)
+      ? {
+          kind: "platform",
+          modules: moduleRows(row, root).map((m) => m.slug),
+          roles: (row.roles ?? []).map((r) => ({ id: r.id, path: r.path, width: r.width })),
+        }
+      : {}),
   };
+}
+
+/** The manifest rows of a platform's module apps, in the row's order. Unknown ids throw. */
+export function moduleRows(row, root = ROOT) {
+  if (!isPlatform(row)) return [];
+  const manifest = readManifest(root);
+  return (row.modules ?? []).map((id) => {
+    const m = (manifest.projects ?? []).find((p) => p.id === id && p.kind === "app");
+    if (!m) throw new Error(`${row.slug}: module "${id}" is not an app id in docs/projects/projects.json`);
+    return m;
+  });
 }
 
 export function json(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-/** Ids that get a copy of docs/PRD.md (the P1 platform: cores 01, 05 and 03). */
-export const PRD_APPS = new Set(["01", "03", "05"]);
+/** Ids that get a copy of docs/PRD.md (the P1 platform itself, and its cores 01, 05 and 03). */
+export const PRD_APPS = new Set(["01", "03", "05", "P1"]);
 
-/** The `### <n>. Title` section of PROPOSALS.md, as a standalone document. */
+/** The `### <n>. Title` (n = 1..20) or `### P<n>. Title` section of PROPOSALS.md, as a standalone document. */
 export function proposalSection(text, n) {
   const lines = String(text).replace(/\r\n/g, "\n").split("\n");
   const start = lines.findIndex((l) => new RegExp(`^###\\s+${n}\\.\\s`).test(l));
@@ -421,14 +447,17 @@ export function proposalSection(text, n) {
   const title = lines[start].replace(/^###\s+/, "").trim();
   return (
     `# Proposal ${title}\n\n` +
-    `_The original one-paragraph pitch for this app (proposal ${n} of 20). The approved spec is \`docs/brief.md\`; where they differ, the brief wins._\n\n` +
+    (/^P\d+$/.test(String(n))
+      ? `_The original pitch for this platform (${n} of P1–P10). The approved spec is \`docs/brief.md\`; where they differ, the brief wins._\n\n`
+      : `_The original one-paragraph pitch for this app (proposal ${n} of 20). The approved spec is \`docs/brief.md\`; where they differ, the brief wins._\n\n`) +
     `${body}\n`
   );
 }
 
 /**
  * The docs every app carries, generated from the repo-level docs:
- * docs/brief.md, docs/DISCLOSURE.md, docs/proposal.md and (01, 03, 05) docs/PRD.md.
+ * docs/brief.md, docs/DISCLOSURE.md, docs/proposal.md, (01, 03, 05, P1) docs/PRD.md,
+ * and for a platform docs/modules/<slug>.md, the brief of each module app.
  * Returns Map<rel, string>. Missing sources throw, except PRD/DISCLOSURE which are skipped.
  */
 export function generatedDocs(root, row) {
@@ -441,12 +470,26 @@ export function generatedDocs(root, row) {
   if (existsSync(disclosure)) docs.set("docs/DISCLOSURE.md", readFileSync(disclosure, "utf8"));
   const proposals = path.join(p.docs, "PROPOSALS.md");
   if (existsSync(proposals)) {
-    const section = proposalSection(readFileSync(proposals, "utf8"), Number(row.id));
+    const section = proposalSection(readFileSync(proposals, "utf8"), isPlatform(row) ? row.id : Number(row.id));
     if (section) docs.set("docs/proposal.md", section);
   }
   const prd = path.join(p.docs, "PRD.md");
   if (PRD_APPS.has(row.id) && existsSync(prd)) docs.set("docs/PRD.md", readFileSync(prd, "utf8"));
+  for (const m of moduleRows(row, root)) {
+    const src = path.join(root, m.brief ?? `docs/projects/${m.slug}.md`);
+    if (!existsSync(src)) throw new Error(`module brief not found: ${path.relative(root, src)}`);
+    docs.set(`docs/modules/${m.slug}.md`, moduleNote(m, row) + readFileSync(src, "utf8"));
+  }
   return docs;
+}
+
+/** The note on top of a module brief inside a platform. */
+function moduleNote(m, row) {
+  return (
+    `> **Module brief** (reference). This is the spec of app #${m.id} ${m.title}, copied from the monorepo's ` +
+    `\`docs/projects/${m.slug}.md\`. Its paths and ports are that app's. In ${row.id} ${row.title}, \`docs/brief.md\` ` +
+    `says which parts to lift or build, and wins where they differ.\n\n`
+  );
 }
 
 /** Every docs/ file the sync may own for some app (so a template copy of them is ignored). */
@@ -463,7 +506,7 @@ export function managedGroup(rel) {
   if (rel === ".claude/settings.json" || rel.startsWith(".claude/skills/") || rel === ".mcp.json" || rel === "CLAUDE.md") return "claude";
   if ([".npmrc", ".gitignore", ".gitattributes", "vite.config.ts", "components.json", "index.html"].includes(rel)) return "config";
   if (/^tsconfig[^/]*\.json$/.test(rel)) return "config";
-  if (GENERATED_DOCS.has(rel)) return "docs";
+  if (GENERATED_DOCS.has(rel) || /^docs\/modules\/[^/]+\.md$/.test(rel)) return "docs";
   if (rel === "package.json") return "package";
   return null;
 }

@@ -1,5 +1,5 @@
 {
-  "$comment": "Orchestration manifest (repo root only; apps never read it, each app has its own project.json). Read by scripts/new-app.mjs (generates apps/<slug> from apps/_template), scripts/sync-shared.mjs, sync-data.mjs, lockfiles.mjs, check-standalone.mjs, smoke.mjs, scripts/launch-worktrees.ps1 (worktrees, sessions, -Status) and the root hooks (write scope per proj/<slug> branch). Ports: template 5100, apps 5101-5120, platforms later 5201-5210. Preview port = dev port + 1000. `extras` and each row's `extras` are informational only: every app gets the full stack from stack.json.",
+  "$comment": "Orchestration manifest (repo root only; apps never read it, each app has its own project.json). Read by scripts/new-app.mjs (generates apps/<slug> from apps/_template), scripts/sync-shared.mjs, sync-data.mjs, lockfiles.mjs, check-standalone.mjs, smoke.mjs, scripts/launch-worktrees.ps1 (worktrees, sessions, -Status) and the root hooks (write scope per proj/<slug> branch). Ports: template 5100, apps 5101-5120, platforms 5201-5210. Preview port = dev port + 1000. `extras` and each row's `extras` are informational only: every app gets the full stack from stack.json. Rows with kind \"platform\" (P1-P10) are generated like apps; `modules` lists the single-feature apps whose briefs are copied into docs/modules/ (and whose finished code the platform lifts), and `roles` drives the generated role launcher, role routes and smoke routes.",
   "version": 1,
   "worktreeRoot": "C:/RSCENE-wt",
   "base": "main",
@@ -614,7 +614,8 @@
         "barangays"
       ],
       "platforms": [
-        "P2"
+        "P2",
+        "P4"
       ],
       "feasibility": "High",
       "writeScope": [
@@ -645,6 +646,861 @@
       "feasibility": "High",
       "writeScope": [
         "apps/20-sumat/**"
+      ]
+    },
+    {
+      "id": "P1",
+      "slug": "p01-andam",
+      "title": "Andam Catbalogan",
+      "tagline": "Community preparedness: one warning, every role, live",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 5,
+      "port": 5201,
+      "branch": "proj/p01-andam",
+      "app": "apps/p01-andam",
+      "brief": "docs/projects/p01-andam.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "01",
+        "05",
+        "03",
+        "04"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "derived/barangay-hazard",
+        "derived/facility-hazard"
+      ],
+      "feasibility": "Med-High",
+      "roles": [
+        {
+          "id": "console",
+          "path": "/console",
+          "width": "full",
+          "title": {
+            "en": "CDRRMO console",
+            "war": "Console han CDRRMO",
+            "fil": "Console ng CDRRMO"
+          },
+          "summary": {
+            "en": "Raise or lower a warning scenario and see which barangays and facilities are exposed.",
+            "war": "Ipataas o ipaubos an warning nga scenario ngan kitaa kon ano nga mga barangay ngan pasilidad an apektado.",
+            "fil": "Itaas o ibaba ang babala at tingnan kung aling mga barangay at pasilidad ang apektado."
+          }
+        },
+        {
+          "id": "resident",
+          "path": "/resident",
+          "width": "phone",
+          "title": {
+            "en": "Resident",
+            "war": "Residente",
+            "fil": "Residente"
+          },
+          "summary": {
+            "en": "Check a place and find the nearest open evacuation center with room.",
+            "war": "Tan-awa an usa nga lugar ngan bilnga an pinakaharani nga bukas nga evacuation center nga may lugar pa.",
+            "fil": "Suriin ang isang lugar at hanapin ang pinakamalapit na bukas na evacuation center na may puwang pa."
+          }
+        },
+        {
+          "id": "center",
+          "path": "/center",
+          "width": "phone",
+          "title": {
+            "en": "Evacuation center staff",
+            "war": "Staff han evacuation center",
+            "fil": "Kawani ng evacuation center"
+          },
+          "summary": {
+            "en": "Log arrivals and departures, and open or close a center.",
+            "war": "Irekord an mga inabot ngan binaya, ngan ablihi o sirhi an center.",
+            "fil": "Itala ang mga dumating at umalis, at buksan o isara ang center."
+          }
+        },
+        {
+          "id": "board",
+          "path": "/board",
+          "width": "full",
+          "title": {
+            "en": "Public board",
+            "war": "Publiko nga board",
+            "fil": "Pampublikong board"
+          },
+          "summary": {
+            "en": "The live warning, centers and capacity, readable from across the room.",
+            "war": "An buhi nga warning, mga center ngan kapasidad, mababasa tikang ha harayo.",
+            "fil": "Ang kasalukuyang babala, mga center at kapasidad, nababasa mula sa malayo."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/console",
+        "/resident",
+        "/center",
+        "/board",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p01-andam/**"
+      ]
+    },
+    {
+      "id": "P2",
+      "slug": "p02-response",
+      "title": "Bayanihan Response",
+      "tagline": "From field report to relief, with every step on the record",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 6,
+      "port": 5202,
+      "branch": "proj/p02-response",
+      "app": "apps/p02-response",
+      "brief": "docs/projects/p02-response.md",
+      "extras": [],
+      "ai": true,
+      "modules": [
+        "06",
+        "19"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays"
+      ],
+      "feasibility": "Medium",
+      "roles": [
+        {
+          "id": "report",
+          "path": "/report",
+          "width": "phone",
+          "title": {
+            "en": "Field report",
+            "war": "Report tikang ha uma",
+            "fil": "Ulat mula sa field"
+          },
+          "summary": {
+            "en": "File a geotagged damage report. It waits in a queue while offline.",
+            "war": "Pag-file hin report han kadaot nga may lokasyon. Naghuhulat ini ha pila samtang offline.",
+            "fil": "Mag-file ng ulat ng pinsala na may lokasyon. Naghihintay ito sa pila habang offline."
+          }
+        },
+        {
+          "id": "triage",
+          "path": "/triage",
+          "width": "full",
+          "title": {
+            "en": "CDRRMO triage",
+            "war": "Triage han CDRRMO",
+            "fil": "Triage ng CDRRMO"
+          },
+          "summary": {
+            "en": "Verify reports, set priority and assign relief.",
+            "war": "Siguroha an mga report, ibutang an prayoridad ngan i-assign an bulig.",
+            "fil": "Beripikahin ang mga ulat, itakda ang prayoridad at magtalaga ng tulong."
+          }
+        },
+        {
+          "id": "relief",
+          "path": "/relief",
+          "width": "phone",
+          "title": {
+            "en": "Relief volunteer",
+            "war": "Boluntaryo ha bulig",
+            "fil": "Boluntaryo sa relief"
+          },
+          "summary": {
+            "en": "Scan household QR codes and record what each household received.",
+            "war": "I-scan an QR code han panimalay ngan irekord kon ano an nakarawat han kada panimalay.",
+            "fil": "I-scan ang QR code ng sambahayan at itala kung ano ang natanggap ng bawat sambahayan."
+          }
+        },
+        {
+          "id": "public",
+          "path": "/public",
+          "width": "full",
+          "title": {
+            "en": "Public dashboard",
+            "war": "Publiko nga dashboard",
+            "fil": "Pampublikong dashboard"
+          },
+          "summary": {
+            "en": "What relief reached which barangay, updated live.",
+            "war": "Ano nga bulig an inabot ha kada barangay, gin-a-update dayon.",
+            "fil": "Anong tulong ang nakarating sa bawat barangay, ina-update agad."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/report",
+        "/triage",
+        "/relief",
+        "/public",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p02-response/**"
+      ]
+    },
+    {
+      "id": "P3",
+      "slug": "p03-kalinga",
+      "title": "Kalinga Catbalogan",
+      "tagline": "Vulnerability-aware social protection before the storm",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 5,
+      "port": 5203,
+      "branch": "proj/p03-kalinga",
+      "app": "apps/p03-kalinga",
+      "brief": "docs/projects/p03-kalinga.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "18"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "derived/barangay-hazard"
+      ],
+      "feasibility": "Med-High",
+      "roles": [
+        {
+          "id": "planner",
+          "path": "/planner",
+          "width": "full",
+          "title": {
+            "en": "CSWDO and BDRRMC",
+            "war": "CSWDO ngan BDRRMC",
+            "fil": "CSWDO at BDRRMC"
+          },
+          "summary": {
+            "en": "Rank barangays by vulnerability and build the pre-emptive evacuation priority list.",
+            "war": "Ranggoha an mga barangay sumala ha kahuyang ngan himoa an listahan han prayoridad para ha pre-emptive nga pagbakwit.",
+            "fil": "Iranggo ang mga barangay ayon sa kahinaan at buuin ang listahan ng prayoridad para sa pre-emptive na paglikas."
+          }
+        },
+        {
+          "id": "field",
+          "path": "/field",
+          "width": "phone",
+          "title": {
+            "en": "Tanod and BHW",
+            "war": "Tanod ngan BHW",
+            "fil": "Tanod at BHW"
+          },
+          "summary": {
+            "en": "Work through the priority list and check households off as they move.",
+            "war": "Sundon an listahan han prayoridad ngan markahi an mga panimalay samtang nabalhin hira.",
+            "fil": "Sundan ang listahan ng prayoridad at markahan ang mga sambahayan habang lumilipat sila."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/planner",
+        "/field",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p03-kalinga/**"
+      ]
+    },
+    {
+      "id": "P4",
+      "slug": "p04-isla",
+      "title": "Isla Link",
+      "tagline": "Island barangays, their needs and the boats that answer them",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 6,
+      "port": 5204,
+      "branch": "proj/p04-isla",
+      "app": "apps/p04-isla",
+      "brief": "docs/projects/p04-isla.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "03",
+        "19"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "land"
+      ],
+      "feasibility": "High",
+      "roles": [
+        {
+          "id": "island",
+          "path": "/island",
+          "width": "phone",
+          "title": {
+            "en": "Island barangay",
+            "war": "Barangay ha isla",
+            "fil": "Barangay sa isla"
+          },
+          "summary": {
+            "en": "Post today's status and needs: water, rice, medicine, patients to transfer.",
+            "war": "I-post an kahimtang ngan kinahanglan yana nga adlaw: tubig, bugas, bulong, pasyente nga ibabalhin.",
+            "fil": "I-post ang kalagayan at pangangailangan ngayong araw: tubig, bigas, gamot, pasyenteng ililipat."
+          }
+        },
+        {
+          "id": "ops",
+          "path": "/ops",
+          "width": "full",
+          "title": {
+            "en": "CDRRMO and port office",
+            "war": "CDRRMO ngan opisina han pantalan",
+            "fil": "CDRRMO at tanggapan ng pantalan"
+          },
+          "summary": {
+            "en": "Watch the needs board and dispatch boat runs.",
+            "war": "Bantayi an board han mga kinahanglan ngan magpadara hin biyahe han sakayan.",
+            "fil": "Bantayan ang board ng mga pangangailangan at magpadala ng biyahe ng bangka."
+          }
+        },
+        {
+          "id": "advisory",
+          "path": "/advisory",
+          "width": "full",
+          "title": {
+            "en": "Sea-travel advisory",
+            "war": "Advisory ha pagbiyahe ha dagat",
+            "fil": "Abiso sa paglalakbay sa dagat"
+          },
+          "summary": {
+            "en": "The public advisory, which follows the tropical-cyclone signal.",
+            "war": "An publiko nga advisory, nasunod ha signal han bagyo.",
+            "fil": "Ang pampublikong abiso, na sumusunod sa signal ng bagyo."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/island",
+        "/ops",
+        "/advisory",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p04-isla/**"
+      ]
+    },
+    {
+      "id": "P5",
+      "slug": "p05-serbisyo",
+      "title": "Serbisyo Catbalogan",
+      "tagline": "One-stop citizen services in Waray, Filipino and English",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 5,
+      "port": 5205,
+      "branch": "proj/p05-serbisyo",
+      "app": "apps/p05-serbisyo",
+      "brief": "docs/projects/p05-serbisyo.md",
+      "extras": [],
+      "ai": true,
+      "modules": [
+        "20",
+        "08",
+        "07"
+      ],
+      "dataNeeds": [
+        "barangays"
+      ],
+      "feasibility": "High",
+      "roles": [
+        {
+          "id": "resident",
+          "path": "/resident",
+          "width": "phone",
+          "title": {
+            "en": "Resident",
+            "war": "Residente",
+            "fil": "Residente"
+          },
+          "summary": {
+            "en": "Find a service in your own words, request it, get a ticket and track it.",
+            "war": "Bilnga an serbisyo gamit an imo kalugaringon nga pulong, hangyoa ini, kumuha hin ticket ngan sunda ini.",
+            "fil": "Hanapin ang serbisyo sa sarili mong salita, hilingin ito, kumuha ng tiket at subaybayan ito."
+          }
+        },
+        {
+          "id": "staff",
+          "path": "/staff",
+          "width": "wide",
+          "title": {
+            "en": "Frontline staff",
+            "war": "Staff ha atubangan",
+            "fil": "Kawani sa harapan"
+          },
+          "summary": {
+            "en": "Call the next ticket and move requests through their steps.",
+            "war": "Tawaga an sunod nga ticket ngan isulong an mga hangyo ha ira mga lakang.",
+            "fil": "Tawagin ang susunod na tiket at isulong ang mga kahilingan sa kanilang mga hakbang."
+          }
+        },
+        {
+          "id": "display",
+          "path": "/display",
+          "width": "full",
+          "title": {
+            "en": "Now Serving display",
+            "war": "Display han ginsisilbihan",
+            "fil": "Display ng pinagsisilbihan"
+          },
+          "summary": {
+            "en": "The queue board for the waiting area.",
+            "war": "An board han pila para ha hulatan.",
+            "fil": "Ang board ng pila para sa hintayan."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/resident",
+        "/staff",
+        "/display",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p05-serbisyo/**"
+      ]
+    },
+    {
+      "id": "P6",
+      "slug": "p06-negosyo",
+      "title": "Negosyo Catbalogan",
+      "tagline": "Hazard-aware business permits, from first question to appointment",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 5,
+      "port": 5206,
+      "branch": "proj/p06-negosyo",
+      "app": "apps/p06-negosyo",
+      "brief": "docs/projects/p06-negosyo.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "09",
+        "07",
+        "10"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*"
+      ],
+      "feasibility": "Med-High",
+      "roles": [
+        {
+          "id": "applicant",
+          "path": "/applicant",
+          "width": "phone",
+          "title": {
+            "en": "Applicant",
+            "war": "Aplikante",
+            "fil": "Aplikante"
+          },
+          "summary": {
+            "en": "Requirements and fee estimate, a hazard check of the business location, then an appointment.",
+            "war": "Mga rekisito ngan banabana han bayad, pag-check han peligro ha lokasyon han negosyo, dayon appointment.",
+            "fil": "Mga kinakailangan at tantiya ng bayad, pagsuri ng panganib sa lokasyon ng negosyo, saka appointment."
+          }
+        },
+        {
+          "id": "bplo",
+          "path": "/bplo",
+          "width": "full",
+          "title": {
+            "en": "BPLO",
+            "war": "BPLO",
+            "fil": "BPLO"
+          },
+          "summary": {
+            "en": "Today's appointments and the applications behind them.",
+            "war": "An mga appointment yana nga adlaw ngan an mga aplikasyon nga para hito.",
+            "fil": "Ang mga appointment ngayong araw at ang mga aplikasyong kaugnay nito."
+          }
+        },
+        {
+          "id": "registry",
+          "path": "/registry",
+          "width": "wide",
+          "title": {
+            "en": "Public registry",
+            "war": "Publiko nga rehistro",
+            "fil": "Pampublikong rehistro"
+          },
+          "summary": {
+            "en": "Registered businesses and complaint lookup.",
+            "war": "Mga rehistrado nga negosyo ngan pagbiling han reklamo.",
+            "fil": "Mga rehistradong negosyo at paghahanap ng reklamo."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/applicant",
+        "/bplo",
+        "/registry",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p06-negosyo/**"
+      ]
+    },
+    {
+      "id": "P7",
+      "slug": "p07-bukas",
+      "title": "Bukas Catbalogan",
+      "tagline": "See the city's data, follow its projects, vote on its budget",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 6,
+      "port": 5207,
+      "branch": "proj/p07-bukas",
+      "app": "apps/p07-bukas",
+      "brief": "docs/projects/p07-bukas.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "13",
+        "12",
+        "11"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "derived/barangay-hazard",
+        "derived/facility-hazard"
+      ],
+      "feasibility": "Medium",
+      "roles": [
+        {
+          "id": "story",
+          "path": "/story",
+          "width": "full",
+          "title": {
+            "en": "Data story",
+            "war": "Istorya han datos",
+            "fil": "Kuwento ng datos"
+          },
+          "summary": {
+            "en": "A scroll story that explains the city's data.",
+            "war": "Usa nga scroll nga istorya nga nagpapasabot han datos han syudad.",
+            "fil": "Isang scroll na kuwento na nagpapaliwanag sa datos ng lungsod."
+          }
+        },
+        {
+          "id": "projects",
+          "path": "/projects",
+          "width": "wide",
+          "title": {
+            "en": "Projects map",
+            "war": "Mapa han mga proyekto",
+            "fil": "Mapa ng mga proyekto"
+          },
+          "summary": {
+            "en": "What is being built, where, and how far along it is.",
+            "war": "Ano an ginhihimo, diin, ngan kun tagpira na an kauswagan.",
+            "fil": "Ano ang itinatayo, saan, at gaano na kalayo ang usad."
+          }
+        },
+        {
+          "id": "budget",
+          "path": "/budget",
+          "width": "phone",
+          "title": {
+            "en": "Budget vote",
+            "war": "Pagboto ha budget",
+            "fil": "Pagboto sa budget"
+          },
+          "summary": {
+            "en": "Allocate a virtual budget, vote and leave feedback.",
+            "war": "Pag-allocate hin virtual nga budget, bumoto ngan magbilin hin feedback.",
+            "fil": "Maglaan ng virtual na budget, bumoto at mag-iwan ng feedback."
+          }
+        },
+        {
+          "id": "planning",
+          "path": "/planning",
+          "width": "full",
+          "title": {
+            "en": "Planning office",
+            "war": "Opisina han pagplano",
+            "fil": "Tanggapan ng pagpaplano"
+          },
+          "summary": {
+            "en": "Live results and feedback from residents.",
+            "war": "Buhi nga resulta ngan feedback tikang ha mga residente.",
+            "fil": "Kasalukuyang resulta at feedback mula sa mga residente."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/story",
+        "/projects",
+        "/budget",
+        "/planning",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p07-bukas/**"
+      ]
+    },
+    {
+      "id": "P8",
+      "slug": "p08-libot",
+      "title": "Libot Catbalogan+",
+      "tagline": "Heritage trails, a check-before-you-go advisory and local enterprises",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 6,
+      "port": 5208,
+      "branch": "proj/p08-libot",
+      "app": "apps/p08-libot",
+      "brief": "docs/projects/p08-libot.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "16",
+        "17"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "heritage",
+        "hazard-*"
+      ],
+      "feasibility": "Medium",
+      "roles": [
+        {
+          "id": "visitor",
+          "path": "/visitor",
+          "width": "phone",
+          "title": {
+            "en": "Visitor",
+            "war": "Bisita",
+            "fil": "Bisita"
+          },
+          "summary": {
+            "en": "Explore the heritage story map, build a trail and check the hazards before you go.",
+            "war": "Usisaa an mapa han istorya han kabilin, paghimo hin trail ngan tan-awa an mga peligro antes ka kumadto.",
+            "fil": "Galugarin ang mapa ng kuwento ng pamana, bumuo ng trail at tingnan ang mga panganib bago ka pumunta."
+          }
+        },
+        {
+          "id": "directory",
+          "path": "/directory",
+          "width": "phone",
+          "title": {
+            "en": "Local enterprises",
+            "war": "Lokal nga mga negosyo",
+            "fil": "Mga lokal na negosyo"
+          },
+          "summary": {
+            "en": "Find local guides and pasalubong shops near your trail.",
+            "war": "Bilnga an mga lokal nga giya ngan tindahan hin pasalubong harani ha imo trail.",
+            "fil": "Hanapin ang mga lokal na gabay at tindahan ng pasalubong malapit sa iyong trail."
+          }
+        },
+        {
+          "id": "enterprise",
+          "path": "/enterprise",
+          "width": "wide",
+          "title": {
+            "en": "Enterprise owner",
+            "war": "Tag-iya han negosyo",
+            "fil": "May-ari ng negosyo"
+          },
+          "summary": {
+            "en": "Keep your listing current: hours, offers and whether you are open today.",
+            "war": "Ig-update an imo listahan: oras, alok ngan kun bukas ka yana nga adlaw.",
+            "fil": "Panatilihing bago ang iyong listahan: oras, alok at kung bukas ka ngayong araw."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/visitor",
+        "/directory",
+        "/enterprise",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p08-libot/**"
+      ]
+    },
+    {
+      "id": "P9",
+      "slug": "p09-luntian",
+      "title": "Luntian Catbalogan",
+      "tagline": "Waste, violations and coastal exposure for residents and planners",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 6,
+      "port": 5209,
+      "branch": "proj/p09-luntian",
+      "app": "apps/p09-luntian",
+      "brief": "docs/projects/p09-luntian.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "14",
+        "15",
+        "02"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-stormSurge",
+        "coastal-2015",
+        "coastal-2020",
+        "facilities",
+        "derived/barangay-hazard"
+      ],
+      "feasibility": "Medium",
+      "roles": [
+        {
+          "id": "resident",
+          "path": "/resident",
+          "width": "phone",
+          "title": {
+            "en": "Resident",
+            "war": "Residente",
+            "fil": "Residente"
+          },
+          "summary": {
+            "en": "Your waste schedule, the segregation game and violation reports.",
+            "war": "An imo iskedyul han basura, an dula han pagbulag ngan mga report han paglapas.",
+            "fil": "Ang iyong iskedyul ng basura, ang laro ng paghihiwalay at mga ulat ng paglabag."
+          }
+        },
+        {
+          "id": "enro",
+          "path": "/enro",
+          "width": "full",
+          "title": {
+            "en": "ENRO",
+            "war": "ENRO",
+            "fil": "ENRO"
+          },
+          "summary": {
+            "en": "Incoming violation reports and their status.",
+            "war": "Mga inabot nga report han paglapas ngan an ira kahimtang.",
+            "fil": "Mga dumating na ulat ng paglabag at ang kanilang katayuan."
+          }
+        },
+        {
+          "id": "planner",
+          "path": "/planner",
+          "width": "full",
+          "title": {
+            "en": "Planner",
+            "war": "Planner",
+            "fil": "Tagaplano"
+          },
+          "summary": {
+            "en": "Sea-level-rise exposure and mangrove change by barangay.",
+            "war": "Kaladman han pagtaas han dagat ngan pagbag-o han bakhawan kada barangay.",
+            "fil": "Pagkakalantad sa pagtaas ng dagat at pagbabago ng bakawan bawat barangay."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/resident",
+        "/enro",
+        "/planner",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p09-luntian/**"
+      ]
+    },
+    {
+      "id": "P10",
+      "slug": "p10-barangay360",
+      "title": "Barangay 360",
+      "tagline": "One screen per barangay for its officials and residents",
+      "domain": "Platform",
+      "kind": "platform",
+      "batch": 5,
+      "port": 5210,
+      "branch": "proj/p10-barangay360",
+      "app": "apps/p10-barangay360",
+      "brief": "docs/projects/p10-barangay360.md",
+      "extras": [],
+      "ai": false,
+      "modules": [
+        "04",
+        "08",
+        "12"
+      ],
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "derived/barangay-hazard",
+        "derived/facility-hazard"
+      ],
+      "feasibility": "Med-High",
+      "roles": [
+        {
+          "id": "captain",
+          "path": "/captain",
+          "width": "full",
+          "title": {
+            "en": "Punong Barangay",
+            "war": "Punong Barangay",
+            "fil": "Punong Barangay"
+          },
+          "summary": {
+            "en": "Profile and trends, hazard exposure, open requests and announcements for one barangay.",
+            "war": "Profile ngan mga trend, kaladman ha peligro, bukas nga mga hangyo ngan anunsyo para ha usa nga barangay.",
+            "fil": "Profile at mga trend, pagkakalantad sa panganib, bukas na kahilingan at anunsyo para sa isang barangay."
+          }
+        },
+        {
+          "id": "resident",
+          "path": "/resident",
+          "width": "phone",
+          "title": {
+            "en": "Resident",
+            "war": "Residente",
+            "fil": "Residente"
+          },
+          "summary": {
+            "en": "Your barangay's announcements, urgent first, in your own language.",
+            "war": "Mga anunsyo han imo barangay, an dinalian anay, ha imo kalugaringon nga pinulongan.",
+            "fil": "Mga anunsyo ng iyong barangay, ang mga apurahan muna, sa sarili mong wika."
+          }
+        }
+      ],
+      "smokeRoutes": [
+        "/",
+        "/captain",
+        "/resident",
+        "/sources"
+      ],
+      "writeScope": [
+        "apps/p10-barangay360/**"
       ]
     }
   ]

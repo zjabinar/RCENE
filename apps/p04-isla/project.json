@@ -1,0 +1,40 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P4",
+  "slug": "p04-isla",
+  "title": "Isla Link",
+  "tagline": "Island barangays, their needs and the boats that answer them",
+  "port": 5204,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p04-isla",
+  "smokeRoutes": [
+    "/",
+    "/island",
+    "/ops",
+    "/advisory",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "03-likas",
+    "19-ayuda"
+  ],
+  "roles": [
+    {
+      "id": "island",
+      "path": "/island",
+      "width": "phone"
+    },
+    {
+      "id": "ops",
+      "path": "/ops",
+      "width": "full"
+    },
+    {
+      "id": "advisory",
+      "path": "/advisory",
+      "width": "full"
+    }
+  ]
+}

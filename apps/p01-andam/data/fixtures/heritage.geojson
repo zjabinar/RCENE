@@ -1,0 +1,90 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "H-001",
+    "name": "Sample Heritage Church",
+    "category": "heritage",
+    "description": "Fixture point for development. Not a real site.",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.884,
+     11.776
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "H-002",
+    "name": "Sample Old Bridge",
+    "category": "heritage",
+    "description": "Fixture point for development. Not a real site.",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.892,
+     11.782
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "H-003",
+    "name": "Sample Hill Viewpoint",
+    "category": "scenic",
+    "description": "Fixture point for development. Not a real site.",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.94,
+     11.82
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "H-004",
+    "name": "Sample Mangrove Walk",
+    "category": "eco-tourism",
+    "description": "Fixture point for development. Not a real site.",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.858,
+     11.79
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "H-005",
+    "name": "Sample Waterfall",
+    "category": "eco-tourism",
+    "description": "Fixture point for development. Not a real site.",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.962,
+     11.79
+    ]
+   }
+  }
+ ]
+}

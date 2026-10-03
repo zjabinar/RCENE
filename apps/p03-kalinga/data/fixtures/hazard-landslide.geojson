@@ -1,0 +1,175 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "hazard": "landslide",
+    "level": "veryHigh",
+    "sourceLayer": "fixture",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.955,
+       11.81
+      ],
+      [
+       124.968,
+       11.81
+      ],
+      [
+       124.968,
+       11.835
+      ],
+      [
+       124.955,
+       11.835
+      ],
+      [
+       124.955,
+       11.81
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "hazard": "landslide",
+    "level": "high",
+    "sourceLayer": "fixture",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.93,
+       11.8
+      ],
+      [
+       124.955,
+       11.8
+      ],
+      [
+       124.955,
+       11.835
+      ],
+      [
+       124.93,
+       11.835
+      ],
+      [
+       124.93,
+       11.8
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "hazard": "landslide",
+    "level": "moderate",
+    "sourceLayer": "fixture",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        124.93,
+        11.725
+       ],
+       [
+        124.945,
+        11.725
+       ],
+       [
+        124.945,
+        11.74
+       ],
+       [
+        124.93,
+        11.74
+       ],
+       [
+        124.93,
+        11.725
+       ]
+      ]
+     ],
+     [
+      [
+       [
+        124.95,
+        11.725
+       ],
+       [
+        124.965,
+        11.725
+       ],
+       [
+        124.965,
+        11.74
+       ],
+       [
+        124.95,
+        11.74
+       ],
+       [
+        124.95,
+        11.725
+       ]
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "hazard": "landslide",
+    "level": "low",
+    "sourceLayer": "fixture",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.92,
+       11.82
+      ],
+      [
+       124.93,
+       11.82
+      ],
+      [
+       124.93,
+       11.835
+      ],
+      [
+       124.92,
+       11.835
+      ],
+      [
+       124.92,
+       11.82
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

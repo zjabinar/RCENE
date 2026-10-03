@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "node",
+      "args": [
+        "scripts/playwright-mcp.mjs",
+        "--isolated",
+        "--output-dir",
+        ".playwright-mcp"
+      ]
+    }
+  }
+}

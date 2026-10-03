@@ -1,0 +1,35 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P10",
+  "slug": "p10-barangay360",
+  "title": "Barangay 360",
+  "tagline": "One screen per barangay for its officials and residents",
+  "port": 5210,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p10-barangay360",
+  "smokeRoutes": [
+    "/",
+    "/captain",
+    "/resident",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "04-bantay",
+    "08-sertipiko",
+    "12-proyekto"
+  ],
+  "roles": [
+    {
+      "id": "captain",
+      "path": "/captain",
+      "width": "full"
+    },
+    {
+      "id": "resident",
+      "path": "/resident",
+      "width": "phone"
+    }
+  ]
+}

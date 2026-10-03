@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Generates self-contained apps/<slug>/ folders from apps/_template, one per
- * app row of docs/projects/projects.json.
+ * app or platform row of docs/projects/projects.json.
  *
  *   node scripts/new-app.mjs 01-ligtas            # one app (slug or id)
  *   node scripts/new-app.mjs --all                # every app row
@@ -16,7 +16,12 @@
  *   2. writes project.json (the app's own metadata) and package.json (exact
  *      versions from stack.json, the template's scripts, no packageManager);
  *   3. writes docs/brief.md (the brief), docs/DISCLOSURE.md, docs/proposal.md
- *      (its section of docs/PROPOSALS.md) and, for 01/03/05, docs/PRD.md;
+ *      (its section of docs/PROPOSALS.md), for 01/03/05/P1 docs/PRD.md, and for a
+ *      platform docs/modules/<slug>.md (its module apps' briefs);
+ *   3b. platforms (kind "platform") also get their starting src/ from
+ *      scripts/lib/platform.mjs: role launcher, role routes and pages, role
+ *      strings (en/war/fil from the row), spine store, and a "Lifted modules"
+ *      section in NOTES.md;
  *   4. mirrors root data/ into the app's data/ (scripts/sync-data.mjs);
  *   5. copies the template's package-lock.json under the app's name, when the
  *      template has one (scripts/lockfiles.mjs is the real tool);
@@ -44,6 +49,7 @@ import {
   fillPlaceholders,
   findApp,
   generatedDocs,
+  isPlatform,
   isStarted,
   isMain,
   isText,
@@ -59,6 +65,7 @@ import {
   templateFiles,
 } from "./lib/apps.mjs";
 import { mirrorData } from "./lib/data.mjs";
+import { LIFTED_MODULES_NOTES, PLATFORM_REMOVED, platformSources, validateRoles } from "./lib/platform.mjs";
 import { lockText, renameLock } from "./lib/lock.mjs";
 
 const USAGE = `Usage: node scripts/new-app.mjs <slug|id>... | --all [--force] [--dry-run] [--root <repo>] [--out <repo>]`;
@@ -97,6 +104,7 @@ export function generate(row, { srcRoot, outRoot, force = false, dryRun = false,
   }
   const files = templateFiles(srcRoot).filter((f) => !skipFromTemplate(f));
   const docs = generatedDocs(srcRoot, row);
+  if (isPlatform(row)) validateRoles(row); // before anything is cleared or written
   if (dryRun) {
     log(`would  ${row.slug}  (${files.length} template files, ${docs.size} docs, port ${row.port}${existed ? ", replacing the existing folder" : ""})`);
     return "dry-run";
@@ -114,6 +122,13 @@ export function generate(row, { srcRoot, outRoot, force = false, dryRun = false,
   writeFile(dir, "project.json", json(projectJson(row, srcRoot)));
   writeFile(dir, "package.json", json(pkg));
   for (const [file, text] of docs) writeFile(dir, file, text);
+  if (isPlatform(row)) {
+    // The platform scaffold: role launcher, role routes and pages, role strings, spine store.
+    for (const file of PLATFORM_REMOVED) rmSync(path.join(dir, ...file.split("/")), { force: true });
+    for (const [file, text] of platformSources(row)) writeFile(dir, file, text);
+    const notes = path.join(dir, "NOTES.md");
+    if (existsSync(notes)) writeFileSync(notes, readFileSync(notes, "utf8").replace(/\s*$/, "\n") + LIFTED_MODULES_NOTES);
+  }
 
   const data = mirrorData(srcRoot, dir);
 

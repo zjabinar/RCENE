@@ -1,0 +1,221 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample Barangay 1",
+    "psgc": "FIXTURE-1",
+    "coastal": true,
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.86,
+       11.72
+      ],
+      [
+       124.92,
+       11.72
+      ],
+      [
+       124.92,
+       11.76
+      ],
+      [
+       124.855,
+       11.76
+      ],
+      [
+       124.86,
+       11.72
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample Barangay 2",
+    "psgc": "FIXTURE-2",
+    "coastal": true,
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.855,
+       11.76
+      ],
+      [
+       124.92,
+       11.76
+      ],
+      [
+       124.92,
+       11.8
+      ],
+      [
+       124.85,
+       11.8
+      ],
+      [
+       124.855,
+       11.76
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample Barangay 3",
+    "psgc": "FIXTURE-3",
+    "coastal": true,
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.85,
+       11.8
+      ],
+      [
+       124.92,
+       11.8
+      ],
+      [
+       124.92,
+       11.84
+      ],
+      [
+       124.88,
+       11.84
+      ],
+      [
+       124.85,
+       11.8
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample Barangay 4",
+    "psgc": "FIXTURE-4",
+    "coastal": false,
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.92,
+       11.72
+      ],
+      [
+       124.97,
+       11.72
+      ],
+      [
+       124.97,
+       11.76
+      ],
+      [
+       124.92,
+       11.76
+      ],
+      [
+       124.92,
+       11.72
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample Barangay 5",
+    "psgc": "FIXTURE-5",
+    "coastal": false,
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.92,
+       11.76
+      ],
+      [
+       124.97,
+       11.76
+      ],
+      [
+       124.97,
+       11.8
+      ],
+      [
+       124.92,
+       11.8
+      ],
+      [
+       124.92,
+       11.76
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Sample Barangay 6",
+    "psgc": "FIXTURE-6",
+    "coastal": false,
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       124.92,
+       11.8
+      ],
+      [
+       124.97,
+       11.8
+      ],
+      [
+       124.97,
+       11.84
+      ],
+      [
+       124.92,
+       11.84
+      ],
+      [
+       124.92,
+       11.8
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

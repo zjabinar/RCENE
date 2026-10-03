@@ -1,0 +1,41 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P9",
+  "slug": "p09-luntian",
+  "title": "Luntian Catbalogan",
+  "tagline": "Waste, violations and coastal exposure for residents and planners",
+  "port": 5209,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p09-luntian",
+  "smokeRoutes": [
+    "/",
+    "/resident",
+    "/enro",
+    "/planner",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "14-basura",
+    "15-bakhaw",
+    "02-tubig"
+  ],
+  "roles": [
+    {
+      "id": "resident",
+      "path": "/resident",
+      "width": "phone"
+    },
+    {
+      "id": "enro",
+      "path": "/enro",
+      "width": "full"
+    },
+    {
+      "id": "planner",
+      "path": "/planner",
+      "width": "full"
+    }
+  ]
+}

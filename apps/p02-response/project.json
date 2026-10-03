@@ -1,0 +1,46 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P2",
+  "slug": "p02-response",
+  "title": "Bayanihan Response",
+  "tagline": "From field report to relief, with every step on the record",
+  "port": 5202,
+  "ai": true,
+  "brief": "docs/brief.md",
+  "branch": "proj/p02-response",
+  "smokeRoutes": [
+    "/",
+    "/report",
+    "/triage",
+    "/relief",
+    "/public",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "06-snap",
+    "19-ayuda"
+  ],
+  "roles": [
+    {
+      "id": "report",
+      "path": "/report",
+      "width": "phone"
+    },
+    {
+      "id": "triage",
+      "path": "/triage",
+      "width": "full"
+    },
+    {
+      "id": "relief",
+      "path": "/relief",
+      "width": "phone"
+    },
+    {
+      "id": "public",
+      "path": "/public",
+      "width": "full"
+    }
+  ]
+}

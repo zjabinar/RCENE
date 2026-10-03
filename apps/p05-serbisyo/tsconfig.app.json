@@ -1,0 +1,10 @@
+{
+  "_comment": "Browser code: the app (src) and its copy of the shared code (rcene), without tests and without the Node-side build config.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "types": ["vite/client"]
+  },
+  "include": ["src", "rcene"],
+  "exclude": ["rcene/config", "**/*.test.ts", "**/*.test.tsx"]
+}

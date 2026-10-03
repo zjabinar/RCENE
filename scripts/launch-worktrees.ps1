@@ -24,10 +24,12 @@
   PowerShell prompt, -Batch 1,2 also works.
 
 .PARAMETER Batch
-  Batch numbers to launch (0 = data foundation, 1-4 = apps).
+  Batch numbers to launch (0 = data foundation, 1-4 = apps, 5-6 = platforms
+  P1-P10; launch a platform after its module apps are merged).
 
 .PARAMETER Project
-  Project ids or slugs, e.g. 01 or 01-ligtas. Comma-separated values are split.
+  Project ids or slugs, e.g. 01, 01-ligtas, P1, p01 or p01-andam.
+  Comma-separated values are split.
 
 .PARAMETER WorktreeRoot
   Folder that holds the worktrees. Default: worktreeRoot from the manifest
@@ -378,12 +380,14 @@ if ($null -ne $Project) {
       if (-not $key) { continue }
       # PowerShell turns an unquoted 05 into 5; restore the two-digit id.
       if ($key -match '^\d$') { $key = $key.PadLeft(2, '0') }
+      # Platform ids: p01 / P01 / p1 -> P1.
+      if ($key -match '^[pP]0*(\d{1,2})$') { $key = 'P' + [int]$Matches[1] }
       $match = $null
       foreach ($row in $allRows) {
         if (($row.slug -eq $key) -or ($row.id -eq $key) -or ($row.branch -eq $key)) { $match = $row; break }
       }
       if ($null -eq $match) {
-        Write-Host "ERROR: no project '$key' in the manifest. Use an id (01) or a slug (01-ligtas)." -ForegroundColor Red
+        Write-Host "ERROR: no project '$key' in the manifest. Use an id (01, P1) or a slug (01-ligtas, p01-andam)." -ForegroundColor Red
         exit 1
       }
       Add-Selected $match

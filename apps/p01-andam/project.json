@@ -1,0 +1,48 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P1",
+  "slug": "p01-andam",
+  "title": "Andam Catbalogan",
+  "tagline": "Community preparedness: one warning, every role, live",
+  "port": 5201,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p01-andam",
+  "smokeRoutes": [
+    "/",
+    "/console",
+    "/resident",
+    "/center",
+    "/board",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "01-ligtas",
+    "05-sakuna",
+    "03-likas",
+    "04-bantay"
+  ],
+  "roles": [
+    {
+      "id": "console",
+      "path": "/console",
+      "width": "full"
+    },
+    {
+      "id": "resident",
+      "path": "/resident",
+      "width": "phone"
+    },
+    {
+      "id": "center",
+      "path": "/center",
+      "width": "phone"
+    },
+    {
+      "id": "board",
+      "path": "/board",
+      "width": "full"
+    }
+  ]
+}

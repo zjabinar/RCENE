@@ -40,6 +40,13 @@ export {
   type SourcesPageProps,
   type SourceCardProps,
 } from "./components/sources-page.tsx";
+export {
+  RoleLauncher,
+  openRoleWindow,
+  ROLE_WINDOW_SIZE,
+  type RoleCard,
+  type RoleLauncherProps,
+} from "./components/role-launcher.tsx";
 export { RouteError } from "./components/route-error.tsx";
 export { ErrorBoundary, type ErrorBoundaryProps } from "./components/error-boundary.tsx";
 export { Toaster, type ToasterProps } from "./components/ui/sonner.tsx";

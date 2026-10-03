@@ -2,13 +2,13 @@
 
 Preparation repo for the **RSCENE 2026 AI Vibe Coding Challenge** (Open Category): a four-hour solo build of a working web app, a poster and a live demo, on **October 7, 2026** at Tandaya Hall, **Catbalogan City**.
 
-Twenty single-feature civic apps for Catbalogan are pre-built here before the event, in parallel Claude Code sessions. On the day, one of them is picked and continued for the four hours as the entry. That is disclosed openly: see [`docs/DISCLOSURE.md`](docs/DISCLOSURE.md). The integrated platforms (P1–P10) come later, composed from the finished apps.
+Twenty single-feature civic apps for Catbalogan are pre-built here before the event, in parallel Claude Code sessions, followed by ten integrated platforms (P1–P10) built from the finished apps. On the day, one of them is picked and continued for the four hours as the entry. That is disclosed openly: see [`docs/DISCLOSURE.md`](docs/DISCLOSURE.md).
 
 ## Repo map
 
 | Path | What |
 |---|---|
-| `apps/` | `_template` (the reference app, port 5100) and the 20 apps `NN-slug` (ports 5101–5120). **Each app folder is a self-contained project**: its own `package.json` and `package-lock.json`, its own copy of the shared code in `rcene/` (data contracts, geometry, store, i18n, UI, map, Vite config), its own `data/`, `CLAUDE.md`, Claude Code skills and hooks, Playwright MCP and smoke test. Each keeps `AI-LOG.md`, `STATUS.md`, `NOTES.md` and `DEMO.md`. |
+| `apps/` | `_template` (the reference app, port 5100), the 20 apps `NN-slug` (ports 5101–5120) and the 10 platforms `pNN-slug` (ports 5201–5210; a role launcher, one route per role, and their module apps' briefs in `docs/modules/`). **Each app folder is a self-contained project**: its own `package.json` and `package-lock.json`, its own copy of the shared code in `rcene/` (data contracts, geometry, store, i18n, UI, map, Vite config), its own `data/`, `CLAUDE.md`, Claude Code skills and hooks, Playwright MCP and smoke test. Each keeps `AI-LOG.md`, `STATUS.md`, `NOTES.md` and `DEMO.md`. |
 | `data/` | The canonical data: real layers in `files/`, fake fixtures in `fixtures/` (a per-file fallback), the catalogue in `README.md`. Copied into every app's `data/` with `pnpm sync-data`; apps fetch `/data/<file>`. |
 | `docs/` | PRD, proposals, disclosure, parallel-build how-to, skills; `projects/` (manifest `projects.json` + one brief per app, copied into the app as `docs/brief.md`); `event/` (challenge text) |
 | `scripts/` | Monorepo tooling: `new-app.mjs`, `sync-shared.mjs`, `sync-data.mjs`, `lockfiles.mjs`, `check-standalone.mjs`, `stack.mjs`, `smoke.mjs` and `fetch-models.mjs` (wrappers over each app's own), `launch-worktrees.ps1`, `data/` (conversion and fixtures), `hooks/` |

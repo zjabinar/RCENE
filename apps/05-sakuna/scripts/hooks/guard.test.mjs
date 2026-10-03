@@ -266,7 +266,7 @@ describe("project branch (proj/01-x in a monorepo)", () => {
   });
 
   it("blocks edits to data/** and docs/brief.md, pointing to NOTES.md", () => {
-    for (const rel of ["data/files/boundary.geojson", "data/fixtures/boundary.geojson", "data/README.md", "docs/brief.md"]) {
+    for (const rel of ["data/files/boundary.geojson", "data/fixtures/boundary.geojson", "data/README.md", "docs/brief.md", "docs/modules/01-ligtas.md"]) {
       const r = write(p(), path.join(p().app, ...rel.split("/")));
       expect(r.status, rel).toBe(2);
       expect(r.stderr, rel).toContain("NOTES.md");

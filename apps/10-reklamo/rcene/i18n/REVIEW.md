@@ -13,5 +13,6 @@ Record every correction here (newest last). The before/after list is evidence fo
 
 - `rcene/i18n/common.ts` — **not yet reviewed** (drafted 2026-10-03).
 - `rcene/ui/i18n.ts` — **not yet reviewed**. `ui.cancel`, `ui.confirm`, `ui.search`, `ui.searchHint`,
-  `ui.suggestions`, `ui.noResults`, `ui.notifications` drafted 2026-10-03 in Waray and Filipino.
+  `ui.suggestions`, `ui.noResults`, `ui.notifications`, `ui.open`, `ui.newWindow`, `ui.openRole`,
+  `ui.openRoleWindow` drafted 2026-10-03 in Waray and Filipino.
   Waray `ui.close` is still missing on purpose (English shows until a fluent speaker supplies it).

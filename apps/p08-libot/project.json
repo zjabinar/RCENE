@@ -1,0 +1,40 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "P8",
+  "slug": "p08-libot",
+  "title": "Libot Catbalogan+",
+  "tagline": "Heritage trails, a check-before-you-go advisory and local enterprises",
+  "port": 5208,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/p08-libot",
+  "smokeRoutes": [
+    "/",
+    "/visitor",
+    "/directory",
+    "/enterprise",
+    "/sources"
+  ],
+  "kind": "platform",
+  "modules": [
+    "16-libot",
+    "17-banig"
+  ],
+  "roles": [
+    {
+      "id": "visitor",
+      "path": "/visitor",
+      "width": "phone"
+    },
+    {
+      "id": "directory",
+      "path": "/directory",
+      "width": "phone"
+    },
+    {
+      "id": "enterprise",
+      "path": "/enterprise",
+      "width": "wide"
+    }
+  ]
+}
