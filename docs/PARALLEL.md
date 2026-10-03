@@ -13,7 +13,7 @@ main ──┬── proj/00-data      (batch 0, local data conversion — merge
 
 1. **Node ≥ 22.18 and pnpm 10:** `node -v`, then `npm i -g pnpm@10` (or `corepack enable`).
 2. **Git:** `git config --global core.longpaths true`. Windows paths get long inside `node_modules`.
-3. **Claude Code:** signed in. Install the user-scope plugins listed in `docs/SKILLS.md` (Superpowers, frontend-design, Design).
+3. **Claude Code:** signed in and current (`claude update`); the project hooks use the exec form (`command` + `args`) that recent versions support. Install the user-scope plugins listed in `docs/SKILLS.md` (Superpowers, frontend-design, Design).
 4. **Windows Terminal** (`wt.exe`). Optional, but each session then opens as a tab in one window.
 5. **Short worktree root on the same drive as the pnpm store.** Default `C:\RSCENE-wt`. pnpm hard-links from its store only within one drive, so worktrees on `D:` copy every file instead.
 6. **Microsoft Defender exclusions** for the repo folder, `C:\RSCENE-wt` and `%LOCALAPPDATA%\pnpm\store`. Without them, installs are slow and fail with EPERM/EBUSY.
@@ -24,14 +24,14 @@ main ──┬── proj/00-data      (batch 0, local data conversion — merge
 | Step | Command (from the main checkout, in PowerShell) | Notes |
 |---|---|---|
 | 0. Data | `powershell -ExecutionPolicy Bypass -File scripts\launch-worktrees.ps1 -Batch 0` | One session converts `D:\lgu_portal - GIS` into `packages/data/files/` (brief `00-data.md`). Review its output, then `git merge --no-ff proj/00-data`. Apps work on fixtures until then, with a "Sample data" badge |
-| 1. Batch 1 | `… -Batch 1` | 01 Ligtas, 03 Likas, 04 Bantay, 16 Libot, 18 Kalinga. Start with `-Project 01,03,16` (3 sessions) and watch `/usage` before adding more |
+| 1. Batch 1 | `… -Batch 1` | 01 Ligtas, 03 Likas, 04 Bantay, 16 Libot, 18 Kalinga. Start with `-Project "01,03,16"` (3 sessions) and watch `/usage` before adding more. With `-File`, pass one batch per run and quote project lists |
 | Watch | `… -Status` | Per project: commits ahead of main, last commit, files changed outside its folder (should be 0), first line of `STATUS.md` |
 | Review | in the main checkout: `git switch proj/01-ligtas`, `/code-review`, `node scripts/smoke.mjs --app 01-ligtas`, open `apps/01-ligtas/docs/screenshots/` | Read the app's `NOTES.md` for package requests and decisions |
 | Merge | `git switch main` then `git merge --no-ff proj/01-ligtas` | If `pnpm-lock.yaml` conflicts, run `pnpm install` and commit. That regenerates it |
 | Package window | on main, between batches | Apply the requests collected in each app's `NOTES.md` to `packages/*`, run `pnpm typecheck; pnpm test; pnpm build`, commit. Later batches start from the updated main |
 | Batches 2–4 | `… -Batch 2`, `… -Batch 3`, `… -Batch 4` | B4 (02 Tubig, 06 Snap, 15 Bakhaw, 17 Banig, 19 Ayuda) is the riskiest. Treat it as optional |
-| Resume | `… -Project 05 -Resume` | Reopens the tab with `claude --continue`, e.g. after a usage limit or a reboot |
-| Clean up | `… -Project 01 -Remove` | Removes the worktree and keeps the branch. Never delete a worktree folder by hand: pnpm uses junctions |
+| Resume | `… -Project "05" -Resume` | Reopens the tab with `claude --continue`, e.g. after a usage limit or a reboot |
+| Clean up | `… -Project "01" -Remove` | Removes the worktree and keeps the branch. Never delete a worktree folder by hand: pnpm uses junctions |
 
 Useful flags:
 - `-DryRun` prints every command and the tab script without running anything. **Run it first.**
