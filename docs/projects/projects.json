@@ -1,0 +1,650 @@
+{
+  "$comment": "Source of truth for the parallel build. Read by scripts/new-app.mjs, scripts/launch-worktrees.ps1, scripts/hooks/*.mjs and the briefs. Ports: template 5100, apps 5101-5120, platforms later 5201-5210. Preview port = dev port + 1000.",
+  "version": 1,
+  "worktreeRoot": "C:/RSCENE-wt",
+  "base": "main",
+  "extras": {
+    "recharts": {
+      "dependencies": [
+        "recharts"
+      ]
+    },
+    "table": {
+      "dependencies": [
+        "@tanstack/react-table"
+      ]
+    },
+    "three": {
+      "dependencies": [
+        "three",
+        "@react-three/fiber",
+        "@react-three/drei"
+      ],
+      "devDependencies": [
+        "@types/three"
+      ]
+    },
+    "deck": {
+      "dependencies": [
+        "deck.gl",
+        "@deck.gl/mapbox"
+      ]
+    },
+    "pwa": {
+      "devDependencies": [
+        "vite-plugin-pwa"
+      ]
+    },
+    "ai": {
+      "dependencies": [
+        "@huggingface/transformers"
+      ]
+    },
+    "qrcode": {
+      "dependencies": [
+        "qrcode"
+      ],
+      "devDependencies": [
+        "@types/qrcode"
+      ]
+    },
+    "scanner": {
+      "dependencies": [
+        "html5-qrcode"
+      ]
+    },
+    "fuse": {
+      "dependencies": [
+        "fuse.js"
+      ]
+    }
+  },
+  "projects": [
+    {
+      "id": "00",
+      "slug": "00-data",
+      "title": "Data foundation",
+      "tagline": "Convert the local GIS archive into packages/data/files",
+      "kind": "data",
+      "batch": 0,
+      "port": null,
+      "branch": "proj/00-data",
+      "brief": "docs/projects/00-data.md",
+      "localOnly": true,
+      "writeScope": [
+        "packages/data/files/**",
+        "packages/data/README.md",
+        "scripts/data/**"
+      ]
+    },
+    {
+      "id": "01",
+      "slug": "01-ligtas",
+      "title": "Ligtas Ba Ako?",
+      "tagline": "Address-level hazard check with truthful three-state answers",
+      "domain": "Hazard",
+      "kind": "app",
+      "batch": 1,
+      "port": 5101,
+      "branch": "proj/01-ligtas",
+      "app": "apps/01-ligtas",
+      "brief": "docs/projects/01-ligtas.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities"
+      ],
+      "platforms": [
+        "P1"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/01-ligtas/**"
+      ]
+    },
+    {
+      "id": "02",
+      "slug": "02-tubig",
+      "title": "Tubig",
+      "tagline": "3D flood and sea-level-rise simulator",
+      "domain": "Hazard",
+      "kind": "app",
+      "batch": 4,
+      "port": 5102,
+      "branch": "proj/02-tubig",
+      "app": "apps/02-tubig",
+      "brief": "docs/projects/02-tubig.md",
+      "extras": [
+        "three"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "facilities",
+        "hazard-stormSurge",
+        "heightmap"
+      ],
+      "platforms": [
+        "P9"
+      ],
+      "feasibility": "Low-Med",
+      "writeScope": [
+        "apps/02-tubig/**"
+      ]
+    },
+    {
+      "id": "03",
+      "slug": "03-likas",
+      "title": "Likas",
+      "tagline": "Evacuation center finder and live capacity board",
+      "domain": "Evacuation",
+      "kind": "app",
+      "batch": 1,
+      "port": 5103,
+      "branch": "proj/03-likas",
+      "app": "apps/03-likas",
+      "brief": "docs/projects/03-likas.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "facilities",
+        "hazard-*"
+      ],
+      "platforms": [
+        "P1",
+        "P4"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/03-likas/**"
+      ]
+    },
+    {
+      "id": "04",
+      "slug": "04-bantay",
+      "title": "Bantay Barangay",
+      "tagline": "Explainable barangay risk dashboard",
+      "domain": "Risk analytics",
+      "kind": "app",
+      "batch": 1,
+      "port": 5104,
+      "branch": "proj/04-bantay",
+      "app": "apps/04-bantay",
+      "brief": "docs/projects/04-bantay.md",
+      "extras": [
+        "recharts",
+        "table"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "derived/barangay-hazard"
+      ],
+      "platforms": [
+        "P1",
+        "P10"
+      ],
+      "feasibility": "Med-High",
+      "writeScope": [
+        "apps/04-bantay/**"
+      ]
+    },
+    {
+      "id": "05",
+      "slug": "05-sakuna",
+      "title": "Sakuna Sim",
+      "tagline": "Typhoon scenario tabletop with a scrubbable timeline",
+      "domain": "Drills",
+      "kind": "app",
+      "batch": 2,
+      "port": 5105,
+      "branch": "proj/05-sakuna",
+      "app": "apps/05-sakuna",
+      "brief": "docs/projects/05-sakuna.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "derived/barangay-hazard"
+      ],
+      "platforms": [
+        "P1"
+      ],
+      "feasibility": "Medium",
+      "writeScope": [
+        "apps/05-sakuna/**"
+      ]
+    },
+    {
+      "id": "06",
+      "slug": "06-snap",
+      "title": "Damage Snap",
+      "tagline": "Offline-first rapid damage assessment",
+      "domain": "Field operations",
+      "kind": "app",
+      "batch": 4,
+      "port": 5106,
+      "branch": "proj/06-snap",
+      "app": "apps/06-snap",
+      "brief": "docs/projects/06-snap.md",
+      "extras": [
+        "pwa",
+        "deck",
+        "ai"
+      ],
+      "ai": true,
+      "dataNeeds": [
+        "boundary",
+        "barangays"
+      ],
+      "platforms": [
+        "P2"
+      ],
+      "feasibility": "Medium",
+      "writeScope": [
+        "apps/06-snap/**"
+      ]
+    },
+    {
+      "id": "07",
+      "slug": "07-pila",
+      "title": "Pila",
+      "tagline": "Digital queue and appointments with a Now Serving board",
+      "domain": "Queueing",
+      "kind": "app",
+      "batch": 2,
+      "port": 5107,
+      "branch": "proj/07-pila",
+      "app": "apps/07-pila",
+      "brief": "docs/projects/07-pila.md",
+      "extras": [
+        "qrcode"
+      ],
+      "ai": false,
+      "dataNeeds": [],
+      "platforms": [
+        "P5",
+        "P6"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/07-pila/**"
+      ]
+    },
+    {
+      "id": "08",
+      "slug": "08-sertipiko",
+      "title": "Sertipiko",
+      "tagline": "Barangay certificate request and tracker",
+      "domain": "Barangay services",
+      "kind": "app",
+      "batch": 3,
+      "port": 5108,
+      "branch": "proj/08-sertipiko",
+      "app": "apps/08-sertipiko",
+      "brief": "docs/projects/08-sertipiko.md",
+      "extras": [
+        "qrcode"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "barangays"
+      ],
+      "platforms": [
+        "P5",
+        "P10"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/08-sertipiko/**"
+      ]
+    },
+    {
+      "id": "09",
+      "slug": "09-negosyo",
+      "title": "Negosyo Navigator",
+      "tagline": "Business-permit wizard, fee estimator and hazard-aware siting",
+      "domain": "Business permits",
+      "kind": "app",
+      "batch": 2,
+      "port": 5109,
+      "branch": "proj/09-negosyo",
+      "app": "apps/09-negosyo",
+      "brief": "docs/projects/09-negosyo.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*"
+      ],
+      "platforms": [
+        "P6"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/09-negosyo/**"
+      ]
+    },
+    {
+      "id": "10",
+      "slug": "10-reklamo",
+      "title": "Reklamo",
+      "tagline": "Public complaints and business-violation lookup",
+      "domain": "Consumer protection",
+      "kind": "app",
+      "batch": 3,
+      "port": 5110,
+      "branch": "proj/10-reklamo",
+      "app": "apps/10-reklamo",
+      "brief": "docs/projects/10-reklamo.md",
+      "extras": [
+        "ai",
+        "table"
+      ],
+      "ai": true,
+      "dataNeeds": [
+        "boundary",
+        "barangays"
+      ],
+      "platforms": [
+        "P6"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/10-reklamo/**"
+      ]
+    },
+    {
+      "id": "11",
+      "slug": "11-bayanihan",
+      "title": "Bayanihan Budget",
+      "tagline": "Participatory budgeting with live results",
+      "domain": "Participation",
+      "kind": "app",
+      "batch": 3,
+      "port": 5111,
+      "branch": "proj/11-bayanihan",
+      "app": "apps/11-bayanihan",
+      "brief": "docs/projects/11-bayanihan.md",
+      "extras": [
+        "recharts"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays"
+      ],
+      "platforms": [
+        "P7"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/11-bayanihan/**"
+      ]
+    },
+    {
+      "id": "12",
+      "slug": "12-proyekto",
+      "title": "Proyekto Watch",
+      "tagline": "Infrastructure project tracker",
+      "domain": "Transparency",
+      "kind": "app",
+      "batch": 3,
+      "port": 5112,
+      "branch": "proj/12-proyekto",
+      "app": "apps/12-proyekto",
+      "brief": "docs/projects/12-proyekto.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays"
+      ],
+      "platforms": [
+        "P7",
+        "P10"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/12-proyekto/**"
+      ]
+    },
+    {
+      "id": "13",
+      "slug": "13-datos",
+      "title": "Bukas Datos",
+      "tagline": "Catbalogan in Data, a scrollytelling open-data story",
+      "domain": "Open data",
+      "kind": "app",
+      "batch": 2,
+      "port": 5113,
+      "branch": "proj/13-datos",
+      "app": "apps/13-datos",
+      "brief": "docs/projects/13-datos.md",
+      "extras": [
+        "recharts"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities",
+        "landcover"
+      ],
+      "platforms": [
+        "P7"
+      ],
+      "feasibility": "Med-High",
+      "writeScope": [
+        "apps/13-datos/**"
+      ]
+    },
+    {
+      "id": "14",
+      "slug": "14-basura",
+      "title": "Basura Alert",
+      "tagline": "Waste collection schedule and segregation guide",
+      "domain": "Waste",
+      "kind": "app",
+      "batch": 3,
+      "port": 5114,
+      "branch": "proj/14-basura",
+      "app": "apps/14-basura",
+      "brief": "docs/projects/14-basura.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays"
+      ],
+      "platforms": [
+        "P9"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/14-basura/**"
+      ]
+    },
+    {
+      "id": "15",
+      "slug": "15-bakhaw",
+      "title": "Bakhaw Watch",
+      "tagline": "Mangrove and coastal change explorer",
+      "domain": "Coastal environment",
+      "kind": "app",
+      "batch": 4,
+      "port": 5115,
+      "branch": "proj/15-bakhaw",
+      "app": "apps/15-bakhaw",
+      "brief": "docs/projects/15-bakhaw.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "coastal-2015",
+        "coastal-2020",
+        "hazard-stormSurge"
+      ],
+      "platforms": [
+        "P9"
+      ],
+      "feasibility": "Medium",
+      "writeScope": [
+        "apps/15-bakhaw/**"
+      ]
+    },
+    {
+      "id": "16",
+      "slug": "16-libot",
+      "title": "Libot Catbalogan",
+      "tagline": "Heritage and eco-tourism trail with hazard-aware badges",
+      "domain": "Heritage and tourism",
+      "kind": "app",
+      "batch": 1,
+      "port": 5116,
+      "branch": "proj/16-libot",
+      "app": "apps/16-libot",
+      "brief": "docs/projects/16-libot.md",
+      "extras": [],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "heritage",
+        "hazard-*"
+      ],
+      "platforms": [
+        "P8"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/16-libot/**"
+      ]
+    },
+    {
+      "id": "17",
+      "slug": "17-banig",
+      "title": "Banig",
+      "tagline": "Woven-heritage gallery and banig pattern maker",
+      "domain": "Heritage craft",
+      "kind": "app",
+      "batch": 4,
+      "port": 5117,
+      "branch": "proj/17-banig",
+      "app": "apps/17-banig",
+      "brief": "docs/projects/17-banig.md",
+      "extras": [
+        "three"
+      ],
+      "ai": false,
+      "dataNeeds": [],
+      "platforms": [
+        "P8"
+      ],
+      "feasibility": "Med-Low",
+      "writeScope": [
+        "apps/17-banig/**"
+      ]
+    },
+    {
+      "id": "18",
+      "slug": "18-kalinga",
+      "title": "Kalinga",
+      "tagline": "Vulnerable-resident evacuation priority",
+      "domain": "Social protection and DRRM",
+      "kind": "app",
+      "batch": 1,
+      "port": 5118,
+      "branch": "proj/18-kalinga",
+      "app": "apps/18-kalinga",
+      "brief": "docs/projects/18-kalinga.md",
+      "extras": [
+        "table"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "boundary",
+        "barangays",
+        "hazard-*",
+        "facilities"
+      ],
+      "platforms": [
+        "P3"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/18-kalinga/**"
+      ]
+    },
+    {
+      "id": "19",
+      "slug": "19-ayuda",
+      "title": "Ayuda Tracker",
+      "tagline": "QR relief distribution with duplicate-claim guard",
+      "domain": "Relief operations",
+      "kind": "app",
+      "batch": 4,
+      "port": 5119,
+      "branch": "proj/19-ayuda",
+      "app": "apps/19-ayuda",
+      "brief": "docs/projects/19-ayuda.md",
+      "extras": [
+        "qrcode",
+        "scanner",
+        "recharts"
+      ],
+      "ai": false,
+      "dataNeeds": [
+        "barangays"
+      ],
+      "platforms": [
+        "P2"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/19-ayuda/**"
+      ]
+    },
+    {
+      "id": "20",
+      "slug": "20-sumat",
+      "title": "Sumat",
+      "tagline": "Three-language accessible citizen service guide",
+      "domain": "Access and inclusion",
+      "kind": "app",
+      "batch": 2,
+      "port": 5120,
+      "branch": "proj/20-sumat",
+      "app": "apps/20-sumat",
+      "brief": "docs/projects/20-sumat.md",
+      "extras": [
+        "fuse",
+        "ai"
+      ],
+      "ai": true,
+      "dataNeeds": [],
+      "platforms": [
+        "P5"
+      ],
+      "feasibility": "High",
+      "writeScope": [
+        "apps/20-sumat/**"
+      ]
+    }
+  ]
+}

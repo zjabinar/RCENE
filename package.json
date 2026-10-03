@@ -1,0 +1,35 @@
+{
+  "name": "rcene",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --workspace-concurrency=4 typecheck",
+    "test": "vitest run",
+    "build": "pnpm -r --workspace-concurrency=2 build",
+    "lint": "oxlint",
+    "smoke": "node scripts/smoke.mjs",
+    "new-app": "node scripts/new-app.mjs",
+    "data:fixtures": "node scripts/data/make-fixtures.mjs"
+  },
+  "devDependencies": {
+    "@playwright/mcp": "catalog:",
+    "@tmcw/togeojson": "catalog:",
+    "@turf/turf": "catalog:",
+    "@types/geojson": "catalog:",
+    "@types/node": "catalog:",
+    "@xmldom/xmldom": "catalog:",
+    "axe-core": "catalog:",
+    "fflate": "catalog:",
+    "jsdom": "catalog:",
+    "mapshaper": "catalog:",
+    "oxlint": "catalog:",
+    "playwright": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}
