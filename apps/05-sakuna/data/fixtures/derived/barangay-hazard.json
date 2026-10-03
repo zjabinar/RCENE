@@ -1,0 +1,189 @@
+[
+ {
+  "barangay": "Sample Barangay 1",
+  "psgc": "FIXTURE-1",
+  "hazards": {
+   "flood": {
+    "low": 0.24
+   },
+   "landslide": {},
+   "stormSurge": {
+    "low": 0.04,
+    "moderate": 0.16,
+    "high": 0.27
+   },
+   "groundShaking": {
+    "moderate": 0.84
+   },
+   "liquefaction": {
+    "low": 0.06
+   }
+  },
+  "exposedFacilities": {
+   "flood": {
+    "low": 1
+   },
+   "landslide": {},
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 1
+   },
+   "liquefaction": {}
+  }
+ },
+ {
+  "barangay": "Sample Barangay 2",
+  "psgc": "FIXTURE-2",
+  "hazards": {
+   "flood": {
+    "moderate": 0.296
+   },
+   "landslide": {},
+   "stormSurge": {
+    "low": 0.074,
+    "moderate": 0.296,
+    "high": 0.538,
+    "veryHigh": 0.089
+   },
+   "groundShaking": {
+    "moderate": 0.889,
+    "high": 0.333
+   },
+   "liquefaction": {
+    "low": 0.222,
+    "high": 0.167
+   }
+  },
+  "exposedFacilities": {
+   "flood": {
+    "moderate": 2
+   },
+   "landslide": {},
+   "stormSurge": {
+    "high": 2,
+    "moderate": 2,
+    "low": 1
+   },
+   "groundShaking": {
+    "high": 3,
+    "moderate": 2
+   },
+   "liquefaction": {
+    "high": 1,
+    "low": 1
+   }
+  }
+ },
+ {
+  "barangay": "Sample Barangay 3",
+  "psgc": "FIXTURE-3",
+  "hazards": {
+   "flood": {},
+   "landslide": {},
+   "stormSurge": {
+    "low": 0.045,
+    "moderate": 0.182,
+    "high": 0.236
+   },
+   "groundShaking": {
+    "moderate": 0.875
+   },
+   "liquefaction": {}
+  },
+  "exposedFacilities": {
+   "flood": {
+    "moderate": 1
+   },
+   "landslide": {},
+   "stormSurge": {
+    "high": 1,
+    "low": 1
+   },
+   "groundShaking": {
+    "moderate": 2
+   },
+   "liquefaction": {}
+  }
+ },
+ {
+  "barangay": "Sample Barangay 4",
+  "psgc": "FIXTURE-4",
+  "hazards": {
+   "flood": {
+    "veryHigh": 0.05
+   },
+   "landslide": {
+    "moderate": 0.225
+   },
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 0.787
+   },
+   "liquefaction": {}
+  },
+  "exposedFacilities": {
+   "flood": {},
+   "landslide": {},
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 1
+   },
+   "liquefaction": {}
+  }
+ },
+ {
+  "barangay": "Sample Barangay 5",
+  "psgc": "FIXTURE-5",
+  "hazards": {
+   "flood": {
+    "moderate": 0.55,
+    "high": 0.2
+   },
+   "landslide": {},
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 0.9
+   },
+   "liquefaction": {}
+  },
+  "exposedFacilities": {
+   "flood": {
+    "moderate": 1
+   },
+   "landslide": {},
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 2
+   },
+   "liquefaction": {}
+  }
+ },
+ {
+  "barangay": "Sample Barangay 6",
+  "psgc": "FIXTURE-6",
+  "hazards": {
+   "flood": {},
+   "landslide": {
+    "low": 0.075,
+    "high": 0.438,
+    "veryHigh": 0.162
+   },
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 0.788
+   },
+   "liquefaction": {}
+  },
+  "exposedFacilities": {
+   "flood": {},
+   "landslide": {
+    "high": 2
+   },
+   "stormSurge": {},
+   "groundShaking": {
+    "moderate": 2
+   },
+   "liquefaction": {}
+  }
+ }
+]

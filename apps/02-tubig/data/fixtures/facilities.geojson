@@ -1,0 +1,209 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-001",
+    "name": "Sample School A (in surge zone)",
+    "kind": "school",
+    "barangay": "Sample Barangay 2",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.875,
+     11.78
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-002",
+    "name": "Sample School B",
+    "kind": "school",
+    "barangay": "Sample Barangay 4",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.935,
+     11.75
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-003",
+    "name": "Sample School C",
+    "kind": "school",
+    "barangay": "Sample Barangay 6",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.945,
+     11.815
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-004",
+    "name": "Sample School D",
+    "kind": "school",
+    "barangay": "Sample Barangay 5",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.925,
+     11.79
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-005",
+    "name": "Sample School E (in surge zone)",
+    "kind": "school",
+    "barangay": "Sample Barangay 3",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.88,
+     11.81
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-006",
+    "name": "Sample School F",
+    "kind": "school",
+    "barangay": "Sample Barangay 5",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.96,
+     11.765
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-007",
+    "name": "Sample Hospital",
+    "kind": "hospital",
+    "barangay": "Sample Barangay 2",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.905,
+     11.775
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-008",
+    "name": "Sample Health Station 1",
+    "kind": "health",
+    "barangay": "Sample Barangay 1",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.9,
+     11.73
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-009",
+    "name": "Sample Health Station 2",
+    "kind": "health",
+    "barangay": "Sample Barangay 6",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.95,
+     11.83
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-010",
+    "name": "Sample Police Station",
+    "kind": "police",
+    "barangay": "Sample Barangay 2",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.895,
+     11.79
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-011",
+    "name": "Sample Fire Station",
+    "kind": "fire",
+    "barangay": "Sample Barangay 3",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.915,
+     11.8
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "F-012",
+    "name": "Sample City Hall",
+    "kind": "townhall",
+    "barangay": "Sample Barangay 2",
+    "fixture": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     124.885,
+     11.775
+    ]
+   }
+  }
+ ]
+}

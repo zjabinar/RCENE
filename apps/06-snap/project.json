@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "06",
+  "slug": "06-snap",
+  "title": "Damage Snap",
+  "tagline": "Offline-first rapid damage assessment",
+  "port": 5106,
+  "ai": true,
+  "brief": "docs/brief.md",
+  "branch": "proj/06-snap",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

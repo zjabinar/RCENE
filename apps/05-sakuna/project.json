@@ -1,0 +1,15 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "05",
+  "slug": "05-sakuna",
+  "title": "Sakuna Sim",
+  "tagline": "Typhoon scenario tabletop with a scrubbable timeline",
+  "port": 5105,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "proj/05-sakuna",
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ]
+}

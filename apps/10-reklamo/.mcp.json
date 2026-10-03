@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "node",
+      "args": [
+        "node_modules/@playwright/mcp/cli.js",
+        "--isolated",
+        "--browser",
+        "msedge",
+        "--output-dir",
+        ".playwright-mcp"
+      ]
+    }
+  }
+}

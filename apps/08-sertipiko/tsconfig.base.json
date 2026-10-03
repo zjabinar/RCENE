@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "allowArbitraryExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@rcene/ui/components/*": ["./rcene/ui/components/ui/*.tsx"],
+      "@rcene/ui/lib/utils": ["./rcene/ui/lib/utils.ts"],
+      "@rcene/ui/motion": ["./rcene/ui/motion/index.ts"],
+      "@rcene/data/schemas": ["./rcene/data/schemas.ts"],
+      "@rcene/*": ["./rcene/*/index.ts"]
+    }
+  }
+}
