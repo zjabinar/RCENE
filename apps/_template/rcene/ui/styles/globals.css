@@ -1,0 +1,174 @@
+/*
+ * @rcene/ui shared theme (Tailwind CSS v4, CSS-first config).
+ *
+ * src/index.css imports Tailwind first, then this file:
+ *   @import "tailwindcss" source(none);
+ *   @import "../rcene/ui/styles/globals.css";
+ *
+ * Fonts are self-hosted (@fontsource-variable/inter) because the demo runs
+ * with Wi-Fi off. Never add a font CDN.
+ */
+@import "tw-animate-css";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  /* Calm civic palette: slate neutrals, teal primary. */
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.208 0.042 265.755);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.208 0.042 265.755);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.208 0.042 265.755);
+  --primary: oklch(0.511 0.096 186.391);
+  --primary-foreground: oklch(0.984 0.014 180.72);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.446 0.043 257.281);
+  --accent: oklch(0.953 0.02 190);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --warning: oklch(0.962 0.059 95.617);
+  --warning-foreground: oklch(0.414 0.112 45.904);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.64 0.04 257);
+  --ring: oklch(0.511 0.096 186.391);
+  --chart-1: oklch(0.6 0.118 184.704);
+  --chart-2: oklch(0.588 0.158 241.966);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.558 0.288 302.321);
+  --chart-5: oklch(0.554 0.046 257.417);
+
+  /*
+   * Hazard tokens. Values MUST equal LEVEL_HEX / STATUS_HEX in
+   * packages/data/src/levels.ts (src/tokens.test.ts checks). They are the same
+   * in light and dark mode so the UI always matches the map paint.
+   * Foregrounds meet WCAG AA (>= 4.5:1) on their fill.
+   */
+  --level-low: #facc15;
+  --level-low-foreground: #422006;
+  --level-moderate: #f97316;
+  --level-moderate-foreground: #431407;
+  --level-high: #dc2626;
+  --level-high-foreground: #ffffff;
+  --level-veryHigh: #7f1d1d;
+  --level-veryHigh-foreground: #ffffff;
+  --status-not-in-zone: #64748b;
+  --status-not-in-zone-foreground: #ffffff;
+  --status-outside: #9ca3af;
+  --status-outside-foreground: #111827;
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.777 0.152 181.912);
+  --primary-foreground: oklch(0.277 0.046 192.524);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.208 0.042 265.755);
+  --warning: oklch(0.279 0.077 45.635);
+  --warning-foreground: oklch(0.924 0.12 95.746);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 25%);
+  --ring: oklch(0.704 0.14 182.503);
+  --chart-1: oklch(0.704 0.14 182.503);
+  --chart-2: oklch(0.685 0.169 237.323);
+  --chart-3: oklch(0.828 0.189 84.429);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.704 0.04 256.788);
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-level-low: var(--level-low);
+  --color-level-low-foreground: var(--level-low-foreground);
+  --color-level-moderate: var(--level-moderate);
+  --color-level-moderate-foreground: var(--level-moderate-foreground);
+  --color-level-high: var(--level-high);
+  --color-level-high-foreground: var(--level-high-foreground);
+  --color-level-veryHigh: var(--level-veryHigh);
+  --color-level-veryHigh-foreground: var(--level-veryHigh-foreground);
+  --color-status-not-in-zone: var(--status-not-in-zone);
+  --color-status-not-in-zone-foreground: var(--status-not-in-zone-foreground);
+  --color-status-outside: var(--status-outside);
+  --color-status-outside-foreground: var(--status-outside-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* Visible keyboard focus everywhere. Components that draw their own ring set outline-none. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
