@@ -1,0 +1,41 @@
+# Dependencies and build output
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+coverage/
+
+# Local reference clones (not part of the project)
+reference/
+everything-claude-code/
+
+# Tool output
+.playwright-mcp/
+apps/*/docs/screenshots/*.png
+!apps/*/docs/screenshots/.gitkeep
+
+# Offline AI model files (fetched with scripts/fetch-models.mjs)
+assets/models/
+
+# Secrets — never commit
+.env
+.env.*
+*.pem
+*service-account*.json
+
+# Raw GIS sources stay on the local drive; only converted GeoJSON is committed
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.sbn
+*.sbx
+*.kmz
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db

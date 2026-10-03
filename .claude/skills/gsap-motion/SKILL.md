@@ -24,24 +24,13 @@ For Motion itself, use the ECC `motion-ui` / `motion-patterns` skills.
 
 ## One-time setup
 
-```bash
-npm install gsap @gsap/react lenis
-```
-
-Register plugins once, in one file, and import GSAP from there everywhere else:
+There is nothing to install or register. The workspace catalog already provides `gsap`, `@gsap/react` and `lenis`, and the shared UI package registers the plugins (`useGSAP`, ScrollTrigger, SplitText, DrawSVG) once. Import GSAP from there everywhere, never straight from `"gsap"`, and don't create a `src/lib/gsap.ts`:
 
 ```ts
-// src/lib/gsap.ts
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
-import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText, DrawSVGPlugin);
-
-export { gsap, ScrollTrigger, SplitText, useGSAP };
+import { gsap, ScrollTrigger, SplitText, useGSAP } from "@rcene/ui/motion";
 ```
+
+`@rcene/ui/motion` also exports `CountUp` (an animated number), `SmoothScroll` (Lenis on GSAP's ticker, synced with ScrollTrigger) and `useReducedMotion()`. Use them before writing your own.
 
 SplitText, DrawSVG, and the other plugins ship in the public `gsap` npm package. No account or token is needed.
 
@@ -49,7 +38,7 @@ SplitText, DrawSVG, and the other plugins ship in the public `gsap` npm package.
 
 ```tsx
 import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap, useGSAP } from "@rcene/ui/motion";
 
 export function HazardCard({ result }: { result: HazardResult }) {
   const root = useRef<HTMLDivElement>(null);
@@ -113,7 +102,7 @@ useGSAP(
 
 ### Count-up numbers (stats, tallies, capacity)
 
-Tween a plain object and write the text through a ref. Setting React state 60 times a second re-renders the whole component.
+Use `<CountUp value={n} />` from `@rcene/ui/motion`. It also handles reduced motion and screen readers. The pattern below is what it does inside, for a custom case: tween a plain object and write the text through a ref. Setting React state 60 times a second re-renders the whole component.
 
 ```tsx
 const el = useRef<HTMLSpanElement>(null);
@@ -157,14 +146,14 @@ Return the tween from `onSplit` so it is cleaned up and rebuilt whenever SplitTe
 
 ### Smooth scroll wired to ScrollTrigger (Lenis)
 
-Use this on story and landing pages only (see Gotchas). Lenis runs on GSAP's ticker so both share one clock:
+Use this on story and landing pages only (see Gotchas). `@rcene/ui/motion` already exports it as `<SmoothScroll>`, which also falls back to native scrolling under reduced motion. Wrap the page with it; don't copy the code. The code below shows how it works: Lenis runs on GSAP's ticker, so both share one clock.
 
 ```tsx
-// src/components/SmoothScroll.tsx
+// What @rcene/ui/motion's SmoothScroll does
 import { useEffect, useRef, type ReactNode } from "react";
 import { ReactLenis, useLenis, type LenisRef } from "lenis/react";
 import "lenis/dist/lenis.css";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@rcene/ui/motion";
 
 function ScrollTriggerSync() {
   useLenis(() => ScrollTrigger.update());
