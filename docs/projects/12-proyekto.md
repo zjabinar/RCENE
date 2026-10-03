@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/12-proyekto` · dev port 5112 · preview 6112 |
 | **Batch** | 3 |
-| **Proposal** | `docs/PROPOSALS.md` #12 (Proyekto Watch — infrastructure project tracker) |
+| **Proposal** | `docs/proposal.md` (#12 Proyekto Watch — infrastructure project tracker, in the monorepo's `docs/PROPOSALS.md`) |
 | **Reused by platforms** | P7 Bukas Catbalogan (core "projects map"), P10 Barangay 360 (stretch "requests and projects": a barangay's projects and open flags) |
 | **Data** | boundary, barangays (🟢 OCHA/HDX) · synthetic: 18 infrastructure projects with Full Disclosure Policy–style fields, contractors as codes only (seed 1201) · before/after **SVG illustrations** in `public/illustrations/` (no photos) · no permission-tier data (CEEPUO site photos would be 🟡 and are not used) |
 | **AI in the app** | none |
@@ -79,7 +79,7 @@ interface TrailEntry { status: FlagStatus; at: number; note?: string }
 - `currentStatus(flag, trail: TrailEntry[] | undefined): FlagStatus` — last entry, or `received` when the office has not acted.
 - `applyReview(reviews: Record<string, TrailEntry[]>, flag, next, at, note?): { ok: true; reviews } | { ok: false; reason: "invalidTransition" | "contactInfo" | "noteTooLong" }` — append-only; does not mutate input. Cases: valid chain to resolved; skipping a step refused; acting on a final state refused; `at` earlier than the last entry is bumped to the last entry's time (trail stays ordered).
 - `containsContactInfo(text): boolean` — PH mobile numbers (`09XXXXXXXXX`, `0917-123-4567`, `+63 917 123 4567`) and e-mail addresses. Cases: those three formats and `name@example.ph` → true; "Km 3.5 drainage", "Purok 4, 2 meters deep", "₱1,200,000" → false.
-- `formatPeso(n, lang)` — `Intl.NumberFormat(LOCALES[lang], { style: "currency", currency: "PHP", maximumFractionDigits: 0 })`. Case: `en` output contains "₱" and "1,200,000".
+- Pesos: no local `formatPeso`. Use the shared `useFormat().currency(n)` in components, or `formatCurrency` from `@rcene/i18n` in pure code (₱, locale-aware). Amounts here are whole pesos, so pass 0 decimals: `currency(n, 0)`, `formatCurrency(n, lang, 0)`.
 
 ## Data
 
@@ -111,9 +111,9 @@ interface TrailEntry { status: FlagStatus; at: number; note?: string }
 ## Definition of done
 
 - [ ] R12.1–R12.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/12-proyekto`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 12-proyekto` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

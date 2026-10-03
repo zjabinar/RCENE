@@ -20,11 +20,11 @@ The project uses both libraries. They are good at different things:
 
 **One element, one library.** Both libraries write inline `transform` and `opacity` on every frame. If both target the same element they overwrite each other, which shows up as jitter, and Motion's layout animations measure the DOM mid-flight and fight GSAP's values. If an element needs both kinds of motion, wrap it: Motion animates the outer element, GSAP the inner.
 
-For Motion itself, use the ECC `motion-ui` / `motion-patterns` skills.
+For Motion itself, use the ECC `motion-ui` / `motion-patterns` skills if they are installed.
 
 ## One-time setup
 
-There is nothing to install or register. The workspace catalog already provides `gsap`, `@gsap/react` and `lenis`, and the shared UI package registers the plugins (`useGSAP`, ScrollTrigger, SplitText, DrawSVG) once. Import GSAP from there everywhere, never straight from `"gsap"`, and don't create a `src/lib/gsap.ts`:
+There is nothing to install or register. This app's `package.json` already has `gsap`, `@gsap/react` and `lenis`, and the shared UI code (`rcene/ui/motion/`, imported as `@rcene/ui/motion`) registers the plugins (`useGSAP`, ScrollTrigger, SplitText, DrawSVG) once. Import GSAP from there everywhere, never straight from `"gsap"`, and don't create a `src/lib/gsap.ts`:
 
 ```ts
 import { gsap, ScrollTrigger, SplitText, useGSAP } from "@rcene/ui/motion";

@@ -4,10 +4,10 @@
 |---|---|
 | **App** | `apps/20-sumat` · dev port 5120 · preview 6120 · extras: `fuse` (`fuse.js`), `ai` (`@huggingface/transformers`) |
 | **Batch** | 2 |
-| **Proposal** | `docs/PROPOSALS.md` #20 ★AI · documented need: "no Waray/Filipino localisation" |
+| **Proposal** | `docs/proposal.md` (#20 in the monorepo's `docs/PROPOSALS.md`) ★AI · documented need: "no Waray/Filipino localisation" |
 | **Reused by platforms** | P5 Serbisyo Catbalogan (workflow step 1: "a resident finds a service by describing it in Waray, Filipino or English"; see "Platform hooks") |
 | **Data** | no map layers (`dataNeeds` is empty) · authored Citizen's Charter subset (`src/content/services.ts`, 26 generic LGU services, illustrative) and labelled test queries · tier: authored (a real Citizen's Charter is a 🟢 public document; this subset is written for the prototype, not copied) |
-| **AI in the app** | ★AI semantic re-ranking with an in-browser multilingual embedding model (`Xenova/multilingual-e5-small`, fetched once with `node scripts/fetch-models.mjs --app 20`, served from `/models/`) in a Web Worker (skill `offline-ai`). Fuse.js search always works without it |
+| **AI in the app** | ★AI semantic re-ranking with an in-browser multilingual embedding model (`Xenova/multilingual-e5-small`, fetched once into this app's `models/` with `npm run fetch-models -- --model e5`, served from `/models/`) in a Web Worker (skill `offline-ai`). Fuse.js search always works without it |
 | **Skills to use** | `offline-ai`, Motion `layout` (result re-rank), `gsap-motion` (light), Design plugin `ux-copy` (plain-language service text) and `accessibility-review` (WCAG AA, large text, read-aloud) |
 
 > Say what you need the way you'd say it at the counter, like "I need a cedula", in Waray, Filipino or English, and get the right office, steps, requirements, fee and time, in large text and read aloud.
@@ -38,7 +38,7 @@ Build in this order. R20.1 alone is a complete entry: plain-language search over
 | R20.3 | **★AI semantic re-ranking** | The worker embeds every service once at start (title + summary + example phrasings, one vector per language), then each query (debounce 300 ms). `combineScores` merges the Fuse and semantic candidates; the list re-orders with Motion `layout`, and a badge "Re-ranked on this device by AI" appears. Fuse results always render first and are never blocked by the model. While the model is loading, missing or failed: Fuse only, a small "Smart search off" badge, and no console error. `/ai-check` runs every labelled query through Fuse alone and Fuse + AI and shows top-1 and top-3 hit rates per language and per half (keyword / paraphrase), with a **Simulate model missing** switch (in memory: it survives in-app navigation and clears on reload); record the numbers in `NOTES.md` and say plainly where Waray is weaker. |
 | R20.4 | **Read aloud** | On `/s/:id`, **Read aloud** (shown only when `speechSynthesis` exists; otherwise a one-line note "Read-aloud isn't available in this browser") speaks the title, the summary, each step, the requirements, the fee and the time as **separate utterances** (`readAloudScript`; separate utterances also avoid long-utterance cut-offs). The part being read is highlighted (`onstart`), marked `aria-current`, and scrolled into view. Controls: Pause/Resume, Stop, speed 0.8× / 1× / 1.2×. The voice comes from `pickVoice(voices, lang)` (re-run on `voiceschanged`): local voices only (`localService`, so it works offline); Filipino accepts `fil` and `tl` tags; Waray has no voice on common devices, so Waray text is read with a Filipino voice and the page says "No Waray voice on this device; reading with a Filipino voice." No suitable voice at all → the button is disabled with the reason, and an English voice is offered if one exists. Speech stops on route change. Nothing auto-plays. |
 | R20.5 | **Large text and WCAG AA** | A **Text size** control (`toggle-group`: 100 % / 125 % / 150 %) sets the root font size and persists. At 150 % and 390 px width nothing scrolls horizontally (check the smoke screenshots), and every control stays usable. Also: axe clean, AA contrast, visible focus rings, touch targets ≥ 44 px, headings in order, the result count announced in an `aria-live="polite"` region ("5 services found"), icons always with a text label, no time limits, `prefers-reduced-motion` respected (the re-rank becomes an instant re-order). |
-| R20.6 | **`/sources` and disclaimer** | `/sources` uses `SourcesPage` plus a "Content in this app" card: the service catalogue is an illustrative subset written for this prototype, modelled on the structure of a Citizen's Charter (a public document), not copied from Catbalogan's; and an "AI model" entry: `Xenova/multilingual-e5-small` (MIT license), runs in the browser, nothing is sent anywhere. Override `app.disclaimer`: "Prototype. Services, fees and processing times are illustrative; check the office's posted Citizen's Charter." |
+| R20.6 | **`/sources` and disclaimer** | `/sources` uses `SourcesPage` plus a "Content in this app" card (as `children`): the service catalogue is an illustrative subset written for this prototype, modelled on the structure of a Citizen's Charter (a public document), not copied from Catbalogan's; and an "AI model" entry: `Xenova/multilingual-e5-small` (MIT license), runs in the browser, nothing is sent anywhere. Override `app.disclaimer` in `src/i18n/strings.ts` (`AppShell strings={strings}` passes it to the footer and `/sources`): "Prototype. Services, fees and processing times are illustrative; check the office's posted Citizen's Charter." |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -58,7 +58,7 @@ Build in this order. R20.1 alone is a complete entry: plain-language search over
 - At start the worker embeds the 26 × 3 service texts once (show a quiet "Preparing smart search…" line, never a blocking spinner), then answers `{ id, query } → { id, sims }`. #10 Reklamo uses the same model files.
 - `useSemantic(): { status: "loading" | "ready" | "missing" | "error"; rank(q): Promise<{ id; sim }[]> }`. `missing` is a normal state, not an error.
 - Vitest never loads the model: all ranking logic is tested with fake vectors.
-- If `node scripts/fetch-models.mjs --app 20` can't download in your environment, build with Fuse only working, keep the worker compiled and typed, and write in `STATUS.md` that the model path must be checked on the demo laptop.
+- If `npm run fetch-models -- --model e5` can't download in your environment, build with Fuse only working, keep the worker compiled and typed, and write in `STATUS.md` that the model path must be checked on the demo laptop.
 
 ## Data
 
@@ -106,7 +106,7 @@ Build in this order. R20.1 alone is a complete entry: plain-language search over
 
 ## Golden-path demo (≤ 2 minutes)
 
-Setup: one window on port 5120 at phone width. Run `node scripts/fetch-models.mjs --app 20` beforehand (once, online). Press **Reset demo** first.
+Setup: one window on port 5120 at phone width. Run `npm run fetch-models -- --model e5` beforehand (once, online). Press **Reset demo** first.
 
 1. `/`: type "I need a cedula" → Community tax certificate (cedula) on top → open it: steps, requirements, City Treasurer, fee, time.
 2. Back; type "my baby was born last week" → the AI re-rank animation → Register a newborn's birth.
@@ -119,9 +119,9 @@ Setup: one window on port 5120 at phone width. Run `node scripts/fetch-models.mj
 ## Definition of done
 
 - [ ] R20.1–R20.6 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/20-sumat`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 20-sumat` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

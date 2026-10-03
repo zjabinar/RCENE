@@ -122,7 +122,7 @@ Since 2026-10-03, each core is pre-built as its own app from its brief: Core 1 �
 ## 7. Architecture
 
 - **Stack:** as in the codebase design spec, with versions pinned in the pnpm catalog (`pnpm-workspace.yaml`). Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui; MapLibre via `react-map-gl/maplibre`; `@turf/turf`; Zustand; `motion` and GSAP. **No three.js** — 3D adds nothing to this product's information.
-- **Layout:** a pnpm monorepo. Each core is its own app under `apps/` (§6); shared code lives in `packages/` (`@rcene/config`, `data`, `geo`, `store`, `i18n`, `ui`, `map`).
+- **Layout:** a pnpm monorepo. Each core is its own app under `apps/` (§6); each app is self-contained and carries its own copy of the shared code in `rcene/` (`config`, `data`, `geo`, `store`, `i18n`, `ui`, `map`), so the chosen app's folder runs on its own.
 - **Routes:** `/`, `/console`, `/center/:id`, `/board`, `/sources`.
 - **State:** each app's Zustand store is created with `createSyncedStore` from `@rcene/store` and persisted to `localStorage` under the key `rcene:<slug>:<store>` (for example `rcene:01-ligtas:app`). Other windows rehydrate on the browser's `storage` event, which fires in every other same-origin window when the key changes. That is all the cross-window sync needs: no server, and no message protocol to debug. `BroadcastChannel` is the fallback if rehydration proves flaky.
 - **Basemap works offline.** The map draws the city boundary, barangays, and sea from local GeoJSON on a plain background. Online raster tiles are an *optional* toggle when Wi-Fi works. Fonts are self-hosted, with no CDN calls.
@@ -173,9 +173,9 @@ Static data (zones, barangays, centers, scenarios) loads from `/data/` (§8.1) a
 
 ## 8. Data
 
-### 8.1 Files that ship in `packages/data/files/`
+### 8.1 Files that ship in `data/files/`
 
-Apps fetch `/data/<file>`. The shared Vite config serves `packages/data/files/` (real data) first and falls back, file by file, to the fake fixtures committed in `packages/data/fixtures/`; a "Sample data" badge shows while any fixture is in use.
+Apps fetch `/data/<file>`. Each app's Vite config serves its `data/files/` (real data) first and falls back, file by file, to the fake fixtures in `data/fixtures/` (both synced from the repo's root `data/` with `pnpm sync-data`); a "Sample data" badge shows while any fixture is in use.
 
 | Output | Source | Tier |
 |---|---|---|
@@ -189,7 +189,7 @@ Apps fetch `/data/<file>`. The shared Vite config serves `packages/data/files/` 
 
 **Fallback:** if a CDRRMO hazard layer turns out unusable in prep, use the UP Project NOAH layer for that hazard (🟢, Samar-wide under `noah_hazards\`, clipped to the boundary). Note the substitution in `sources.json`.
 
-**Canonical layer per hazard.** Each hazard folder holds several exposure layers (population, critical facilities, urban use, …). During prep, choose **one** per hazard — default *Population to {Hazard} Risk* — and map its own category field onto `Level`. Record the choice and the mapping in `packages/data/README.md`. These layers map *risk to people and assets*, not the full hazard extent, which is why the UI says "mapped risk zone".
+**Canonical layer per hazard.** Each hazard folder holds several exposure layers (population, critical facilities, urban use, …). During prep, choose **one** per hazard — default *Population to {Hazard} Risk* — and map its own category field onto `Level`. Record the choice and the mapping in `data/README.md`. These layers map *risk to people and assets*, not the full hazard extent, which is why the UI says "mapped risk zone".
 
 **Conversion** happens before the event, in the local data session (batch B0, `docs/projects/00-data.md`), with `npx mapshaper`:
 - reproject to WGS84 (`-proj wgs84`); the folder mixes UTM 51N and geographic `.prj` files
@@ -223,7 +223,7 @@ Waray labels are prepared with the content in §11.
 
 - **Never read from `D:\monica`.** Never copy anything from `C:\lgu_portal`; its root holds credential files.
 - Barangay-level and facility-level data only. No personal data, real or invented, appears anywhere in the app.
-- The repository stays private: the 🟡 permission-tier layers are committed in `packages/data/files/`.
+- The repository stays private: the 🟡 permission-tier layers are committed in `data/files/` (and copied into each app's `data/`).
 - Every source is credited on `/sources` and on the poster:
   - *Risk maps: Catbalogan City CDRRMO / CPDCO, used with permission.*
   - *Boundaries: OCHA/HDX.*
@@ -266,12 +266,12 @@ No AI runs inside the app, by decision. The AI score therefore rests on the buil
 1. **Ask first.** Ask the organizers by **October 4** whether pre-built code is allowed (§13, §17).
 2. **Freeze and tag.** Tag the repo `pre-event-freeze` on **October 6**. `git diff pre-event-freeze..HEAD` then shows judges exactly what was built on the day.
 3. **Disclose.** Say it in the demo and on the poster (`docs/DISCLOSURE.md`).
-4. **Fallback.** If the organizers say no, start the entry from the generic template and shared packages only (`apps/_template` and `packages/*`), which contain no project feature code, and build the chosen proposal on the day from its brief in `docs/projects/`.
+4. **Fallback.** If the organizers say no, start the entry from the generic template and shared packages only (`apps/_template`, which carries the shared code in `rcene/` and contains no project feature code), and build the chosen proposal on the day from its brief in `docs/projects/`.
 
 | Before October 7 | On October 7 |
 |---|---|
-| Data conversion → `packages/data/files/` (local data session, batch B0) | Pick one app and continue it: new routes, components and domain functions |
-| Shared packages `packages/*` and the generic `apps/_template` | Integration toward the platform (for #1: the scenario from #5, live capacity from #3) |
+| Data conversion → `data/files/` (local data session, batch B0) | Pick one app and continue it: new routes, components and domain functions |
+| The generic `apps/_template` with its shared code (`rcene/`) | Integration toward the platform (for #1: the scenario from #5, live capacity from #3) |
 | All 20 single-feature apps `apps/01-ligtas` … `apps/20-sumat`, built in parallel from the briefs in `docs/projects/` | Unit tests for every new domain function |
 | String tables and "what to do" checklists (EN + Waray + Filipino drafts) inside each app | Polish, accessibility pass and Wi-Fi-off check |
 | Evacuation-center list (Plan A) or the Plan B decision | The chosen app's `AI-LOG.md` entries for the day |
@@ -302,8 +302,8 @@ The four hours continue a pre-built app (§11); they do not start from an empty 
 | Zaldy | Confirm the topic format with the organizers (self-chosen or announced) | Oct 4 |
 | Zaldy | Ask the organizers whether code pre-built before the event is allowed (§11, §17). Record the answer in `docs/DISCLOSURE.md`; if no, use the fallback in §11. | Oct 4 |
 | Zaldy | Have the written LGU data permission ready to show | Oct 6 |
-| Claude, local session B0 | Data foundation per `docs/projects/00-data.md` → `packages/data/files/` + `sources.json` + `packages/data/README.md`; Zaldy reviews and merges before B1 | Oct 3–4 |
-| Claude (after approval) | Monorepo scaffold: `packages/*`, `apps/_template`, the 20 app stubs, the briefs in `docs/projects/` | Oct 3 |
+| Claude, local session B0 | Data foundation per `docs/projects/00-data.md` → `data/files/` + `sources.json` + `data/README.md`; Zaldy reviews and merges before B1 | Oct 3–4 |
+| Claude (after approval) | Monorepo scaffold: `apps/_template` (with the shared code), the 20 self-contained app stubs, the briefs in `docs/projects/` | Oct 3 |
 | Claude, parallel sessions | Build the 20 apps in batches with `scripts/launch-worktrees.ps1` (`docs/PARALLEL.md`): B1 01, 03, 04, 16, 18 · B2 05, 07, 09, 13, 20 · B3 08, 10, 11, 12, 14 · B4 02, 06, 15, 17, 19 (optional, riskiest). Zaldy reviews and merges each `proj/NN-slug` branch. | Oct 3–5 |
 | Zaldy + Claude | EN + Waray string table and "what to do" checklists — AI drafts, Zaldy corrects (each app's `NOTES.md` lists the translations to review) | Oct 4 |
 | Both | Full four-hour dry run (continue one pre-built app) on a throwaway branch, then delete it | Oct 5 |
@@ -326,8 +326,8 @@ The four hours continue a pre-built app (§11); they do not start from an empty 
 
 | Risk | Mitigation |
 |---|---|
-| Topic is announced on the day and doesn't fit | Pick the closest of the 20 pre-built apps, or start from `apps/_template` + `packages/*`; the data foundation is reusable |
-| Organizers rule out pre-built code, or judges mark it down | Asked by Oct 4; `pre-event-freeze` tag and `git diff pre-event-freeze..HEAD`; open disclosure; fallback to `apps/_template` + `packages/*` (§11) |
+| Topic is announced on the day and doesn't fit | Pick the closest of the 20 pre-built apps, or start from `apps/_template`; the data foundation is reusable |
+| Organizers rule out pre-built code, or judges mark it down | Asked by Oct 4; `pre-event-freeze` tag and `git diff pre-event-freeze..HEAD`; open disclosure; fallback to `apps/_template` (§11) |
 | No evacuation-center list arrives | Plan B (§8.2): labelled OSM candidates |
 | CDRRMO layer categories are inconsistent | Choose the canonical layer and mapping during prep; NOAH fallback per hazard |
 | Venue Wi-Fi fails | Offline basemap and self-hosted fonts; the golden path is rehearsed with Wi-Fi off |
@@ -352,4 +352,4 @@ The four hours continue a pre-built app (§11); they do not start from an empty 
 1. Will there be a projector or second screen for `/board` at Tandaya Hall? If not, the board shares the laptop screen in a split layout.
 2. Waray and English only, or Filipino too (stretch S3)?
 3. Plan B capacities: one flat illustrative number per school, or an estimate scaled by school size?
-4. Do the organizers allow code pre-built before the event (§11)? Ask by October 4. If not, start the entry from `apps/_template` + `packages/*` only.
+4. Do the organizers allow code pre-built before the event (§11)? Ask by October 4. If not, start the entry from `apps/_template` only.

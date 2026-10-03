@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/09-negosyo` · dev port 5109 · preview 6109 · extras: none (core libraries only) |
 | **Batch** | 2 |
-| **Proposal** | `docs/PROPOSALS.md` #9 · and the "risk-aware business siting" idea of P6 |
+| **Proposal** | `docs/proposal.md` (#9 in the monorepo's `docs/PROPOSALS.md`) · and the "risk-aware business siting" idea of P6 |
 | **Reused by platforms** | P6 Negosyo Catbalogan (core: "wizard + fee estimate" and "location hazard check"; see "Platform hooks") |
 | **Data** | boundary, barangays, all five `hazard-*` layers · 🟢 HDX/OCHA boundaries + 🟡 CDRRMO risk maps (permission; UP NOAH fallback recorded by the data session) · no synthetic records · authored, illustrative fee rules, requirements, steps and siting advice |
 | **AI in the app** | none |
@@ -38,7 +38,7 @@ Build in this order. R9.1 alone is a complete entry: a wizard that produces a pe
 | R9.3 | **Hazard-aware siting check** | On `/result`: a map (`BaseMap`, `ZoneLayer` for one hazard at a time chosen with a `toggle-group`, default storm surge; `Legend`; `SelectedPoint`; `useFlyTo`) opens on the chosen barangay. Until a pin is dropped, the check runs at the barangay's interior point (`turf.pointOnFeature`), labelled "Barangay centre. Tap the map to pin your lot." A tap pins the lot → `lookupHazards` → `HazardStatusList` (three states, missing layers listed as missing) plus, for each `inZone` hazard, "What this means for your business" from `src/content/siting.ts`, e.g. "This lot is in a mapped storm-surge zone (High). Keep stock and electrical outlets above the expected water line; plan how you will close and protect stock when a storm-surge warning is raised." `notInZone` reads "Not in a mapped risk zone. Maps don't show every risk; keep a basic preparedness plan." A pin outside the city boundary reads "Outside data coverage. We can't say anything about this place." If the pin's barangay (`barangayAt`) differs from the answer, a button offers "Use {barangay}". In-zone results add **recommended** items to the checklist (badge "Recommended", never mixed with legal requirements). No zoning answer: there is no zoning layer, so the locational-clearance item says the CPDO confirms zoning. No siting text calls a lot "safe", in any language (wording test below). |
 | R9.4 | **Steps and timeline** | `stepsFor(answers)` gives the ordered steps with office, where to go and working days; steps in the same group show as "You can do these on the same days"; the total reads "About {min}–{max} working days" (`timelineDays`). Vertical timeline UI with lucide icons per office. |
 | R9.5 | **Printable checklist** | `/print` (also reached with a **Print** button on `/result`): checklist with empty checkboxes and reasons, the fee table with the illustrative label, steps and days, the siting summary in the three-state wording with the pin's coordinates (the map itself is not printed), the date generated and the disclaimer. `@media print` hides the app chrome; at most two A4 pages in Ctrl+P preview; real text, not images. |
-| R9.6 | **Language toggle, `/sources`, disclaimer** | EN / Waray / Filipino via `useLang`, persisted; all UI text, requirement, step and siting content from `src/i18n/strings.ts` and `src/content/*.ts` (en + war + fil drafts). `/sources` uses `SourcesPage` (risk maps: CDRRMO/CPDCO, used with permission; boundaries: OCHA/HDX) plus a "Content in this app" card: fee rules, requirements, steps and advice are illustrative and written for this prototype from general eBOSS knowledge; they are not Catbalogan's ordinance. Override `app.disclaimer`: "Prototype. Requirements, fees and timelines are illustrative estimates; confirm with the BPLO. Hazard maps show mapped risk zones only." |
+| R9.6 | **Language toggle, `/sources`, disclaimer** | EN / Waray / Filipino via `useLang`, persisted; all UI text, requirement, step and siting content from `src/i18n/strings.ts` and `src/content/*.ts` (en + war + fil drafts). `/sources` uses `SourcesPage` (risk maps: CDRRMO/CPDCO, used with permission; boundaries: OCHA/HDX) plus a "Content in this app" card (as `children`): fee rules, requirements, steps and advice are illustrative and written for this prototype from general eBOSS knowledge; they are not Catbalogan's ordinance. Override `app.disclaimer` in `src/i18n/strings.ts` (`AppShell strings={strings}` passes it to the footer and `/sources`): "Prototype. Requirements, fees and timelines are illustrative estimates; confirm with the BPLO. Hazard maps show mapped risk zones only." |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -102,7 +102,7 @@ Build in this order. R9.1 alone is a complete entry: a wizard that produces a pe
 
 - Friendly and step-by-step: big choice cards with lucide icons, one question per screen, plain words ("capital" gets a one-line explanation).
 - **Wow moment:** finishing step 5 lands on `/result`. The fee bars grow one after another and the total counts up to "₱2,993.75 (estimate)"; the map flies to the barangay; the applicant taps a point on the shore and the storm-surge chip "In a mapped risk zone — High" staggers in (built into `HazardStatusList`) with "What this means for your business", while a "Recommended: business continuity plan" item slides into the checklist (Motion `layout`). One element, one library: GSAP owns the fee bars and the total, Motion owns the wizard steps and checklist rows.
-- **Accessibility:** each step is a `<fieldset>` with a `<legend>`; radio cards are real radio inputs; errors are linked with `aria-describedby` and announced; pesos formatted with `useFormat`; the map is never the only way in (the barangay answer drives the default check point); the siting result is announced in an `aria-live="polite"` region; all touch targets ≥ 44 px; `prefers-reduced-motion` respected.
+- **Accessibility:** each step is a `<fieldset>` with a `<legend>`; radio cards are real radio inputs; errors are linked with `aria-describedby` and announced; pesos formatted with `useFormat().currency`; the map is never the only way in (the barangay answer drives the default check point); the siting result is announced in an `aria-live="polite"` region; all touch targets ≥ 44 px; `prefers-reduced-motion` respected.
 
 ## Golden-path demo (≤ 2 minutes)
 
@@ -119,9 +119,9 @@ Setup: one window on port 5109 at 1280 px (the wizard is centred). Press **Reset
 ## Definition of done
 
 - [ ] R9.1–R9.6 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/09-negosyo`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 09-negosyo` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

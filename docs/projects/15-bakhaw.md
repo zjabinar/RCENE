@@ -4,9 +4,9 @@
 |---|---|
 | **App** | `apps/15-bakhaw` · dev port 5115 · preview 6115 |
 | **Batch** | 4 |
-| **Proposal** | `docs/PROPOSALS.md` #15 (Bakhaw Watch — mangrove and coastal change explorer) |
+| **Proposal** | `docs/proposal.md` (#15 Bakhaw Watch — mangrove and coastal change explorer, in the monorepo's `docs/PROPOSALS.md`) |
 | **Reused by platforms** | P9 Luntian Catbalogan (stretch "mangrove change"; the storm-surge explainer also feeds its planner view) |
-| **Data** | boundary, barangays (🟢 OCHA/HDX) · `hazard-stormSurge` (🟡 CDRRMO/CPDCO risk map, used with permission; 🟢 UP NOAH fallback) · `derived/barangay-hazard` (computed) · optional `coastal-2015`, `coastal-2020` (🟡 NAMRIA coastal resources; **not in `LAYER_FILES`**, may never arrive) · fallback: **synthetic mangrove illustration** (seed 1501), labelled on every view |
+| **Data** | boundary, barangays (🟢 OCHA/HDX) · `hazard-stormSurge` (🟡 CDRRMO/CPDCO risk map, used with permission; 🟢 UP NOAH fallback) · `derived/barangay-hazard` (computed) · optional `coastal-2015`, `coastal-2020` (🟡 NAMRIA coastal resources; **not in `LAYER_FILES`**, loaded with `useOptionalLayer`, may never arrive) · fallback: **synthetic mangrove illustration** (seed 1501), labelled on every view |
 | **AI in the app** | none |
 | **Skills to use** | `maplibre-gis` (two synced maps, fills, fit-bounds), `gsap-motion` (divider reveal, scrubbable timeline for the cross-section), Design plugin `ux-copy` (the illustration banner and the explainer's careful wording) |
 
@@ -33,7 +33,7 @@ Build in this order. R15.1 alone is a complete entry.
 | ID | Requirement | Acceptance criteria (testable) |
 |---|---|---|
 | R15.1 | Swipe-compare map, 2015 against 2020 | `coastalDataMode` decides **real** (both `coastal-2015.geojson` and `coastal-2020.geojson` are in `/data/manifest.json` and pass the zod schema) or **illustrative** (otherwise; files absent from the manifest are never requested). Two `BaseMap`s are stacked: 2015 underneath, 2020 on top clipped with CSS `clip-path: inset(0 0 0 X%)`. Both are interactive and share one controlled view state (if `BaseMap` does not pass `viewState`/`onMove` through, sync with `onMove` + `jumpTo` and note the gap in `NOTES.md`), so panning either keeps them aligned. Each map shows barangay outlines and that year's mangrove fill; year labels sit on each side of the divider. The divider handle follows the pointer and is a keyboard slider (`role="slider"`, ←/→ 5%, Home/End, `aria-valuetext` "Divider at 50%: 2015 on the left, 2020 on the right"). A segmented control "2015 · Swipe · 2020" is the non-drag alternative ("2015" sets the divider to 100%, "2020" to 0%). On load the divider sweeps from 100% to 50% with GSAP (reduced motion: starts at 50%). In illustrative mode: a non-dismissible banner above the map reads "Illustration only. These mangrove patches are generated, not mapped. NAMRIA coastal resource maps for 2015 and 2020 are pending permission.", each half carries an "Illustration" tag, and patch outlines are dashed. In real mode a one-line source note above the map names the NAMRIA layers instead. |
-| R15.2 | Per-barangay gain and loss table | Rows from `changeByBarangay` for every barangay with mangrove area in either year: Barangay · 2015 (ha) · 2020 (ha) · Gained · Lost · Net · Net % ("new" when 2015 is 0). Sortable by net, lost and name (plain `<table>` with sort buttons and `aria-sort`); a totals row; an inline SVG diverging bar per row with +/− signs and a colorblind-friendly pair (not red/green). The caption states the data mode. Clicking a row (or Enter on it) highlights the barangay and fits both maps to it. "Download CSV" exports the rows. |
+| R15.2 | Per-barangay gain and loss table | Rows from `changeByBarangay` for every barangay with mangrove area in either year: Barangay · 2015 (ha) · 2020 (ha) · Gained · Lost · Net · Net % ("new" when 2015 is 0). Sortable by net, lost and name (plain `<table>` with sort buttons and `aria-sort`); a totals row; an inline SVG diverging bar per row with +/− signs and a colorblind-friendly pair (not red/green). The caption states the data mode. Clicking a row (or Enter on it) highlights the barangay and fits both maps to it. "Download CSV" exports the rows (`toCsv` from `@rcene/data`, `downloadCsv` from `@rcene/ui`). |
 | R15.3 | Mangroves and storm surge explainer `/surge` | A map of the real `hazard-stormSurge` zones (`ZoneLayer` + `Legend`) with the 2020 mangrove fill on top (labelled illustrative when it is). If the surge layer is missing → `DataMissing` for that part, the rest still renders. A cross-section SVG (sea → surge wave → mangrove belt → houses) in two lanes, "Without a mangrove belt" and "With a mangrove belt", driven by a paused GSAP timeline that a range input scrubs and a Play button runs; in the mangrove lane the wave visibly loses height and speed. Qualitative only: **no percentages or wave-height numbers**. The copy says mangrove belts can slow water and reduce wave energy, wide and dense belts help most, they lower the hazard but do not remove it, and surge can still flood the land behind them. A real-data panel: the number of barangays with any mapped storm-surge zone and the top 5 by `shareAtLeast(row, "stormSurge", "high")`, with "Share of land area, not of people." |
 | R15.4 | Language toggle, `/sources`, disclaimer | EN / Waray / Filipino via `useLang`; every string from `src/i18n/strings.ts`. A domain test asserts no string in any language contains any word from `FORBIDDEN_ANSWER_WORDS` (`@rcene/i18n`). `/sources` lists OCHA/HDX, the storm-surge source and either the NAMRIA layers (real mode) or a `tier: "synthetic"` entry for the illustration with the same wording as the banner. Disclaimer footer on every view. |
 
@@ -54,15 +54,15 @@ interface ChangeRow { barangay: string; ha2015: number; ha2020: number; gained: 
 - `totals(rows: ChangeRow[]): Omit<ChangeRow, "barangay" | "netPct"> & { netPct: number | null }` — sums. Case: empty → zeros.
 - `shareAtLeast(row: BarangayHazardRow, hazard, min: Level): number` — sum of shares at or above `min`, capped at 1 (levels can overlap in the source). Cases: as in the derived fixture.
 - `swipeFromKey(value: number, key: string): number` — ArrowLeft −5, ArrowRight +5, Home 0, End 100, clamped to 0–100; other keys unchanged.
-- `toCsv(rows, columns): string` — RFC 4180 quoting. Cases: comma, quote, newline.
+- CSV text comes from the shared `toCsv(rows, columns)` in `@rcene/data` (RFC 4180 quoting for comma, quote and newline is tested there; don't re-implement it).
 
 Compute `changeByBarangay` once per data load and memoize it; never recompute while swiping. If it takes over 1 s on real data, show `LoadingState` for the table and record the timing in `NOTES.md`.
 
 ## Data
 
 - `useLayer("boundary")`, `useLayer("barangays")`, `useLayer("derived/barangay-hazard")`, `useZones(["stormSurge"])`. Works on fixtures until the real data lands; the Sample data badge shows meanwhile.
-- **Optional coastal layers** (not in `LAYER_FILES`, and shared packages are frozen): write `src/data/optionalLayer.ts` → `useOptionalLayer(file: string, schema: ZodType)`, returning `loading`, `absent`, `invalid` or `ready`. It reads `useDataManifest()`, returns `absent` **without fetching** when the file is not listed (a 404 would print a console error and fail the smoke test), otherwise fetches `/data/<file>` and validates with an app-local zod schema (Polygon/MultiPolygon features with a string `class`). `invalid` falls back to illustrative mode with the banner plus "The coastal files were found but not recognised."
-- `NOTES.md` → "Requests for shared packages": add `coastal-2015` and `coastal-2020` to `LayerTypes`/`LAYER_FILES` (properties `{ class: string; fixture?: boolean }`, NAMRIA class labels verbatim, simplified, clipped to the boundary) and to `sources.json` (NAMRIA, `tier: "permission"`), when permission arrives (`docs/projects/00-data.md` pass 2).
+- **Optional coastal layers** (not in `LAYER_FILES`, so `useLayer` can't load them): use `useOptionalLayer(file, schema)` from `@rcene/data` (states `loading`, `absent`, `invalid`, `ready`) with an app-local zod schema (Polygon/MultiPolygon features with a string `class`). It reads the manifest first and reports a file that isn't listed as missing **without fetching it** (a 404 would print a console error and fail the smoke test), otherwise fetches `/data/<file>` and validates it. `invalid` (listed, but unreadable or failing the schema) falls back to illustrative mode with the banner plus "The coastal files were found but not recognised."
+- `NOTES.md` → "Requests for the data session": `coastal-2015.geojson` and `coastal-2020.geojson` (properties `{ class: string; fixture?: boolean }`, NAMRIA class labels verbatim, simplified, clipped to the boundary) with `sources.json` entries (NAMRIA, `tier: "permission"`), when permission arrives (data pass 2 of the `00-data` brief in the monorepo).
 - Synthetic fallback: `seedMangroves(…, 1501)` on the loaded barangays and boundary (the fixture coastline until real data lands). Never mixed with real coastal data: real mode uses only the NAMRIA files.
 - Store `createSyncedStore("15-bakhaw:app")` → `{ mode: "swipe" | "2015" | "2020"; swipe: number; selected: string | null }`, `version: 1`.
 
@@ -86,9 +86,9 @@ Compute `changeByBarangay` once per data load and memoize it; never recompute wh
 ## Definition of done
 
 - [ ] R15.1–R15.4 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/15-bakhaw`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 15-bakhaw` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current
@@ -105,4 +105,4 @@ Satellite imagery or NDVI; carbon or biomass estimates; numeric wave-attenuation
 
 ## Platform hooks
 
-Export `routes` (already), plus `SwipeCompare` (generic: takes two layer sets, labels and a view state, so P9 can reuse it for any before/after pair such as sea-level-rise scenarios), `ChangeTable`, `SurgeCrossSection` and the domain functions, all free of app-specific globals. P9 Luntian Catbalogan mounts `/` as its "mangrove change" view and `/surge` beside its sea-level-rise exposure view, and swaps the illustration for NAMRIA data simply by the files appearing in `packages/data/files/`.
+Export `routes` (already), plus `SwipeCompare` (generic: takes two layer sets, labels and a view state, so P9 can reuse it for any before/after pair such as sea-level-rise scenarios), `ChangeTable`, `SurgeCrossSection` and the domain functions, all free of app-specific globals. P9 Luntian Catbalogan mounts `/` as its "mangrove change" view and `/surge` beside its sea-level-rise exposure view, and swaps the illustration for NAMRIA data simply by the files appearing in `data/files/`.

@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/07-pila` · dev port 5107 · preview 6107 · extras: `qrcode` (+ `@types/qrcode`) |
 | **Batch** | 2 |
-| **Proposal** | `docs/PROPOSALS.md` #7 · documented need: "no digital queue or appointment system" |
+| **Proposal** | `docs/proposal.md` (#7 in the monorepo's `docs/PROPOSALS.md`) · documented need: "no digital queue or appointment system" |
 | **Reused by platforms** | P5 Serbisyo Catbalogan (request → queue ticket, staff console with "Now Serving" board), P6 Negosyo Catbalogan (BPLO appointment booking) |
 | **Data** | no map layers (`dataNeeds` is empty) · authored offices, services and counters (`src/content/offices.ts`) · synthetic queue history (seed 701) · tier: authored + synthetic |
 | **AI in the app** | none |
@@ -38,7 +38,7 @@ Build in this order. R7.1 alone is a complete entry: a ticket and a counter cons
 | R7.2 | **"Now Serving" board** with a split-flap flip | `/display`: one tile per counter (counter number, office name, current code or "—"); closed counters are greyed out with the text "Closed"; under each office, "Next" lists its next 3 codes. A call or a recall flips that tile's characters split-flap style (GSAP, per-character stagger); a recall flips the same code again. A two-tone chime (Web Audio oscillator, no audio file) plays after the viewer has clicked **Turn on sound** once; until then nothing tries to play, so the autoplay policy logs no errors. An `aria-live="assertive"` region announces "Now serving {code} at Counter {n}". Code text ≥ 96 px and contrast ≥ 7:1 at 1280 px. A clock (HH:MM) in the corner. A **Full screen** button (Fullscreen API, hidden when unsupported). The initial load and store rehydration never flip or chime: only calls newer than the page load do. Reduced motion: the code swaps instantly with a 1-s highlight. |
 | R7.3 | **QR ticket and wait estimate** | `/t/:code` shows a QR (rendered locally with `qrcode`) encoding `${location.origin}/t/{code}`, with the same URL as text underneath. The estimate comes from `estimateWait` (pure, tested): "About {lo}–{hi} min", "Under 5 min" when the upper bound is ≤ 5, "You're next" at 0 ahead, and "No counter is open for this office right now" when none is open. It never invents a number. It is recomputed every 15 s and on every store change; the "ahead" number counts down with `CountUp`. States: waiting (position + estimate), called (a full-width band "Go to Counter {n} now" with icon and pulse, plus `navigator.vibrate` where supported), served ("Served. Thank you!"), skipped ("You missed your call. Please see the office staff."). |
 | R7.4 | **Appointment booking** | `/` → **Book an appointment**: service → day (today plus the next 4 working days, Mon–Fri; holidays out of scope) → a 30-min slot from `availableSlots`. Past, lunch (12:00–13:00), weekend and full slots are not offered; capacity is 2 × the office's counters per slot. Booking issues an appointment code (`TA-001` for the Treasurer, `CA-…`, `BA-…`, `AA-…`) and opens `/t/:code`: "Appointment {day}, {time}. Please arrive by {time − 10 min}." An appointment enters the call order 10 min before its slot, ahead of walk-ins (rule tested), and shows a calendar icon on the board and the console. If no slot is left today, the earliest free slot is suggested. |
-| R7.5 | **Language toggle, `/sources`, disclaimer** | EN / Waray / Filipino via `useLang`. The language is shared across windows, so switching on `/` switches the board too (say so in `DEMO.md`). No hard-coded UI text (grep for JSX text literals). `/sources` uses `SourcesPage` plus a "Content in this app" card: offices, services, counters and service times are illustrative and authored for this prototype; the morning's queue history is synthetic (seed 701). Override `app.disclaimer`: "Prototype queue. Offices, services and times are illustrative; wait times are estimates." The footer comes with `AppShell`. |
+| R7.5 | **Language toggle, `/sources`, disclaimer** | EN / Waray / Filipino via `useLang`. The language is shared across windows, so switching on `/` switches the board too (say so in `DEMO.md`). No hard-coded UI text (grep for JSX text literals). `/sources` uses `SourcesPage` plus a "Content in this app" card (as `children`): offices, services, counters and service times are illustrative and authored for this prototype; the morning's queue history is synthetic (seed 701). Override `app.disclaimer` in `src/i18n/strings.ts` (`AppShell strings={strings}` passes it to the footer and `/sources`): "Prototype queue. Offices, services and times are illustrative; wait times are estimates." The footer comes with `AppShell`. |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -101,9 +101,9 @@ Setup: three windows on port 5107: A `/display` (projector, full screen, click *
 ## Definition of done
 
 - [ ] R7.1–R7.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/07-pila`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 07-pila` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

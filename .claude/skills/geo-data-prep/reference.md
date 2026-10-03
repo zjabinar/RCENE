@@ -56,14 +56,11 @@ Adjust `byLayer` to the real file names in `critical_facilities\`, and adjust `b
 | Ground shaking as PEIS intensity (VII, VIII, ...) | an ordered mapping the user confirms; record it |
 | Liquefaction "Generally susceptible" / "Highly susceptible" | ask the user and record the answer; don't guess |
 
-## packages/data/README.md template
+## data/README.md template (the data session's sections)
+
+`data/README.md` is the data catalogue (folders, layers, tiers, rules). Replace only its two placeholder sections, "Canonical layer per hazard and level mapping" and "Conversion record", and keep the rest:
 
 ```markdown
-# Shipped data layers (packages/data/files)
-
-Converted on 2026-10-0X by the data session (docs/projects/00-data.md) from `D:\lgu_portal - GIS\`, read only.
-Raw sources are not in this repo. Tools: mapshaper 0.6.121, scripts/data/kml-to-geojson.mjs, derive.mjs, validate.mjs.
-
 ## Canonical layer per hazard and level mapping
 
 | Hazard | Source layer | Category field | Tier | Simplify |
@@ -81,13 +78,18 @@ These layers map risk to people and assets, not the full hazard extent. That is 
 
 Include files used: scripts/data/include/levels-*.txt, facility-kinds.txt.
 
-## Other layers
+## Conversion record (data/files)
+
+Converted on 2026-10-0X by the data session (docs/projects/00-data.md) from `D:\lgu_portal - GIS\`, read only.
+Raw sources are not in this repo. Tools: mapshaper 0.6.121, scripts/data/kml-to-geojson.mjs, derive.mjs, validate.mjs.
+
+### Other layers
 
 - boundary, barangays (57), land: OCHA/HDX, fields kept: name, psgc.
 - facilities: OSM `critical_facilities\*.geojson`, clipped to the boundary; kinds counted: school N, hospital N, ...
 - heritage: CPDCO KML (heritage H-001..H-0NN, eco-tourism ...), descriptions reviewed for personal data.
 
-## Checks
+### Checks
 
 `node scripts/data/validate.mjs`: 0 errors, total N KB.
 ```
@@ -99,7 +101,7 @@ Include files used: scripts/data/include/levels-*.txt, facility-kinds.txt.
   { "file": "boundary.geojson", "title": "Catbalogan City boundary", "attribution": "Boundaries: OCHA/HDX", "tier": "open", "license": "CC BY-IGO (confirm on the HDX page)", "url": "https://data.humdata.org/dataset/cod-ab-phl" },
   { "file": "barangays.geojson", "title": "Catbalogan barangays (57)", "attribution": "Boundaries: OCHA/HDX", "tier": "open", "license": "CC BY-IGO (confirm on the HDX page)", "url": "https://data.humdata.org/dataset/cod-ab-phl" },
   { "file": "land.geojson", "title": "Samar land outline (simplified)", "attribution": "Boundaries: OCHA/HDX", "tier": "open", "license": "CC BY-IGO (confirm on the HDX page)", "notes": "Dissolved and simplified from the Region VIII boundaries." },
-  { "file": "hazard-flood.geojson", "title": "Flood: mapped risk zones", "attribution": "Risk maps: Catbalogan City CDRRMO / CPDCO, used with permission", "tier": "permission", "notes": "Canonical layer: Population to Flood Risk. Levels mapped as in packages/data/README.md." },
+  { "file": "hazard-flood.geojson", "title": "Flood: mapped risk zones", "attribution": "Risk maps: Catbalogan City CDRRMO / CPDCO, used with permission", "tier": "permission", "notes": "Canonical layer: Population to Flood Risk. Levels mapped as in data/README.md." },
   { "file": "facilities.geojson", "title": "Critical facilities", "attribution": "Facilities: © OpenStreetMap contributors (ODbL)", "tier": "open", "license": "ODbL-1.0", "url": "https://www.openstreetmap.org/copyright" },
   { "file": "heritage.geojson", "title": "Heritage and eco-tourism sites", "attribution": "Heritage and eco-tourism points: Catbalogan City CPDCO, used with permission", "tier": "permission" }
 ]

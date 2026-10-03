@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/05-sakuna` · dev port 5105 · preview 6105 |
 | **Batch** | 2 |
-| **Proposal** | `docs/PROPOSALS.md` #5 · this is **Core 2 of `docs/PRD.md`** (Andam Catbalogan scenario console, R2.1–R2.3) |
+| **Proposal** | `docs/proposal.md` (#5 in the monorepo's `docs/PROPOSALS.md`) · this is **Core 2 of `docs/PRD.md`** (Andam Catbalogan scenario console, R2.1–R2.3) |
 | **Reused by platforms** | P1 Andam Catbalogan (`/console` is the CDRRMO view; its `activeScenarioId` drives #1 and #3) |
 | **Data** | boundary, barangays, facilities, all five `hazard-*` layers, `derived/barangay-hazard`, `derived/facility-hazard` · 🟢 HDX + OSM, 🟡 CDRRMO risk maps (permission) · synthetic: candidate capacities (seed 101), illustrative barangay populations (seed 105) |
 | **AI in the app** | none |
@@ -26,7 +26,7 @@ The LGU portal's gap list records "no scenario simulation", and drills run on pa
 
 Use `AppShell width="full"` for `/console` and `width="wide"` for `/` (it must also work at 390 px). Turn `showReset` on. Nav: Overview (`/`), Console (`/console`), Data sources.
 
-Smoke visits only `/` and `/sources` by default, so also run it with `--route /console`.
+Smoke visits the `smokeRoutes` in `project.json` (only `/` and `/sources` by default), so also add these routes there or run `npm run smoke -- --route /console`.
 
 ## MVP requirements
 
@@ -39,7 +39,7 @@ Build in this order. R5.1 alone is a complete entry: a scenario console with hon
 | R5.3 | **Which centers would overflow** (illustrative) | Candidate centers are OSM schools with seeded capacity (seed 101, range 150–600) and the badge **Candidate — not verified by CDRRMO**. Centers inside a scenario zone at ≥ `minLevel` are listed as "Excluded — inside {hazard} zone".<br>Evacuees per affected barangay = `round(population × share × rate)`. Each barangay's evacuees go to the nearest **non-excluded** center from the barangay's anchor point (straight-line, labelled). Centers whose load exceeds capacity are listed as "Would overflow by N", largest first. Barangays with no eligible center are listed as "No eligible center".<br>A rate slider runs from 10% to 60% in 5% steps (default 25%).<br>The whole panel carries the badge "Illustrative — synthetic population; candidate centers not verified by CDRRMO". Map markers distinguish eligible, excluded and would-overflow by shape + color, and the list repeats that information as text. |
 | R5.4 | **Timeline stepper**, one paused GSAP timeline | Phases T-24h, T-12h, Landfall, Recovery (T+48h). Controls: a scrub slider (`input type="range"`, keyboard-operable, `aria-valuetext="T minus 12 hours"`), step buttons (`tweenTo(label)`), and Play/Pause.<br>As time moves:<br>- a clock readout updates<br>- the phase card shows that phase's actions checklist from `src/content/phases.ts` (en + war + fil)<br>- each center's load bar fills to `load × evacuatedFraction(hours) / capacity` (bars use `scaleX`, capped visually at 120%)<br>- "Would overflow" badges appear only while a bar is above 100%<br>- an "Evacuees in centers" counter follows the curve<br>Scrubbing backwards reverses everything exactly. Disabled with a message until a warning is raised. The timeline position is per window, not synced or persisted. Under reduced motion, step buttons `seek` (no tween) and Play advances one phase every 2 s with no interpolation. |
 | R5.5 | Language toggle EN / Waray / Filipino | Scenario labels (`scenario.<id>`), phase content and every UI string come from the string table. The choice persists across reloads. No hard-coded UI text. |
-| R5.6 | `/sources` and disclaimer footer on every view | `SourcesPage`, plus an app section "Synthetic data in this app": candidate capacities (seed 101), illustrative population (seed 105, "not PSA census data"), and the evacuation curve (an authored assumption). The footer comes with `AppShell`. |
+| R5.6 | `/sources` and disclaimer footer on every view | `SourcesPage`, plus an app section "Synthetic data in this app" (passed as `extra` entries or `children`): candidate capacities (seed 101), illustrative population (seed 105, "not PSA census data"), and the evacuation curve (an authored assumption). The footer comes with `AppShell`. |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -116,9 +116,9 @@ Setup: `/console` on the left at 1280 px and `/` on the right, both on port 5105
 ## Definition of done
 
 - [ ] R5.1–R5.6 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/05-sakuna`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 05-sakuna` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current
@@ -135,7 +135,7 @@ Setup: `/console` on the left at 1280 px and `/` on the right, both on port 5105
 ## Stretch (only after the definition of done is met)
 
 - PRD S4: storm-surge advisory variants SSA1–4 as extra presets. This needs per-SSA layers from the data session, so request them in `NOTES.md`; never invent them.
-- A drill log: timestamped notes per phase, exported as a `.txt` download.
+- A drill log: timestamped notes per phase, exported as a `.txt` download (`downloadText` from `@rcene/ui`).
 - A printable one-page briefing (affected barangays, exposed facilities, overflow) via `window.print()` with print CSS.
 - Replace the illustrative population with PSA 2020 barangay counts (🟢 open) if the data session adds them.
 

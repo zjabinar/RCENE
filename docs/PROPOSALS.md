@@ -22,6 +22,7 @@ Sources reviewed: `docs/event/VibeCoding_Challenge.txt` and the event poster; th
 | 2026-10-03 | **Parallel worktree build.** `docs/projects/projects.json` is the manifest, with one brief per project in `docs/projects/`. `scripts/launch-worktrees.ps1` opens a Claude Code session per project in a git worktree on `proj/NN-slug`, in batches: B0 data (local) · B1 01, 03, 04, 16, 18 · B2 05, 07, 09, 13, 20 · B3 08, 10, 11, 12, 14 · B4 02, 06, 15, 17, 19 (optional, riskiest). Each app keeps its own `AI-LOG.md`. See `docs/PARALLEL.md`. |
 | 2026-10-03 | **Platforms P1–P10 come later**, composed from the finished single-feature apps. P1 Andam = #1 (Core 1) + #5 (Core 2) + #3 (Core 3). |
 | 2026-10-03 | **Stack pinned** in the pnpm catalog to majors the coding model knows well (see Tech stack). Newer majors wait until after the event. |
+| 2026-10-03 | **Self-contained apps.** `packages/` is folded into each app: every `apps/NN-slug/` carries its own copy of the shared code (`rcene/`), data (`data/`, synced from root `data/`), full library stack with exact pins (`stack.json`) and `package-lock.json`, Claude setup and scripts, so the chosen app's folder runs on its own with `npm ci`. `apps/_template` is the reference copy (`pnpm sync-shared`). Scoped `@deck.gl/*` packages replace the `deck.gl` meta-package. Supersedes the `packages/` layout in the rows above. |
 
 ---
 

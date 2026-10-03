@@ -17,14 +17,9 @@ Cheaper options to consider first:
 
 **Time-box:** if terrain and water aren't rendering correctly 45 minutes after you start, stop and ship the MapLibre version. Decide this in advance so you don't have to decide it under pressure.
 
-## Install
+## Libraries
 
-```bash
-npm install three @react-three/fiber @react-three/drei
-npm install -D @types/three
-```
-
-`@react-three/fiber@9` pairs with React 19 (v8 is for React 18). If npm prints peer-dependency warnings about React, check this first.
+Nothing to install: every app's `package.json` already has `three`, `@react-three/fiber` 9, `@react-three/drei` and `@types/three` (exact pins). `@react-three/fiber@9` pairs with React 19 (v8 is for React 18); don't change either version.
 
 ## Data prep — do this before the event, never on the day
 
@@ -38,16 +33,23 @@ gdalwarp -t_srs EPSG:4326 -r bilinear dtm.tif dtm_4326.tif
 gdalinfo -mm dtm_4326.tif
 
 # 3. Scale elevations to 0–255 and downsample to a sane size (0 keeps the aspect ratio)
-gdal_translate -of PNG -ot Byte -scale <minElev> <maxElev> 0 255 -outsize 1024 0 dtm_4326.tif heightmap.png
+gdal_translate -of PNG -ot Byte -scale <minElev> <maxElev> 0 255 -outsize 1024 0 dtm_4326.tif heightmap-catbalogan.png
 ```
 
-Save the numbers next to the PNG as `public/data/terrain.json`:
+### The heightmap contract (brief 02)
+
+Two files, served at `/data/` like every layer:
+
+- `/data/heightmap-catbalogan.png`: 8-bit grayscale, ≤ 1024 px on the long edge, EPSG:4326, black = `minElev`, white = `maxElev`.
+- `/data/heightmap-catbalogan.json`:
 
 ```json
-{ "bounds": [124.86, 11.74, 124.93, 11.82], "minElev": 0, "maxElev": 412 }
+{ "image": "heightmap-catbalogan.png", "bounds": [124.86, 11.74, 124.93, 11.82], "minElev": 0, "maxElev": 412, "source": "Copernicus GLO-30 DEM", "tier": "open" }
 ```
 
-`bounds` is `[west, south, east, north]` from `gdalinfo`. The values above are placeholders, not real Catbalogan extents.
+`bounds` is `[west, south, east, north]` from `gdalinfo`. The values above are placeholders, not real Catbalogan extents. `source` and `tier` feed the terrain badge and `/sources`.
+
+Where the files live: the data session writes them to the monorepo's root `data/files/`, and `pnpm sync-data` copies them into every app's `data/files/`. On a project branch this app's `data/` is read-only. In a standalone copy you may drop the two files into `data/files/` yourself. They are not in `LAYER_FILES`: load the JSON with `useOptionalLayer` (below) and request the PNG only once the JSON is ready. Never probe for either with `useLayer` or a bare `fetch`.
 
 **Precompute per-feature elevation too.** In QGIS, run *Processing → Sample raster values* on the facilities layer against the DEM to add an `elev_m` property. Exposure then becomes a simple comparison at runtime instead of reading texture pixels in the browser.
 
@@ -86,14 +88,73 @@ export function terrainFrame(t: TerrainMeta, size = 10, exaggeration = 3) {
 
 Real terrain looks flat at true scale. `exaggeration = 3` makes hills readable; say so on the poster ("vertical exaggeration ×3").
 
+## Load the heightmap, or fall back to stylised terrain
+
+`useOptionalLayer(file, schema)` from `@rcene/data` reads `/data/manifest.json` first. When the file isn't listed it returns `absent` **without a request**, so a missing heightmap never prints a 404 (which would fail the smoke test). Its states are `loading`, `absent` (not shipped), `invalid` (shipped, but unreadable or failing the schema) and `ready`; treat `absent` and `invalid` alike, as "no heightmap".
+
+```tsx
+// src/three/terrain-source.ts
+import { z } from "zod";
+export const HEIGHTMAP = "heightmap-catbalogan.json"; // the one place to change if the data session ships other names
+export const heightmapMeta = z.object({
+  image: z.string(),
+  bounds: z.tuple([z.number(), z.number(), z.number(), z.number()]),
+  minElev: z.number(),
+  maxElev: z.number(),
+  source: z.string(),
+  tier: z.enum(["open", "permission"]),
+});
+export type HeightmapMeta = z.infer<typeof heightmapMeta>;
+```
+
+```tsx
+import { useOptionalLayer } from "@rcene/data";
+import { LoadingState } from "@rcene/ui";
+import { HEIGHTMAP, heightmapMeta } from "@/three/terrain-source.ts";
+
+export function TerrainView({ levelM }: { levelM: number }) {
+  const meta = useOptionalLayer(HEIGHTMAP, heightmapMeta);
+  if (meta.status === "loading") return <LoadingState />;
+  return meta.status === "ready"
+    ? <FloodScene meta={meta.data} levelM={levelM} />   // badge: "Elevation: {source} · vertical exaggeration ×3"
+    : <StylisedFloodScene levelM={levelM} />;           // badge: "Stylised terrain — generated from the city outline, not real elevation"
+}
+```
+
+**No heightmap is the normal case** (the only real elevation in the archive is Calbayog's). The stylised fallback builds a height grid from the city outline (distance to the sea plus seeded noise from `createRng`; brief 02 gives the exact functions) and is **always labelled** on screen. Never present it as real elevation, and never let counts depend on it.
+
+To keep one pipeline for both sources, turn either one into a `Float32Array` height grid (the real PNG via `createImageBitmap` → canvas → `getImageData`, red channel, 0 → `minElev`, 255 → `maxElev`) and displace the plane's vertices from it:
+
+```ts
+// Row-major grid, w × h, north row first. Call once per grid, then render the geometry.
+export function applyHeights(geo: THREE.PlaneGeometry, grid: Float32Array, w: number, h: number, toY: (m: number) => number) {
+  const pos = geo.attributes.position;
+  const sx = geo.parameters.widthSegments + 1;
+  const sy = geo.parameters.heightSegments + 1;
+  for (let j = 0; j < sy; j++) {
+    for (let i = 0; i < sx; i++) {
+      const gx = Math.round((i / (sx - 1)) * (w - 1));
+      const gy = Math.round((j / (sy - 1)) * (h - 1));
+      pos.setZ(j * sx + i, toY(grid[gy * w + gx]!)); // local z becomes world y after rotation-x = -π/2
+    }
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+```
+
+The `displacementMap` version under **Terrain** is the shortest path when only the real PNG matters; the grid version is what brief 02 asks for.
+
 ## Scene skeleton
 
 ```tsx
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { CameraControls, Loader } from "@react-three/drei";
+import type { HeightmapMeta } from "@/three/terrain-source.ts";
 
-export function FloodScene({ levelM }: { levelM: number }) {
+export function FloodScene({ meta, levelM }: { meta: HeightmapMeta; levelM: number }) {
+  const frame = terrainFrame(meta);
   return (
     <div className="relative h-[70vh]">
       <Canvas frameloop="demand" dpr={[1, 1.5]} camera={{ position: [0, 7, 9], fov: 45 }}>
@@ -101,8 +162,8 @@ export function FloodScene({ levelM }: { levelM: number }) {
         <hemisphereLight intensity={0.6} />
         <directionalLight position={[5, 10, 5]} intensity={1.2} />
         <Suspense fallback={null}>
-          <Terrain />
-          <Water levelM={levelM} />
+          <Terrain meta={meta} frame={frame} />
+          <Water levelM={levelM} frame={frame} />
         </Suspense>
         <CameraControls makeDefault maxPolarAngle={Math.PI / 2.1} />
       </Canvas>
@@ -112,6 +173,7 @@ export function FloodScene({ levelM }: { levelM: number }) {
 }
 ```
 
+- Memoize `frame` (`useMemo`) if the parent re-renders often; `meta` is stable once loaded.
 - `<Suspense>` is required because `useTexture` suspends while the heightmap loads. `<Loader />` sits *outside* the Canvas and shows load progress.
 - The Canvas fills its parent, so give the parent a height. A parent with zero height is the most common cause of "nothing renders".
 
@@ -119,13 +181,13 @@ export function FloodScene({ levelM }: { levelM: number }) {
 
 ```tsx
 import { useTexture } from "@react-three/drei";
-import meta from "@/data/terrain.json";
-import { terrainFrame, type TerrainMeta } from "@/three/frame";
+import type { HeightmapMeta } from "@/three/terrain-source.ts";
+import type { terrainFrame } from "@/three/frame.ts";
 
-const frame = terrainFrame(meta as TerrainMeta);
+type Frame = ReturnType<typeof terrainFrame>;
 
-export function Terrain() {
-  const height = useTexture("/data/heightmap.png");
+export function Terrain({ meta, frame }: { meta: HeightmapMeta; frame: Frame }) {
+  const height = useTexture(`/data/${meta.image}`); // requested only after the JSON said it exists
   return (
     <mesh rotation-x={-Math.PI / 2}>
       <planeGeometry args={[frame.width, frame.depth, 256, 256]} />
@@ -151,9 +213,10 @@ Tween the water with GSAP and call `invalidate` each frame. In `frameloop="deman
 import { useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap, useGSAP } from "@rcene/ui/motion";
+import type { terrainFrame } from "@/three/frame.ts";
 
-export function Water({ levelM }: { levelM: number }) {
+export function Water({ levelM, frame }: { levelM: number; frame: ReturnType<typeof terrainFrame> }) {
   const mesh = useRef<THREE.Mesh>(null);
   const invalidate = useThree((s) => s.invalidate);
 
@@ -237,6 +300,7 @@ Define three or four named presets (overview, coastline, city center) and put th
 
 - **Black or empty canvas:** the parent has no height, a light is missing, or the camera is inside or under the terrain. Move the camera up and back before debugging anything else.
 - **Terrain mirrored or rotated:** check the `-Math.PI / 2` sign and that the PNG came from the reprojected (EPSG:4326) GeoTIFF.
+- **A 404 for the heightmap in the console:** something fetched it directly. Only `useOptionalLayer` may decide whether it exists.
 - **Markers don't line up with terrain:** some data is still in UTM. Reproject everything to EPSG:4326 during prep.
 - **Water flickers along the coast (z-fighting):** the water and terrain surfaces are nearly coplanar. Raise the water by a hair (`+0.001`) or lower its opacity.
 - **Rehearse on the competition laptop.** Integrated GPUs on battery can run at a fraction of desktop speed.

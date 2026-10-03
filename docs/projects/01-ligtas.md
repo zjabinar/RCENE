@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/01-ligtas` · dev port 5101 · preview 6101 |
 | **Batch** | 1 |
-| **Proposal** | `docs/PROPOSALS.md` #1 · this is **Core 1 of `docs/PRD.md`** (Andam Catbalogan) |
+| **Proposal** | `docs/proposal.md` (#1 in the monorepo's `docs/PROPOSALS.md`) · this is **Core 1 of `docs/PRD.md`** (Andam Catbalogan) |
 | **Reused by platforms** | P1 Andam Catbalogan (resident view `/`), P6 (hazard check of a business lot), P8 (site hazard badge) |
 | **Data** | boundary, barangays, all five `hazard-*` layers, facilities · 🟢 open + 🟡 CDRRMO risk maps (permission) |
 | **AI in the app** | none |
@@ -71,9 +71,9 @@ Build in this order. R1.1 alone is a complete entry.
 ## Definition of done
 
 - [ ] R1.1–R1.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/01-ligtas`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 01-ligtas` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

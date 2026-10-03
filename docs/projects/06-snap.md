@@ -4,19 +4,19 @@
 |---|---|
 | **App** | `apps/06-snap` · dev port 5106 · preview 6106 |
 | **Batch** | 4 |
-| **Proposal** | `docs/PROPOSALS.md` #6 ★AI |
+| **Proposal** | `docs/proposal.md` (#6 in the monorepo's `docs/PROPOSALS.md`) ★AI |
 | **Reused by platforms** | P2 Bayanihan Response (report form with offline queue; the dashboard feeds its triage board) |
 | **Data** | boundary, barangays · 🟢 HDX · synthetic: 120 seeded damage reports (seed 106) · no personal data of any kind |
 | **AI in the app** | ★AI in-browser (skill `offline-ai`): zero-shot photo classification in a Web Worker suggests a damage severity, and the officer confirms or changes it. A deterministic rule-based suggestion takes over when the model is absent. |
 | **Skills to use** | `offline-ai` (read first), `maplibre-gis` (deck.gl overlay), `gsap-motion` (count-ups) + Motion (sync-state cards), Design plugin `accessibility-review` and `ux-copy` |
 
-Extra libraries already installed: `vite-plugin-pwa` (dev), `deck.gl` + `@deck.gl/mapbox`, `@huggingface/transformers`.
+Extra libraries already installed: `vite-plugin-pwa` (dev), `@deck.gl/core`, `@deck.gl/layers`, `@deck.gl/aggregation-layers` and `@deck.gl/maplibre` (not the `deck.gl` meta-package), `@huggingface/transformers`.
 
 > Snap a damaged house with no signal, let the phone suggest how bad it is, confirm it, and watch the report land on the command-post heatmap the moment signal returns.
 
 ## Problem
 
-Field damage assessment has to work without signal, and paper forms get re-encoded later (`docs/PROPOSALS.md` #6; the LGU portal's gap list records "field work that must survive without signal"). Re-encoding is slow and error-prone, so the command post sees damage hours late. Damage Snap captures a geotagged photo, damage category and households affected offline, queues the report, and syncs it when signal returns.
+Field damage assessment has to work without signal, and paper forms get re-encoded later (`docs/proposal.md`; the LGU portal's gap list records "field work that must survive without signal"). Re-encoding is slow and error-prone, so the command post sees damage hours late. Damage Snap captures a geotagged photo, damage category and households affected offline, queues the report, and syncs it when signal returns.
 
 **Honesty rule:** there is no server. In this prototype, "sync" moves a report from the device outbox to the command-post dashboard dataset **in the same browser**. The UI, `DEMO.md` and the pitch say exactly that.
 
@@ -31,7 +31,7 @@ Field damage assessment has to work without signal, and paper forms get re-encod
 
 Use `AppShell width="phone"` for `/` and `/outbox` and `width="wide"` for `/dashboard`. Nav: New report (`/`), Outbox (with the queued count as a badge), Dashboard, Data sources.
 
-Smoke visits only `/` and `/sources` by default, so also run it with `--route /outbox --route /dashboard`.
+Smoke visits the `smokeRoutes` in `project.json` (only `/` and `/sources` by default), so also add these routes there or run `npm run smoke -- --route /outbox --route /dashboard`.
 
 Do **not** use `showReset`: the shared reset clears `localStorage` only. Put this app's own **Reset demo** button in `actions`. It clears the IndexedDB photo store, then calls `resetDemo({ keep: ["lang"] })`.
 
@@ -41,13 +41,13 @@ Build in this order. R6.1 alone is a complete entry: an offline field form with 
 
 | ID | Requirement | Acceptance criteria (testable) |
 |---|---|---|
-| R6.1 | **Report form + outbox** | Fields:<br>- **photo:** optional; `<input type="file" accept="image/*" capture="environment">`, with a preview<br>- **location:** required, inside the city boundary, set by tapping a small map (default), by "Use my location" (Geolocation, 8 s timeout; failure shows a message and never blocks), or by "Pick barangay instead" (searchable list; uses the barangay's `pointOnFeature`, labelled "approximate: barangay")<br>- **barangay:** auto-filled with `barangayAt`<br>- **damage category:** 7 options, as a radio group<br>- **severity:** Minor / Moderate / Severe / Destroyed, as a radio group<br>- **households affected:** integer 0–500<br>There is **no** name, phone, address or free-text field. The form says "Numbers only. Don't record names."<br>Validation uses react-hook-form + zod (`@hookform/resolvers`), with messages linked by `aria-describedby`.<br>**Save:**<br>- the photo is downscaled to ≤ 1024 px JPEG; re-encoding strips EXIF, GPS included<br>- the photo is stored in IndexedDB<br>- the report is added as `queued` with code `DR-0001`, `DR-0002`, …<br>- a toast (`@rcene/ui/components/sonner`) says "Saved to outbox. It will sync when signal returns."<br>**`/outbox`** lists reports newest first: thumbnail, code, barangay, category, severity, households and a state chip (icon + text). A report can be deleted only while queued. Everything survives a reload. |
+| R6.1 | **Report form + outbox** | Fields:<br>- **photo:** optional; `<input type="file" accept="image/*" capture="environment">`, with a preview<br>- **location:** required, inside the city boundary, set by tapping a small map (default), by "Use my location" (Geolocation, 8 s timeout; failure shows a message and never blocks), or by "Pick barangay instead" (searchable list; uses the barangay's `pointOnFeature`, labelled "approximate: barangay")<br>- **barangay:** auto-filled with `barangayAt`<br>- **damage category:** 7 options, as a radio group<br>- **severity:** Minor / Moderate / Severe / Destroyed, as a radio group<br>- **households affected:** integer 0–500<br>There is **no** name, phone, address or free-text field. The form says "Numbers only. Don't record names."<br>Validation uses react-hook-form + zod (`@hookform/resolvers`), with messages linked by `aria-describedby`.<br>**Save:**<br>- the photo is downscaled to ≤ 1024 px JPEG; re-encoding strips EXIF, GPS included<br>- the photo is stored in IndexedDB<br>- the report is added as `queued` with code `DR-0001`, `DR-0002`, …<br>- a toast (`toast` from `@rcene/ui`; `AppShell` already mounts the Toaster) says "Saved to outbox. It will sync when signal returns."<br>**`/outbox`** lists reports newest first: thumbnail, code, barangay, category, severity, households and a state chip (icon + text). A report can be deleted only while queued. Everything survives a reload. |
 | R6.2 | **Simulated sync** | On `/outbox`, a **Field signal (simulated)** switch, Offline by default.<br>While Online, reports go queued → syncing (≈ 700 ms) → synced one at a time, oldest first, animated with Motion (`AnimatePresence` / `layout`).<br>Switching Offline mid-sync returns `syncing` to `queued`, and a reload does the same (`recoverOnLoad`).<br>The sync loop runs **only** while `/outbox` is mounted, so there is one writer.<br>The outbox copy says: "Prototype: there is no server. Synced means added to this browser's command-post dashboard." |
-| R6.3 | **Dashboard** at `/dashboard` | `BaseMap` with a deck.gl `MapboxOverlay` (interleaved), mounted through `useControl` from `@rcene/map`. A toggle switches between a `HeatmapLayer` weighted by `heatWeight` (default) and a `HexagonLayer` (radius 300 m, color by summed households, not extruded).<br>Data = **synced** reports + seeded synthetic reports, with an "Include synthetic reports" switch (default on) and a legend entry that says "Synthetic".<br>`StatTile`s with count-up: reports, households affected, severe + destroyed, and "still in field outboxes" (queued + syncing).<br>A table by barangay (reports, households, severe +), sorted by households.<br>A report synced in the field window appears in an open dashboard window in < 1 s, with a one-time pulse at its point.<br>There are no symbol or text layers: the offline basemap has no glyphs. |
-| R6.4 | **Installable PWA** with an offline app shell | `VitePWA` passed through `rceneApp({ plugins: [...] })` (config under Data). In `pnpm build && pnpm preview` (port 6106):<br>- the web app manifest is valid<br>- the service worker registers<br>- Chrome offers **Install**<br>- after one full load, stopping the preview server and reloading still opens `/`, `/outbox` and `/dashboard`, with the boundary and barangay layers (precached)<br>Dev (5106) never registers a service worker (`devOptions.enabled: false`). `DEMO.md` has the "unregister a stale service worker" steps. |
+| R6.3 | **Dashboard** at `/dashboard` | `BaseMap` with a deck.gl `MapLibreOverlay` from `@deck.gl/maplibre` (not `MapboxOverlay`, not interleaved), mounted through `useControl` from `@rcene/map` as the `maplibre-gis` skill shows. A toggle switches between a `HeatmapLayer` weighted by `heatWeight` (default) and a `HexagonLayer` (radius 300 m, color by summed households, not extruded), both from `@deck.gl/aggregation-layers`.<br>Data = **synced** reports + seeded synthetic reports, with an "Include synthetic reports" switch (default on) and a legend entry that says "Synthetic".<br>`StatTile`s with count-up: reports, households affected, severe + destroyed, and "still in field outboxes" (queued + syncing).<br>A table by barangay (reports, households, severe +), sorted by households.<br>A report synced in the field window appears in an open dashboard window in < 1 s, with a one-time pulse at its point.<br>There are no symbol or text layers: the offline basemap has no glyphs. |
+| R6.4 | **Installable PWA** with an offline app shell | `VitePWA` passed through `rceneApp({ plugins: [...] })` (config under Data). In `npm run build && npm run preview` (port 6106):<br>- the web app manifest is valid<br>- the service worker registers<br>- Chrome offers **Install**<br>- after one full load, stopping the preview server and reloading still opens `/`, `/outbox` and `/dashboard`, with the boundary and barangay layers (precached)<br>Dev (5106) never registers a service worker (`devOptions.enabled: false`). `DEMO.md` has the "unregister a stale service worker" steps. |
 | R6.5 | **★AI severity suggestion** | Choosing a photo starts classification in a module Web Worker (`src/ai/classify.worker.ts`). It runs Transformers.js `pipeline("zero-shot-image-classification", MODEL_ID)` with local models only: `env.allowRemoteModels = false` and `env.localModelPath = "/models/"`.<br>The result shows "Suggested on this device: Severe (62%)" with **Use suggestion** and the normal severity radios. The severity field is **never** set without a user action, and the suggestion is never submitted on its own.<br>**Fallback.** If the model is absent, fails or takes > 15 s, the UI shows `ruleSeverity(category, households)` as "Rule-based suggestion (AI model not available)". This fallback is deterministic.<br>The report stores `severitySource` and `aiSuggestion`.<br>Nothing under `/models/` is requested until a photo is chosen, so the first load stays light and the smoke test sees no 404s. The form stays usable while the model loads (progress text). |
 | R6.6 | Language toggle EN / Waray / Filipino | Every UI string, category and severity label comes from `src/i18n/strings.ts`. The choice persists. No hard-coded UI text. The CLIP prompts in `src/ai/labels.ts` are model input, not UI text, and stay in English; a code comment says so. The PWA manifest name is config. |
-| R6.7 | `/sources` and disclaimer footer on every view | `SourcesPage`, plus an app section listing: the synthetic reports (seed 106); the AI model id, its license and "runs on this device; photos never leave it". The footer comes with `AppShell`. |
+| R6.7 | `/sources` and disclaimer footer on every view | `SourcesPage`, plus an app section (passed as `extra` entries or `children`) listing: the synthetic reports (seed 106); the AI model id, its license and "runs on this device; photos never leave it". The footer comes with `AppShell`. |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -102,9 +102,9 @@ Build in this order. R6.1 alone is a complete entry: an offline field form with 
   Only the field window's form and `/outbox` write to it. `/dashboard` only reads.
 - **Photos:** IndexedDB database `rcene-06-snap`, object store `photos`, keyed by report id, holding the JPEG `Blob`. Use a tiny hand-written wrapper in `src/lib/photo-db.ts` over raw `indexedDB` (`putPhoto`, `getPhoto`, `deletePhoto`, `clearPhotos`) with no extra library. Keep logic out of it: jsdom has no IndexedDB, so it is not unit-tested. Object URLs are revoked on unmount.
 - **AI model:**
-  - The model is `Xenova/clip-vit-base-patch32` with dtype `q8`, the 06 entry in `scripts/fetch-models.mjs`. Keep its id in one constant, `MODEL_ID`, in `src/ai/config.ts`.
+  - The model is `Xenova/clip-vit-base-patch32` with dtype `q8`, the `clip` entry in `scripts/fetch-models.mjs`. Keep its id in one constant, `MODEL_ID`, in `src/ai/config.ts`.
   - Point ONNX Runtime at the local wasm files under `/models/ort/` as the `offline-ai` skill shows, so nothing is fetched from a CDN.
-  - Fetch it before the event with `node scripts/fetch-models.mjs --app 06` into `assets/models/`. `@rcene/config` serves it at `/models/` because `projects.json` marks 06 `ai: true`. Follow the skill on what gets committed.
+  - Fetch it before the event, once, while online: `npm run fetch-models -- --model clip` downloads it into this app's `models/` (gitignored, never committed). The Vite preset (`rcene/config`) serves that folder at `/models/` because `project.json` has `ai: true`. Follow the skill on what gets committed. (In the monorepo, `node scripts/fetch-models.mjs --app 06-snap` from the repo root does the same through a shared download cache.)
   - Labels live in `src/ai/labels.ts`, two English prompts per severity:
     - Minor: "a photo of a house with minor damage", "a photo of an intact house"
     - Moderate: "a photo of a house with a damaged roof", "a photo of debris and fallen trees"
@@ -140,7 +140,7 @@ Build in this order. R6.1 alone is a complete entry: an offline field form with 
 
 ## Golden-path demo (≤ 2 minutes)
 
-Setup: `pnpm build && pnpm preview` in `apps/06-snap` (port 6106), with models fetched. Window A at phone width on `/` (the installed PWA, if rehearsed); window B at 1280 px on `/dashboard`. Press **Reset demo**. Keep two or three of the presenter's own damage photos in a local folder: no faces, no house numbers, never committed.
+Setup: `npm run build && npm run preview` in this folder (port 6106), with models fetched. Window A at phone width on `/` (the installed PWA, if rehearsed); window B at 1280 px on `/dashboard`. Press **Reset demo**. Keep two or three of the presenter's own damage photos in a local folder: no faces, no house numbers, never committed.
 
 1. B: a heatmap of the synthetic reports, with "Synthetic" in the legend.
 2. A: choose a photo. "Suggested on this device: Severe (61%)" appears; press **Use suggestion**. Category "House — partially damaged", households 4, tap the map, **Save**. A toast says "Saved to outbox".
@@ -152,9 +152,9 @@ Setup: `pnpm build && pnpm preview` in `apps/06-snap` (port 6106), with models f
 ## Definition of done
 
 - [ ] R6.1–R6.7 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/06-snap`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 06-snap` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current
@@ -172,7 +172,7 @@ Setup: `pnpm build && pnpm preview` in `apps/06-snap` (port 6106), with models f
 
 - Read GPS from the photo's EXIF before it is stripped, with a small hand-written parser, as another `locationSource`.
 - A dashboard tile: "AI suggestion accepted in X of Y reports" (from `severitySource`). It doubles as a poster panel.
-- A CSV export of synced reports (codes and numbers only).
+- A CSV export of synced reports (codes and numbers only; `toCsv` from `@rcene/data`, `downloadCsv` from `@rcene/ui`).
 - Register the Background Sync API where supported, in addition to the simulated switch.
 
 ## Platform hooks

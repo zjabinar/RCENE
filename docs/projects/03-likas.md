@@ -4,8 +4,8 @@
 |---|---|
 | **App** | `apps/03-likas` · dev port 5103 · preview 6103 |
 | **Batch** | 1 |
-| **Proposal** | `docs/PROPOSALS.md` #3 · this is **Core 3 of `docs/PRD.md`** (Andam Catbalogan, R3.1–R3.3) |
-| **Reused by platforms** | P1 Andam Catbalogan (evacuation finder, `/center/:id`, `/board`), P4 Isla Link (board pattern; P4 is set aside in the `docs/PROPOSALS.md` decisions, so this only means keep the board generic) |
+| **Proposal** | `docs/proposal.md` (#3 in the monorepo's `docs/PROPOSALS.md`) · this is **Core 3 of `docs/PRD.md`** (Andam Catbalogan, R3.1–R3.3) |
+| **Reused by platforms** | P1 Andam Catbalogan (evacuation finder, `/center/:id`, `/board`), P4 Isla Link (board pattern; P4 is set aside in the decisions of the monorepo's `docs/PROPOSALS.md`, so this only means keep the board generic) |
 | **Data** | boundary, barangays, facilities (schools become candidate centers), all five `hazard-*` layers · 🟢 HDX + OSM, 🟡 CDRRMO risk maps (permission) · synthetic: illustrative candidate capacities (seed 101) |
 | **AI in the app** | none |
 | **Skills to use** | `maplibre-gis`, `gsap-motion` (count-ups, banner sweep), Motion `layout` for the board re-sort, Design plugin `ux-copy` (reasons and badges) and `accessibility-review` (board legibility) |
@@ -14,7 +14,7 @@
 
 ## Problem
 
-Catbalogan has no mapped list of evacuation centers with capacities (PRD §2, problem 3) and no evacuation routing (one of the documented needs in `docs/PROPOSALS.md`), so nobody can tell a family where to go or whether there is room when they arrive. When a warning is raised, a center *inside* the hazard zone can still be listed as a destination (PRD §2, problem 4). Likas makes the eligibility rule explicit, visible and unit-tested, and syncs live headcounts across windows with no server.
+Catbalogan has no mapped list of evacuation centers with capacities (PRD §2, problem 3) and no evacuation routing (one of the documented needs in the monorepo's `docs/PROPOSALS.md`), so nobody can tell a family where to go or whether there is room when they arrive. When a warning is raised, a center *inside* the hazard zone can still be listed as a destination (PRD §2, problem 4). Likas makes the eligibility rule explicit, visible and unit-tested, and syncs live headcounts across windows with no server.
 
 ## Users and routes
 
@@ -27,7 +27,7 @@ Catbalogan has no mapped list of evacuation centers with capacities (PRD §2, pr
 
 Use `AppShell width="phone"` for `/`, `/center` and `/center/:id`, `width="full"` for `/board`, and `showReset` everywhere. Nav: Find a center (`/`), Center staff (`/center`), Board (`/board`), Data sources.
 
-Smoke visits only `/` and `/sources` by default, so also run it with `--route /center --route /board --route /center/<first candidate id>`.
+Smoke visits the `smokeRoutes` in `project.json` (only `/` and `/sources` by default), so also add these routes there or run `npm run smoke -- --route /center --route /board --route /center/<first candidate id>`.
 
 ## MVP requirements
 
@@ -40,7 +40,7 @@ Build in this order. R3.1 alone is a complete entry: a finder with tested eligib
 | R3.3 | **Public board** (PRD R3.3) at `/board` | Totals: evacuees, open centers, and centers with space, counting up on change. Centers are sorted: eligible ones by available space (most first), then full or over capacity, then excluded by hazard, then closed. Ties are broken by name. Each row has a capacity bar and a status chip. Rows re-sort with Motion `layout`. At most 12 rows, then "+ N more centers". Footnote: "Candidate centers are OpenStreetMap schools, not verified by CDRRMO. Capacities are illustrative." Legible at 1920 × 1080: row text ≥ 28 px, totals ≥ 56 px, WCAG AA contrast. |
 | R3.4 | **Hazard filter** (a demo control standing in for #5's scenario) | A select in the AppShell `actions` on every route: "None" plus the five PRD §8.3 presets, labelled "Hazard filter (demo)". It is stored as `activeScenarioId` and synced across windows. When a preset is active: a warning banner shows on `/`, `/board` and `/center/:id`. Centers inside a zone of the preset's hazards at or above its `minLevel` become ineligible with the reason "Inside {hazard} zone — {level}" (use `HazardStatusBadge`). The manager view says "Residents are not being sent here: inside {hazard} zone". If a preset's hazard layer is missing, a notice says "Could not check {hazard}: layer not loaded" and the center is listed as unchecked, never silently counted as clear. Turning the filter off removes every banner. |
 | R3.5 | **What to bring** + language toggle EN / Waray / Filipino | "Before you go" checklist (8 items) under the resident's first recommendation, from `src/content/bring.ts` (en + war + fil drafts). The language choice persists across reloads and follows in every window (`useLang`). No hard-coded UI text (grep for JSX text literals). |
-| R3.6 | `/sources` and disclaimer footer on every view | `SourcesPage`, plus an app section "Synthetic data in this app" listing the candidate capacities (seed 101, range 150–600). The footer comes with `AppShell`. On `/board`, the disclaimer is ≥ 20 px. |
+| R3.6 | `/sources` and disclaimer footer on every view | `SourcesPage`, plus an app section "Synthetic data in this app" (passed as `extra` entries or `children`) listing the candidate capacities (seed 101, range 150–600). The footer comes with `AppShell`. On `/board`, the disclaimer is ≥ 20 px. |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -106,9 +106,9 @@ Setup: three windows on port 5103. `/` at phone width, `/board` on the right, an
 ## Definition of done
 
 - [ ] R3.1–R3.6 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/03-likas`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 03-likas` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

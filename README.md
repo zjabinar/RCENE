@@ -8,32 +8,49 @@ Twenty single-feature civic apps for Catbalogan are pre-built here before the ev
 
 | Path | What |
 |---|---|
-| `apps/` | `_template` (generic starter, port 5100) and the 20 apps `NN-slug` (ports 5101–5120). Each app keeps `AI-LOG.md`, `STATUS.md`, `NOTES.md` and `DEMO.md`. |
-| `packages/` | Shared code: `config`, `data`, `geo`, `store`, `i18n`, `ui`, `map`. Real data in `packages/data/files/`; fake fixtures in `packages/data/fixtures/` as a per-file fallback. Apps fetch `/data/<file>`. |
-| `docs/` | PRD, proposals, disclosure, parallel-build how-to, skills; `projects/` (manifest `projects.json` + one brief per app); `event/` (challenge text) |
-| `scripts/` | `new-app.mjs`, `launch-worktrees.ps1`, `smoke.mjs`, `data/` (conversion and fixtures), `hooks/` |
+| `apps/` | `_template` (the reference app, port 5100) and the 20 apps `NN-slug` (ports 5101–5120). **Each app folder is a self-contained project**: its own `package.json` and `package-lock.json`, its own copy of the shared code in `rcene/` (data contracts, geometry, store, i18n, UI, map, Vite config), its own `data/`, `CLAUDE.md`, Claude Code skills and hooks, Playwright MCP and smoke test. Each keeps `AI-LOG.md`, `STATUS.md`, `NOTES.md` and `DEMO.md`. |
+| `data/` | The canonical data: real layers in `files/`, fake fixtures in `fixtures/` (a per-file fallback), the catalogue in `README.md`. Copied into every app's `data/` with `pnpm sync-data`; apps fetch `/data/<file>`. |
+| `docs/` | PRD, proposals, disclosure, parallel-build how-to, skills; `projects/` (manifest `projects.json` + one brief per app, copied into the app as `docs/brief.md`); `event/` (challenge text) |
+| `scripts/` | Monorepo tooling: `new-app.mjs`, `sync-shared.mjs`, `sync-data.mjs`, `lockfiles.mjs`, `check-standalone.mjs`, `stack.mjs`, `smoke.mjs` and `fetch-models.mjs` (wrappers over each app's own), `launch-worktrees.ps1`, `data/` (conversion and fixtures), `hooks/` |
+| `stack.json` | The exact version of every dependency, for every app |
 | `assets/` | `event/` images |
-| `.claude/` | `settings.json` (hooks that keep each session in its own app folder; env) and project skills |
+| `.claude/` | Root settings and the root-only skill `geo-data-prep` (the app skills live inside each app) |
+
+There is no shared `packages/` folder: the reference copy of the shared code is `apps/_template/rcene/`, and `pnpm sync-shared` pushes changes from there into the apps.
 
 ## Quick start (Windows)
 
 Needs **Node 22.18 or newer**.
 
+**The monorepo** (daily development, pnpm):
+
 ```powershell
 node --version                            # v22.18 or newer
 npm i -g pnpm@10                          # or: corepack enable
-pnpm install
-pnpm --filter @rcene/01-ligtas dev        # http://localhost:5101
+pnpm install                              # one install for every app
+pnpm --filter @rcene/01-ligtas dev        # http://localhost:5101 (or: cd apps\01-ligtas; pnpm dev)
+```
+
+**One app on its own** (a copied folder, npm):
+
+```powershell
+cd C:\entry\01-ligtas                     # any copy of apps\01-ligtas
+npm ci                                    # installs from its package-lock.json
+npm run dev                               # also: npm run test | typecheck | build | smoke | fetch-models
 ```
 
 | Command (repo root) | Does |
 |---|---|
-| `pnpm test` | Unit tests for packages, scripts and every app |
-| `pnpm typecheck` | TypeScript across the workspace |
-| `pnpm build` | Production build of every app |
-| `node scripts/smoke.mjs --app 01-ligtas` | Boots one app and checks every route offline |
+| `pnpm test` · `pnpm typecheck` · `pnpm build` | Tests, TypeScript and production builds across the workspace |
+| `node scripts/smoke.mjs --app 01-ligtas` | Runs that app's own smoke test: boots it and checks every route offline |
+| `pnpm new-app <slug>` | Generates `apps/<slug>` from the template and its row in `projects.json` |
+| `pnpm sync-shared --all` | Pushes template changes (shared code, scripts, skills, config, docs) into the apps; changed files are skipped unless `--force` |
+| `pnpm sync-data` | Mirrors root `data/` into every app |
+| `pnpm lockfiles` | Writes each app's `package-lock.json` |
+| `pnpm check-standalone --all` | Checks that no app reaches outside its folder (`--install <slug>` does a real `npm ci` in a temp copy) |
+| `pnpm stack:check` | Checks every app's versions against `stack.json` |
 
-Any app runs the same way: `pnpm --filter @rcene/<slug> dev` on its port below (the template is `@rcene/template` on 5100). Preview port = dev port + 1000.
+Any app runs the same way: `pnpm --filter @rcene/<slug> dev` on its port below (the template is `@rcene/template` on 5100), or `npm run dev` in a standalone copy. Preview port = dev port + 1000.
 
 ## The 20 apps
 
@@ -69,12 +86,13 @@ Source of truth: [`docs/projects/projects.json`](docs/projects/projects.json). B
 - [`docs/PRD.md`](docs/PRD.md) — Andam Catbalogan (P1) requirements, data, build plan
 - [`docs/PROPOSALS.md`](docs/PROPOSALS.md) — the 30 proposals, decisions log, stack
 - [`docs/DISCLOSURE.md`](docs/DISCLOSURE.md) — what was pre-built, and how to verify it
+- [`data/README.md`](data/README.md) — the data catalogue: layers, tiers, rules
 
 ## Data rules
 
 - **Never read anything under `D:\monica`.** It is someone else's unpublished research.
 - **Never copy anything from `C:\lgu_portal`.** It holds credential files.
-- **Keep this repo private.** Some committed layers in `packages/data/files/` are permission-tier (used with LGU permission, not open data).
+- **Keep this repo private.** Some committed layers in `data/files/` (and each app's copy in `apps/<slug>/data/files/`) are permission-tier (used with LGU permission, not open data).
 
 ## Judging rubric
 

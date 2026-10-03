@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/14-basura` · dev port 5114 · preview 6114 |
 | **Batch** | 3 |
-| **Proposal** | `docs/PROPOSALS.md` #14 (Basura Alert — waste collection and segregation guide) |
+| **Proposal** | `docs/proposal.md` (#14 Basura Alert — waste collection and segregation guide, in the monorepo's `docs/PROPOSALS.md`) |
 | **Reused by platforms** | P9 Luntian Catbalogan (core "waste schedule + game", step 1 of its workflow) |
 | **Data** | boundary, barangays (🟢 OCHA/HDX) · synthetic, labelled **Illustrative**: collection routes A–D assigned per barangay (hash salt 1401), materials recovery facility (MRF) points (seed 1402), game round order (seed 1403) · holiday list as config (`src/content/holidays.ts`) · no permission-tier data |
 | **AI in the app** | none |
@@ -83,7 +83,7 @@ interface Pickup { stream: Stream; ymd: string; start: Date; end: Date; shiftedF
 - `useLayer("barangays")`, `useLayer("boundary")`. Works on fixtures until the real data lands; the Sample data badge shows meanwhile.
 - Synthetic: routes (fixed table above, assigned per barangay by `assignRoute`), MRFs (`seedMrfs`, seed 1402), game order (seed 1403 + round). All labelled illustrative in the UI and on `/sources`. No personal names.
 - Holidays (`src/content/holidays.ts`, editable config): national holidays with fixed or computable dates for 2026 and 2027: 1 Jan, Maundy Thursday and Good Friday (2026: 2–3 Apr; 2027: 25–26 Mar), Black Saturday (2026: 4 Apr; 2027: 27 Mar), 9 Apr (Day of Valor), 1 May, 12 Jun, 21 Aug, National Heroes Day (2026: 31 Aug; 2027: 30 Aug), 1 Nov, 30 Nov, 8 Dec, 24 Dec, 25 Dec, 30 Dec, 31 Dec. Eid holidays and other proclaimed days are added when proclaimed; local holidays are left for the City to confirm (record that in `NOTES.md`).
-- `NOTES.md` → "Requests for shared packages": an optional `mrf` point layer (`{ id, name, barangay, accepts }`) if the City ENRO shares real MRF locations; until then the app uses `seedMrfs` only.
+- `NOTES.md` → "Requests for the data session": an optional `mrf` point layer (`{ id, name, barangay, accepts }`) if the City ENRO shares real MRF locations; until then the app uses `seedMrfs` only.
 - Store `createSyncedStore("14-basura:app")` → `{ langChosen: boolean; lastBarangay: string | null; bestScore: number }`, `version: 1`. `/` offers "Back to {lastBarangay}" when set.
 
 ## Experience
@@ -106,9 +106,9 @@ interface Pickup { stream: Stream; ymd: string; start: Date; end: Date; shiftedF
 ## Definition of done
 
 - [ ] R14.1–R14.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/14-basura`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 14-basura` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current
@@ -119,7 +119,7 @@ Push notifications or SMS reminders (no server); the real City ENRO schedule or 
 
 ## Stretch (only after the definition of done is met)
 
-- "Add to calendar": download an `.ics` file of the next 4 weeks of pickups, generated locally.
+- "Add to calendar": download an `.ics` file of the next 4 weeks of pickups, generated locally (`downloadText` from `@rcene/ui`).
 - A "special waste" explainer card: what counts and why it stays separate.
 - Timed mode for the game (60 seconds), with the best time kept per device.
 

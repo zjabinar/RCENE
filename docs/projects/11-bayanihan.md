@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/11-bayanihan` · dev port 5111 · preview 6111 |
 | **Batch** | 3 |
-| **Proposal** | `docs/PROPOSALS.md` #11 (Bayanihan Budget — participatory budgeting) |
+| **Proposal** | `docs/proposal.md` (#11 Bayanihan Budget — participatory budgeting, in the monorepo's `docs/PROPOSALS.md`) |
 | **Reused by platforms** | P7 Bukas Catbalogan (core module "budget vote": the ballot `/` and the results board `/results`, see "Platform hooks") |
 | **Data** | boundary, barangays (🟢 OCHA/HDX) · synthetic: 12 proposed projects (fixed content table, map placement seed 1101) and simulated ballots (seed 1102), all labelled "Sample" · no permission-tier data |
 | **AI in the app** | none |
@@ -62,7 +62,7 @@ type BallotError = "empty" | "unknownProject" | "notWholePesos" | "negative" | "
 - `fundedProjects(rows, projects, budget): { funded: string[]; leftover: number }` — greedy down the ranking: fund a project if its full cost fits the remaining budget, otherwise skip it and continue; never fund a project with 0 pledged. Cases: exact fit; the #1 project too expensive is skipped and #2, #3 funded; all zero → none.
 - `simulateBallots(projects, budget, n, seed = 1102): Ballot[]` — category preference weights (from `src/content/projects.ts`) so results are uneven; ids `S-0001`…, tokens `SIM-001`…; `simulated: true`. Cases: deterministic per seed; for seeds 1–20 and n = 25 every ballot passes `validateBallot`.
 - `byCategory(rows, projects): { category; pledged }[]` — for R11.4. Case: sums equal Σ pledged.
-- `formatPeso(n, lang): string` — `Intl.NumberFormat(LOCALES[lang], { style: "currency", currency: "PHP", maximumFractionDigits: 0 })` (`useFormat` has no currency). Case: `en` output contains "₱" and "2,000,000".
+- Pesos: no local `formatPeso`. Use the shared `useFormat().currency(n)` in components, or `formatCurrency` from `@rcene/i18n` in pure code (₱, locale-aware). Amounts here are whole pesos, so pass 0 decimals: `currency(n, 0)`, `formatCurrency(n, lang, 0)`.
 
 ## Data
 
@@ -112,9 +112,9 @@ type BallotError = "empty" | "unknownProject" | "notWholePesos" | "negative" | "
 ## Definition of done
 
 - [ ] R11.1–R11.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/11-bayanihan`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 11-bayanihan` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

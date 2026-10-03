@@ -1,47 +1,81 @@
-# @rcene/data
+# Data catalogue
 
-Data contracts, level colors, loaders and synthetic-data helpers shared by every app.
+The map layers and tables every RCENE app reads at `/data/<file>`.
 
-## Where the files come from
+**Where the copies live.** In the monorepo, the repo-root `data/` is the **canonical copy**. Each app has its own copy in `apps/<slug>/data/`, made by `pnpm sync-data`, so an app folder works on its own when it is copied out. If you are reading this inside an app folder, this is that copy: treat it as read-only on a `proj/<slug>` branch, and ask for changes in the app's `NOTES.md` under "Requests for the data session". The loaders, types and schemas are documented in the app's `rcene/data/README.md`.
 
-| Folder | What | Committed |
+## Folders
+
+| Folder | What | Committed | Written by |
+|---|---|---|---|
+| `files/` | Real layers converted from `D:\lgu_portal - GIS` by the **local data session** (`docs/projects/00-data.md` in the monorepo, skill `geo-data-prep`) | Yes, private repo only: some layers are permission-tier | the data session, at the repo root |
+| `fixtures/` | **Fake** sample geometry so every app runs before the real data lands. Every name says "Sample". | Yes | `pnpm data:fixtures` (`scripts/data/make-fixtures.mjs`, then `derive.mjs --fixtures`) |
+
+Each app serves `/data/` from `data/files/` first and falls back to `data/fixtures/` **file by file**, so layers can be replaced one at a time. `/data/manifest.json` (generated) says which file is real and which is a fixture. While any layer an app uses is a fixture, the app shows a "Sample data" badge.
+
+## Layers
+
+Levels are ordered `low < moderate < high < veryHigh`. Coordinates are WGS84 `[lon, lat]` with 5 decimals. The whole of `files/` stays **under 3 MB**.
+
+| File | Geometry | Properties | Tier |
+|---|---|---|---|
+| `boundary.geojson` | 1 polygon (the city) | `name` | 🟢 open (OCHA/HDX) |
+| `barangays.geojson` | 57 polygons (6 in the fixtures) | `name`, `psgc?`, `coastal?` | 🟢 open (OCHA/HDX) |
+| `land.geojson` | Samar outline around the city, for the offline basemap coastline | `name` | 🟢 open (OCHA/HDX) |
+| `hazard-flood.geojson`, `hazard-landslide.geojson`, `hazard-stormSurge.geojson`, `hazard-groundShaking.geojson`, `hazard-liquefaction.geojson` | polygons, dissolved by level | `hazard`, `level`, `sourceLayer?` | 🟡 permission (CDRRMO/CPDCO risk maps); 🟢 UP NOAH fallback per hazard |
+| `facilities.geojson` | points | `id`, `name`, `kind` (`school`/`hospital`/`health`/`police`/`fire`/`townhall`/`other`), `barangay?`, `osmId?` | 🟢 open (© OpenStreetMap contributors, ODbL) |
+| `heritage.geojson` | points | `id`, `name`, `category` (`heritage`/`eco-tourism`/`scenic`/`other`), `description?`, `barangay?` | 🟡 permission (CPDCO KML) |
+| `derived/barangay-hazard.json` | table | per barangay: area share by hazard and level, exposed facilities | computed by `scripts/data/derive.mjs` |
+| `derived/facility-hazard.json` | table | per facility: three-state hazard status | computed by `scripts/data/derive.mjs` |
+| `sources.json` | list | one entry per shipped file: `file`, `title`, `attribution`, `tier`, `license?`, `url?`, `notes?` | rendered by `/sources` and the poster |
+
+These are the files listed in `LAYER_FILES` (`rcene/data/layers.ts` in each app; the reference copy is `apps/_template/rcene/data/`), loaded with `useLayer(name)`.
+
+### Optional layers (data pass 2)
+
+These may never arrive. They are **not** in `LAYER_FILES`: apps load them with `useOptionalLayer(file, schema)`, which checks the manifest first, so a missing file is never requested and never logs a 404.
+
+| File | For | Source |
 |---|---|---|
-| `files/` | Real layers made by the **local data session** (`docs/projects/00-data.md`, skill `geo-data-prep`) from `D:\lgu_portal - GIS` | Yes (private repo only — some layers are permission-tier) |
-| `fixtures/` | **Fake** sample geometry (`node scripts/data/make-fixtures.mjs`, then `node scripts/data/derive.mjs --fixtures`). Every name says "Sample". | Yes |
+| `landcover-2010.geojson`, `landcover-2020.geojson` (`{ class }`, NAMRIA labels verbatim) | 13 Bukas Datos | 🟡 NAMRIA land cover, if permission is granted |
+| `coastal-2015.geojson`, `coastal-2020.geojson` (`{ class }`, NAMRIA labels verbatim) | 15 Bakhaw Watch | 🟡 NAMRIA coastal resources, if permission is granted |
+| `heightmap-catbalogan.png` + `heightmap-catbalogan.json` (`{ image, bounds, minElev, maxElev, source, tier }`) | 02 Tubig | 🟢 public DEM or 🟡 NAMRIA; contract in brief 02 and the `r3f-scenes` skill |
 
-Apps fetch `/data/<file>`. `@rcene/config`'s static plugin serves `files/` first and falls back to `fixtures/` **per file**, and `/data/manifest.json` says which is which — `SampleDataBadge` in `@rcene/ui` shows a "Sample data" badge while any used layer is a fixture.
+## Tiers
 
-## Layers (`LAYER_FILES`)
+| Tier | Meaning |
+|---|---|
+| 🟢 `open` | Open data with a license (HDX, OSM, UP NOAH). Fine to show anywhere, with credit. |
+| 🟡 `permission` | Used with LGU permission (CDRRMO/CPDCO, NAMRIA). Only in this **private** repo and the local demo; never on a public remote, gist or public deploy. |
+| `synthetic` | Generated by an app with a fixed seed. Labelled as such on `/sources`. |
+| `fixture` | The fake samples in `fixtures/`. |
 
-`boundary` · `barangays` · `land` (coastline for the offline basemap) · `hazard-flood` · `hazard-landslide` · `hazard-stormSurge` · `hazard-groundShaking` · `hazard-liquefaction` · `facilities` · `heritage` · `derived/barangay-hazard` · `derived/facility-hazard` · `sources`
-
-Property shapes are in `src/types.ts` (`ZoneProps { hazard, level }`, `FacilityProps { id, name, kind }`, …). Levels: `low < moderate < high < veryHigh`.
-
-<!-- The data session fills in this section. -->
+<!-- The data session fills in the next two sections (templates in the geo-data-prep skill's reference.md). -->
 ## Canonical layer per hazard and level mapping
 
-_Not filled in yet — the data session records, per hazard, which CDRRMO/NOAH layer was chosen and how its categories map to `Level`._
+_Not filled in yet. The data session records, per hazard, which CDRRMO/NOAH layer was chosen, its category field, and how each category maps to a `Level` (dropped values included)._
 
-## API
+## Conversion record
 
-```ts
-import {
-  HAZARDS, LEVELS, type Hazard, type Level, type HazardStatus,   // three states: inZone | notInZone | outsideCoverage
-  LEVEL_HEX, STATUS_HEX, atLeast, maxLevel, levelRank,             // colors for map paint; comparisons
-  LAYER_FILES, layerUrl, hazardLayer, type LayerName,
-  useLayer, useZones, useDataManifest, usesFixtures, fetchLayer, LayerMissingError, type LoadState,
-  createRng, code,                                                 // seeded synthetic data: code("HH", 7) → "HH-0007"
-} from "@rcene/data";
-import { zonesSchema, facilitiesSchema /* … */ } from "@rcene/data/schemas"; // zod, for validation
-```
-
-- `useLayer("facilities")` → `{ status: "loading" | "ready" | "missing" | "error", data? }`. Render it with `<LoadGate state={...}>` from `@rcene/ui`.
-- `useZones(hazards?)` → `{ zones: ZonesByHazard, missing: Hazard[] }`. Missing hazard layers are listed, never guessed.
-- `createRng(seed)` → `next, int, float, pick, weighted, bool, shuffle`. Same seed → same demo every rehearsal.
+_Not filled in yet. The data session records the date, the tools, the other layers' sources and the result of `node scripts/data/validate.mjs`._
 
 ## Rules
 
-- Barangay- and facility-level data only. **No personal data, real or invented** — synthetic households use codes like `HH-0123`, never names.
-- Never read from `D:\monica` or `C:\lgu_portal`.
-- Every shipped file has a `sources.json` entry; `/sources` renders it.
-- Frozen during a batch: request new layers or fields in your app's `NOTES.md`.
+- Barangay- and facility-level data only. **No personal data, real or invented.** Synthetic records use codes such as `HH-0123`, never names.
+- Never read anything under `D:\monica`. Never copy anything from `C:\lgu_portal`. The only archive the data session may read is `D:\lgu_portal - GIS`.
+- Raw sources (`.shp`, `.dbf`, `.prj`, `.kmz`, raw `.kml`/`.geojson` copies) are never committed, only converted outputs.
+- Every shipped file except `derived/*` has a `sources.json` entry, with the credit lines from the PRD (§8.4) word for word.
+- Only the data session writes `files/` (branch `proj/00-data`, at the repo root, write scope `data/**` and `scripts/data/**`). Apps never edit their `data/` on a project branch.
+- After a change: `node scripts/data/derive.mjs`, then `node scripts/data/validate.mjs` (exit 0), merge, then `pnpm sync-data` on main and commit the app copies.
+
+## Tools (monorepo root)
+
+| Command | Does |
+|---|---|
+| `node scripts/data/validate.mjs [--fixtures]` | Schemas, Samar bounding box, ids, `sources.json` entries, sizes; exit 1 on errors |
+| `node scripts/data/derive.mjs [--fixtures]` | Writes the two `derived/*.json` tables |
+| `node scripts/data/kml-to-geojson.mjs` | KML/KMZ points → `heritage.geojson` |
+| `pnpm data:fixtures` | Regenerates `fixtures/` and their derived tables |
+| `pnpm sync-data` | Mirrors this folder into every app's `data/` |
+
+The scripts import the contracts (`LAYER_FILES`, types, zod schemas) from `apps/_template/rcene/data/`.

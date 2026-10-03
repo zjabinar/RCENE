@@ -1,13 +1,15 @@
 ---
 name: maplibre-gis
-description: Maps for this project's React apps through the shared @rcene/map package (MapLibre GL JS 6 via react-map-gl/maplibre, with an offline GeoJSON basemap) — hazard lookups with the three-state answer, zone layers, nearest-facility search, barangay choropleths, heatmaps, markers, popups, fly-to, fit bounds, hover highlights, animated routes and deck.gl overlays. Use this whenever writing or debugging map code: MapLibre, maplibre-gl, react-map-gl, <Source>/<Layer>, GeoJSON layers, paint or filter expressions, turf, map clicks, legends, map styling, map accessibility, or anything on a map that has to work with Wi-Fi off.
+description: Maps for this app through its shared map code @rcene/map (in rcene/map/; MapLibre GL JS 6 via react-map-gl/maplibre, with an offline GeoJSON basemap) — hazard lookups with the three-state answer, zone layers, nearest-facility search, barangay choropleths, heatmaps, markers, popups, fly-to, fit bounds, hover highlights, animated routes and deck.gl overlays. Use this whenever writing or debugging map code: MapLibre, maplibre-gl, react-map-gl, <Source>/<Layer>, GeoJSON layers, paint or filter expressions, turf, map clicks, legends, map styling, map accessibility, or anything on a map that has to work with Wi-Fi off.
 ---
 
 # Maps for the RCENE build
 
 **The live demo runs with Wi-Fi off.** Every map starts from `<BaseMap>` in `@rcene/map`, which draws sea, land, the city boundary and barangays from local GeoJSON. Never point a map at a style URL, a tile server or a CDN. If it needs the network, it is broken on stage.
 
-## The package
+## The shared map code (`@rcene/map`)
+
+This app owns its copy of the map code in `rcene/map/`; `@rcene/map` resolves there. Use it as-is. If you must change it, keep the change minimal and list it in `NOTES.md` under "Shared-code changes (for the template)".
 
 ```tsx
 import { BaseMap, ZoneLayer, PointLayer, SelectedPoint, Legend, useFlyTo, SLOT } from "@rcene/map";
@@ -68,7 +70,7 @@ export function Lookup({ selected, select }: { selected: LngLat | null; select: 
 }
 ```
 
-`apps/_template/src/pages/Home.tsx` is this screen, already wired to the app store and i18n. Start from it. Map UI text (pin labels, popups, lists) goes through `t()` like everything else.
+The template's `src/pages/Home.tsx` (every app starts with it) is this screen, already wired to the app store and i18n. Start from it. Map UI text (pin labels, popups, lists) goes through `t()` like everything else.
 
 ## The three-state rule (non-negotiable)
 
@@ -302,11 +304,14 @@ Try a **native heatmap layer** first. It needs no extra library:
 </Source>
 ```
 
-Use deck.gl only for what MapLibre lacks (hexagon bins, 3D columns, arcs). Mount it as a control with `useControl`. Prefer **`MapLibreOverlay`** (from `deck.gl`, which re-exports `@deck.gl/maplibre` and supports MapLibre 6). `MapboxOverlay` from `@deck.gl/mapbox` reads the removed `map.transform` in interleaved and terrain modes, so use it only with `interleaved: false`.
+Use deck.gl only for what MapLibre lacks (hexagon bins, 3D columns, arcs). Every app already has `@deck.gl/core`, `@deck.gl/layers`, `@deck.gl/aggregation-layers` and `@deck.gl/maplibre` (9.4). Don't add the `deck.gl` meta-package (it drags in `@arcgis/core`, about 250 MB) or `@deck.gl/mapbox`.
+
+Mount **`MapLibreOverlay`** from `@deck.gl/maplibre` as a control with `useControl`. It supports MapLibre 6. Keep the default `interleaved: false`: deck draws on its own canvas above the map, so it never touches MapLibre's internals (the removed `map.transform` broke `MapboxOverlay` in interleaved and terrain modes). Layers come from `@deck.gl/aggregation-layers` (`HexagonLayer`, `HeatmapLayer`, `GridLayer`, `ScreenGridLayer`) and `@deck.gl/layers` (`ScatterplotLayer`, `ArcLayer`, `PathLayer`, `GeoJsonLayer`, …).
 
 ```tsx
 import { useControl } from "@rcene/map";
-import { HexagonLayer, MapLibreOverlay, type MapLibreOverlayProps } from "deck.gl";
+import { MapLibreOverlay, type MapLibreOverlayProps } from "@deck.gl/maplibre";
+import { HexagonLayer } from "@deck.gl/aggregation-layers";
 
 function DeckOverlay(props: MapLibreOverlayProps) {
   const overlay = useControl(() => new MapLibreOverlay(props));

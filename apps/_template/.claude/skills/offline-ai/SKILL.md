@@ -5,7 +5,7 @@ description: In-browser, offline AI for the ★AI apps (06 Damage Snap photo-sev
 
 # Offline in-browser AI (apps 06, 10, 20)
 
-The ★AI features must run on the demo laptop with **no network and no API key**. Never call a hosted model (the HF Inference API, OpenAI, and so on). Transformers.js runs a small quantized model inside a **Web Worker**, so the UI never blocks. The model files come from `/models/`, which `@rcene/config` serves from `assets/models/` for apps marked `ai: true` in `projects.json`. The app brief is the spec: it fixes the file names, labels and acceptance criteria. This skill shows how to build them. If the Hugging Face `transformers-js` skill is installed, use it for general API questions. This skill wins on paths, offline setup and UX rules.
+The ★AI features must run on the demo laptop with **no network and no API key**. Never call a hosted model (the HF Inference API, OpenAI, and so on). Transformers.js runs a small quantized model inside a **Web Worker**, so the UI never blocks. The model files come from `/models/`, which the Vite preset (`rcene/config/vite.ts`) serves from this app's own `models/` folder when `project.json` has `ai: true`. The app brief is the spec: it fixes the file names, labels and acceptance criteria. This skill shows how to build them. If the Hugging Face `transformers-js` skill is installed, use it for general API questions. This skill wins on paths, offline setup and UX rules.
 
 Four rules hold everywhere:
 1. **AI output is a suggestion that a person confirms.** It never fills a field without a user action, and it is never submitted on its own. Store where the final value came from (`ai-confirmed`, `ai-changed`, `manual`, `rule`).
@@ -20,7 +20,7 @@ Four rules hold everywhere:
 | Import | `import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers"`. The browser build is `dist/transformers.web.js`, which imports `onnxruntime-web/webgpu` |
 | Local models | `env.allowRemoteModels = false`; `env.allowLocalModels = true` (**false by default in browsers and workers**); `env.localModelPath = "/models/"`. Files resolve to `/models/<repo>/<file>` |
 | ORT wasm files | `env.backends.onnx.wasm.wasmPaths = { mjs, wasm }`. The default points at **cdn.jsdelivr.net**, so it fails offline. `env.backends.onnx.wasm` *is* ORT's own `env.wasm` object, so set its `wasmPaths` property; replacing the `wasm` object does nothing |
-| Which ORT files | `ort-wasm-simd-threaded.asyncify.mjs` + `.asyncify.wasm` (25.6 MB), from the `onnxruntime-web` version that transformers depends on (1.31.0-dev here). `fetch-models.mjs` copies them to `assets/models/ort/` |
+| Which ORT files | `ort-wasm-simd-threaded.asyncify.mjs` + `.asyncify.wasm` (25.6 MB), from the `onnxruntime-web` version that transformers depends on (1.31.0-dev here). `npm run fetch-models` copies them to `models/ort/` |
 | Tasks | `"feature-extraction"` (alias `"embeddings"`), `"zero-shot-image-classification"`, `"zero-shot-classification"`, `"text-classification"`, `"image-classification"` |
 | dtype / device | `{ dtype: "q8", device: "wasm" }` loads `onnx/model_quantized.onnx`. Other dtypes: `fp32` (`model.onnx`), `fp16`, `q4` (`_q4`), and more |
 | Progress | `progress_callback` receives `initiate`/`download`/`progress`/`done`/`ready`, plus **`progress_total`** (an aggregate `progress` from 0 to 100) |
@@ -36,16 +36,20 @@ Four rules hold everywhere:
 | 06 Damage Snap | `Xenova/clip-vit-base-patch32` (OpenAI CLIP, MIT; confirm on the model card for /sources) | `zero-shot-image-classification` | ~155 MB |
 | all | ONNX Runtime Web | wasm runtime | 25.7 MB |
 
+Run these in this app's folder, once, while online:
+
 ```powershell
-node scripts/fetch-models.mjs --app 20 --dry-run   # shows files, URLs, what is already present
-node scripts/fetch-models.mjs --app 20             # downloads into assets/models/<repo>/..., copies ORT into assets/models/ort/
+npm run fetch-models -- --model e5 --dry-run   # shows files, URLs, what is already present
+npm run fetch-models -- --model e5             # downloads into models/<repo>/..., copies ORT into models/ort/
 ```
-`--app 06|10|20|all`, `--force`, `--skip-ort`. Re-runs skip finished files. `HF_ENDPOINT` selects a mirror. `assets/models/` is gitignored: never `git add -f` it. On another machine, run the script there, or copy the folder over. **Re-run it after upgrading `@huggingface/transformers`**, because the ORT files must match its version. One e5 download serves both 10 and 20.
+`--model e5|clip|all` (e5 for 10 and 20, clip for 06), `--force` fetches again, `--skip-ort` skips the runtime files. Re-runs skip finished files. Every download is also copied into a shared cache (`~/.cache/rcene-models`, or `RCENE_MODELS_CACHE`), so the next app copies instead of downloading; `--from <folder>|cache` copies without touching the network (e.g. `--from ../10-reklamo/models`). `HF_ENDPOINT` selects a mirror. `models/` is gitignored (each model is well over 100 MB): never `git add -f` it, never commit it. On another machine, run the script there, or copy the folder over. **Re-run it after upgrading `@huggingface/transformers`**, because the ORT files must match its version.
+
+In the monorepo, `node scripts/fetch-models.mjs --app <slug>` from the repo root runs the same script for that app.
 
 ## Vite config
 
 ```ts
-// apps/NN-slug/vite.config.ts
+// vite.config.ts (in this app's folder)
 export default rceneApp({
   dir: fileURLToPath(new URL(".", import.meta.url)),
   overrides: {
@@ -55,8 +59,8 @@ export default rceneApp({
 });
 ```
 - **Why `exclude`:** without it, the dev server discovers the package only when the worker first loads, and re-optimizes dependencies at that moment (verified). That can force a full page reload in the middle of the first demo run. With `exclude`, the ESM build is served as-is, and its imports `onnxruntime-web/webgpu` and `onnxruntime-common` resolve (verified). `include: ["@huggingface/transformers"]` also works, because it pre-bundles at startup.
-- `rceneApp` merges `overrides` shallowly. Passing `build` replaces the preset's whole `build` block. App 06 passes `VitePWA(...)` through `plugins`.
-- `pnpm build` copies all of `assets/models` into each AI app's `dist/`. Vite also emits ORT's wasm as an unused asset, because `wasmPaths` wins. Both are fine for a local demo; don't deploy these builds publicly.
+- `rceneApp` deep-merges `overrides` last with Vite's `mergeConfig`: nested keys merge (arrays are concatenated), so `build: { … }` changes only the keys you pass. App 06 passes `VitePWA(...)` through `plugins`.
+- `npm run build` copies all of `models/` into `dist/` (only when `ai: true`). Vite also emits ORT's wasm as an unused asset, because `wasmPaths` wins. Both are fine for a local demo; don't deploy these builds publicly.
 
 ## The code (`src/ai/`, adapt names to the brief)
 
@@ -89,7 +93,7 @@ import { env } from "@huggingface/transformers";
 export function configureOfflineModels(): void {
   env.allowRemoteModels = false; // never call huggingface.co
   env.allowLocalModels = true; // false by default in browsers and workers
-  env.localModelPath = "/models/"; // assets/models via @rcene/config
+  env.localModelPath = "/models/"; // this app's models/ folder, served by rcene/config
   env.backends.onnx.wasm!.wasmPaths = {
     mjs: "/models/ort/ort-wasm-simd-threaded.asyncify.mjs",
     wasm: "/models/ort/ort-wasm-simd-threaded.asyncify.wasm",
@@ -299,7 +303,7 @@ Downscale the photo before posting it to the worker (the brief already needs ≤
 ## Loading and fallback UI
 
 - `idle`: show nothing extra. The keyword or rule answer works on its own.
-- `loading`: "Preparing on-device AI…" with a progress bar. **In `pnpm dev` the progress stays at 0**, because the dev static server sends no `Content-Length`; `preview` has the sizes. Show an indeterminate bar while `progress === 0`.
+- `loading`: "Preparing on-device AI…" with a progress bar (`progress_total` works in dev and preview alike). Show an indeterminate bar until the first progress message arrives.
 - `ready`: "Suggested on this device" next to each suggestion, plus "Nothing is uploaded."
 - `unavailable`: "Rule-based suggestion (AI model not available)". Never show an error page; the feature keeps working.
 - Show confidence as words (High / Medium / Low) or the % the brief asks for, never raw cosine scores. Every string goes through `src/i18n/strings.ts`, with the Waray reviewed by a person.
@@ -310,7 +314,7 @@ Downscale the photo before posting it to the worker (the brief already needs ≤
 
 - jsdom has no `Worker`. Because the hook starts lazily, rendering is safe. Mock `useEmbedder`/`useWorker` with `vi.mock` in component tests.
 - Unit-test the pure parts (`rank`, `centroids`, `classify`, `keywordSuggest`, `severityFromScores`, the fallbacks) in `src/domain/*.test.ts`.
-- Check the model by hand in `pnpm dev`, following the brief's demo steps. The smoke test runs without models, so it must pass on the fallback path.
+- Check the model by hand in `npm run dev`, following the brief's demo steps. The smoke test runs without models, so it must pass on the fallback path.
 
 ## Gotchas
 

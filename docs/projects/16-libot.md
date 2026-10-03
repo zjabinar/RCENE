@@ -4,7 +4,7 @@
 |---|---|
 | **App** | `apps/16-libot` · dev port 5116 · preview 6116 |
 | **Batch** | 1 |
-| **Proposal** | `docs/PROPOSALS.md` #16 · shortlist rank 2 (answers the event theme directly) |
+| **Proposal** | `docs/proposal.md` (#16 in the monorepo's `docs/PROPOSALS.md`) · shortlist rank 2 (answers the event theme directly) |
 | **Reused by platforms** | P8 Libot Catbalogan+ (core 1 "heritage story map + trail" and core 2 "hazard advisory", see "Platform hooks") |
 | **Data** | `heritage` (CPDCO eco-tourism and heritage KML points), all five `hazard-*`, `boundary`, `barangays` · 🟡 CPDCO KML and CDRRMO risk maps (permission) + 🟢 HDX boundaries · no synthetic data · authored site copy (draft) |
 | **AI in the app** | none |
@@ -38,7 +38,7 @@ Build in this order. R16.1 alone is a complete entry.
 | R16.2 | Hazard-aware badge per site | `siteBadge(lookupHazards(pt, zones, boundary), missing)` drives a full badge on the card and a compact one in the list. It shows exactly one of: **"Mapped hazards here: Storm surge (High), Flood (Moderate)"** (most severe first), **"Not in a mapped risk zone"**, **"Outside data coverage"**, or **"Hazard check unavailable — no hazard layers loaded"**. Hazards whose layer is missing appear on a separate line, "Not checked (layer not available): …", and are never folded into "Not in a mapped risk zone". Color + icon + text, never color alone. Under every badge: "Mapped zones come from CDRRMO risk maps. Check official advisories before you travel." A test asserts no `badge.*` string (en, war, fil) contains any of `FORBIDDEN_ANSWER_WORDS` from `@rcene/i18n`, and a second test reads every non-test file in `src/` and asserts the phrase "safe to visit" appears nowhere. |
 | R16.3 | Curated trails with a self-drawing line | 2–3 trails authored in `src/content/trails.ts` as ordered lists of heritage ids, resolved with `resolveTrail` (hidden when it returns `null`). `/trail/:id` fits the map to the trail, shows numbered stop markers (HTML markers 1…n), an ordered stop list with leg distances "{km} km straight-line" and the total, and a dashed line of **straight segments between stops**, labelled "Straight lines between stops — not a walking route. Follow roads and local guidance." On open the line draws itself from the first to the last stop in about 2.5 s (GSAP tween + `turf.lineSliceAlong`, writing to the GeoJSON source with `setData`; no React state per frame); each stop marker appears when the line reaches it. "Replay", "Previous stop" and "Next stop" buttons fly to and highlight a stop, and a live region announces "Stop 2 of 5: {name}". Trail summary: "{n} of {m} stops are in a mapped risk zone". Reduced motion: the full line appears at once and the camera jumps instead of flying. |
 | R16.4 | Shareable trail link | "Add to my trail" on each story card (max 12 stops; move up/down; remove), persisted in `16-libot:app`; "My trail" opens `/trail/custom?stops=…`. "Share" on any trail page uses `navigator.share` when available, else copies the absolute URL with `navigator.clipboard.writeText`, else shows it in a read-only, pre-selected input; confirmation in an `aria-live` region. Opening a `/trail/custom?stops=…` link in a fresh window (empty storage) shows the same stops in the same order and draws the line; unknown or duplicate ids are dropped with the notice "{n} stops in this link aren't in the current data". Fewer than 2 valid stops → `EmptyState` explaining why. |
-| R16.5 | Language toggle, `/sources`, disclaimer | EN / Waray / Filipino via `useLang`, persisted. All UI text from `src/i18n/strings.ts`. Site copy carries en + war + fil drafts; a missing language falls back to English with a small "English only" tag. `/sources` uses `SourcesPage` (heritage KML: CPDCO, used with permission; risk maps: CDRRMO/CPDCO, used with permission; boundaries: OCHA/HDX) plus a "Content in this app" note: site texts are drafts written for this prototype, to be verified with CPDCO; illustrations are original SVG. Disclaimer footer on every view (automatic in `AppShell`). |
+| R16.5 | Language toggle, `/sources`, disclaimer | EN / Waray / Filipino via `useLang`, persisted. All UI text from `src/i18n/strings.ts`. Site copy carries en + war + fil drafts; a missing language falls back to English with a small "English only" tag. `/sources` uses `SourcesPage` (heritage KML: CPDCO, used with permission; risk maps: CDRRMO/CPDCO, used with permission; boundaries: OCHA/HDX) plus a "Content in this app" note (as `children`): site texts are drafts written for this prototype, to be verified with CPDCO; illustrations are original SVG. Disclaimer footer on every view (automatic in `AppShell`). |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -55,9 +55,9 @@ Tests use small inline features (two or three points, a square boundary, one zon
 ## Data
 
 - `useLayer("heritage")`, `useZones()` (all five hazards), `useLayer("boundary")`, `useLayer("barangays")`. Badges are computed once per data load (memoised by site id), not per render.
-- **Real or fixture ids.** First thing in the session: check whether `packages/data/files/heritage.geojson` exists. If it does, author `sites.ts` and `trails.ts` against its ids (choose 2–3 trails of 3–6 nearby stops; write copy for at most 10 sites, all on trails). If it doesn't, author against the fixtures `H-001`…`H-005` (all named "Sample …") and add to `NOTES.md`: "Rekey `src/content/sites.ts` and `trails.ts` when the real heritage layer lands." The generic fallback card and `autoTrail` keep the app correct with any ids.
+- **Real or fixture ids.** First thing in the session: check whether `data/files/heritage.geojson` exists. If it does, author `sites.ts` and `trails.ts` against its ids (choose 2–3 trails of 3–6 nearby stops; write copy for at most 10 sites, all on trails). If it doesn't, author against the fixtures `H-001`…`H-005` (all named "Sample …") and add to `NOTES.md`: "Rekey `src/content/sites.ts` and `trails.ts` when the real heritage layer lands." The generic fallback card and `autoTrail` keep the app correct with any ids.
 - **Copy rules** (`src/content/sites.ts`, `SiteCopy = { id; intro: L10n; notice: L10n[]; respect: L10n[]; status: "draft" }`, `L10n = { en: string; war?: string; fil?: string }`): write only from the site's name, category and KML `description`. No invented dates, founders, legends, opening hours, fees or distances. "What to notice" bullets are observational; "Visit respectfully" bullets are generic to the category. Category fallback copy lives in `src/content/categories.ts`.
-- Synthetic data: none. No personal data. Nothing from `D:\monica`. The CPDCO heritage and scenic **overlay zones** are not in `LAYER_FILES`; don't add them (request in `NOTES.md` for P8).
+- Synthetic data: none. No personal data. Nothing from `D:\monica`. The CPDCO heritage and scenic **overlay zones** are not in `LAYER_FILES`; don't add them (request them in `NOTES.md` under "Requests for the data session", for P8).
 - Store `createSyncedStore("16-libot:app")`, version 1: `{ myTrail: string[]; category: "all" | HeritageProps["category"] }`. The selected site and active trail are route state, not persisted.
 
 ## Experience
@@ -80,9 +80,9 @@ Tests use small inline features (two or three points, a square boundary, one zon
 ## Definition of done
 
 - [ ] R16.1–R16.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/16-libot`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 16-libot` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current

@@ -4,10 +4,10 @@
 |---|---|
 | **App** | `apps/10-reklamo` · dev port 5110 · preview 6110 · extras: `ai` (`@huggingface/transformers`), `table` (`@tanstack/react-table` v8) |
 | **Batch** | 3 |
-| **Proposal** | `docs/PROPOSALS.md` #10 ★AI · documented need: "no public complaint form or business-violation lookup" |
+| **Proposal** | `docs/proposal.md` (#10 in the monorepo's `docs/PROPOSALS.md`) ★AI · documented need: "no public complaint form or business-violation lookup" |
 | **Reused by platforms** | P6 Negosyo Catbalogan (stretch module "public registry and complaints"; see "Platform hooks") |
 | **Data** | boundary, barangays · 🟢 HDX/OCHA boundaries · synthetic business registry, permits and violations (seed 1001) and complaints with desk events (seed 1002) · authored complaint categories with English, Filipino and Waray example phrases |
-| **AI in the app** | ★AI in-browser complaint categorisation: sentence embeddings (`Xenova/multilingual-e5-small`, fetched once with `node scripts/fetch-models.mjs --app 10`, served from `/models/`) + nearest centroid, in a Web Worker (skill `offline-ai`). A suggestion the citizen confirms; keyword fallback when the model is absent |
+| **AI in the app** | ★AI in-browser complaint categorisation: sentence embeddings (`Xenova/multilingual-e5-small`, fetched once into this app's `models/` with `npm run fetch-models -- --model e5`, served from `/models/`) + nearest centroid, in a Web Worker (skill `offline-ai`). A suggestion the citizen confirms; keyword fallback when the model is absent |
 | **Skills to use** | `offline-ai`, `maplibre-gis` (cluster map), `gsap-motion` (light: stepper line, tracking-number reveal), Design plugin `ux-copy` (form, status and AI-suggestion wording) and `accessibility-review` |
 
 > Anyone can file a complaint against a business in their own language, get a tracking number, and look up whether that business has a valid permit and a record of violations, while an AI running on their own device suggests the right category without sending a word anywhere.
@@ -40,7 +40,7 @@ Build in this order. R10.1 alone is a complete entry: a public complaint form wi
 | R10.2 | **Business lookup** | `/business`: TanStack table of the 80 synthetic businesses: code, name (e.g. "Sari-sari Store #12"), kind, barangay, permit badge ("Valid until {date}" / "Expired since {date}" / "Renewal pending" / "No permit on record", always icon + text), violations in the last 12 months, open complaints. Global search, sortable headers (`aria-sort`), filter chips by permit status, 20 rows per page. `/business/:id`: the same facts, violations in the last 12 months by category (plain bars), the business's complaints as tracking number, category, status and month only (**never another citizen's text**), and **File a complaint about this business**, which opens `/` with the business preselected. |
 | R10.3 | **★AI category suggestion the citizen confirms** | While the citizen types (debounced 400 ms, at least 4 words), the worker embeds the text and `rankCategories` compares it with one centroid per category built from the example phrases in `src/content/categories.ts`. When `suggest()` clears the thresholds, a chip appears: "Looks like: Short weight or measure", with **Use this** and the runner-up as a second button. The category select is **never filled without a tap**. The chip says where the suggestion came from: "Suggested on this device by AI" or "Suggested by keyword match" (the fallback, used while the model is missing, loading or failed; that is a normal state with a small "AI off" badge, never a console error). Under the chip: "AI understands English and Filipino best; Waray suggestions are weaker. Please check." The complaint stores `suggestion { category, source: "ai" or "keyword", score }` and `accepted` (whether the final category equals it). `/ai-check` runs the held-out eval set (`src/content/eval.ts`) through both methods and shows top-1 accuracy per language and method, plus a **Simulate model missing** switch (in memory: it survives in-app navigation and clears on reload); record the numbers in `NOTES.md`. |
 | R10.4 | **Complaint cluster map** | `/map`: complaints (seeded + filed) grouped by barangay with `clusterByBarangay`, drawn as circles at each barangay's interior point (`turf.pointOnFeature`) with a radius that grows with √count and a color for the dominant category (a `<Source>` + `<Layer type="circle">` from `@rcene/map` with expression paint, `beforeId={SLOT.points}`). Counts appear as `aria-hidden` HTML `<Marker>`s, never `symbol` text layers (no glyphs offline). Filters: category and status (open / all). Clicking a circle lists that barangay's businesses with complaint counts, linking to `/business/:id`. A "Table" tab shows the same numbers, so the map is never the only way in; the legend pairs each category color with its name. |
-| R10.5 | **Language toggle, `/sources`, disclaimer** | EN / Waray / Filipino via `useLang`, persisted; all UI text and category labels from `src/i18n/strings.ts`. `/sources` uses `SourcesPage` (boundaries: OCHA/HDX) plus a "Synthetic data" entry: "Businesses, permits, violations and complaints are generated by this app (seeds 1001 and 1002); business names are generic labels, not real businesses." and an "AI model" entry: `Xenova/multilingual-e5-small` (MIT license), runs in the browser, nothing is sent anywhere. Override `app.disclaimer`: "Prototype. Businesses, permits, violations and complaints are synthetic; AI-suggested categories are confirmed by a person." |
+| R10.5 | **Language toggle, `/sources`, disclaimer** | EN / Waray / Filipino via `useLang`, persisted; all UI text and category labels from `src/i18n/strings.ts`. `/sources` uses `SourcesPage` (boundaries: OCHA/HDX) plus a "Synthetic data" entry (in `extra`, tier `synthetic`): "Businesses, permits, violations and complaints are generated by this app (seeds 1001 and 1002); business names are generic labels, not real businesses." and an "AI model" entry: `Xenova/multilingual-e5-small` (MIT license), runs in the browser, nothing is sent anywhere. Override `app.disclaimer` in `src/i18n/strings.ts` (`AppShell strings={strings}` passes it to the footer and `/sources`): "Prototype. Businesses, permits, violations and complaints are synthetic; AI-suggested categories are confirmed by a person." |
 
 ## Domain functions (test-first in `src/domain/`)
 
@@ -66,7 +66,7 @@ Functions take `now` as an argument; build test times with `new Date(y, m, d)` (
 - `useCategorizer(): { status: "loading" | "ready" | "missing" | "error"; rank(text): Promise<ranked> }`. `missing` is a normal state (keyword fallback), not an error.
 - Thresholds `MIN_SCORE` and `MIN_MARGIN` live in `src/ai/config.ts`. e5 similarities sit in a narrow, high band, so tune both on `/ai-check` and record the values and accuracy in `NOTES.md`.
 - Vitest never loads the model: all AI logic is tested with fake vectors.
-- If `node scripts/fetch-models.mjs --app 10` can't download in your environment, build with the fallback working, keep the worker compiled and typed, and write in `STATUS.md` that the model path must be checked on the demo laptop.
+- If `npm run fetch-models -- --model e5` can't download in your environment, build with the fallback working, keep the worker compiled and typed, and write in `STATUS.md` that the model path must be checked on the demo laptop.
 
 ## Data
 
@@ -89,7 +89,7 @@ Functions take `now` as an argument; build test times with `new Date(y, m, d)` (
 
 ## Golden-path demo (≤ 2 minutes)
 
-Setup: two windows on port 5110: A `/` at phone width, B `/desk`. Run `node scripts/fetch-models.mjs --app 10` beforehand (once, online). Press **Reset demo** first.
+Setup: two windows on port 5110: A `/` at phone width, B `/desk`. Run `npm run fetch-models -- --model e5` beforehand (once, online). Press **Reset demo** first.
 
 1. A: business "Rice Retailer #…" (record the id in `DEMO.md`) → type the Waray short-weight phrase from `eval.ts` → the AI chip suggests Short weight or measure → **Use this** → attach a photo (preview) → Submit → `RK-0061`.
 2. B: RK-0061 is at the top → **Under review** → **Inspection scheduled**. A's `/track/RK-0061` advances live.
@@ -102,9 +102,9 @@ Setup: two windows on port 5110: A `/` at phone width, B `/desk`. Run `node scri
 ## Definition of done
 
 - [ ] R10.1–R10.5 meet their acceptance criteria
-- [ ] Domain tests pass: `pnpm test` (in `apps/10-reklamo`)
-- [ ] `pnpm typecheck` and `pnpm build` pass
-- [ ] `node ../../scripts/smoke.mjs --app 10-reklamo` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
+- [ ] Domain tests pass: `npm run test`
+- [ ] `npm run typecheck` and `npm run build` pass
+- [ ] `npm run smoke` passes (offline, no console errors, axe clean, screenshots at 390 and 1280)
 - [ ] Every string comes from `src/i18n/strings.ts` (en + war + fil drafts); AI-drafted Waray/Filipino strings listed in `NOTES.md` under "Translations to review"
 - [ ] `/sources` lists every dataset used; disclaimer footer on every view
 - [ ] `STATUS.md`, `AI-LOG.md` (one row per commit) and `DEMO.md` are current
@@ -121,7 +121,7 @@ Setup: two windows on port 5110: A `/` at phone width, B `/desk`. Run `node scri
 - S1 Duplicate hint: when a new complaint's embedding is very close to an open complaint about the same business, show "A similar complaint, RK-0042, is already under review."
 - S2 Business-level points with MapLibre's built-in GeoJSON clustering (circle layers only) as a second map mode.
 - S3 Desk tile "AI suggestion accepted: X of Y" (`StatTile countUp`): a poster number.
-- S4 Export the desk table as CSV (a `Blob` download).
+- S4 Export the desk table as CSV (`toCsv` from `@rcene/data`, `downloadCsv` from `@rcene/ui`).
 
 ## Platform hooks
 
