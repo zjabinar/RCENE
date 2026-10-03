@@ -7,7 +7,7 @@ Thirty candidate projects for the four-hour solo build on **October 7, 2026** at
 - **Rubric:** AI use 20% · Innovation 20% · Functionality 20% · UX/UI 15% · Relevance & impact 15% · Poster & presentation 10%
 - **Constraints:** solo · React + TypeScript · local-only demo · prepared repo allowed · no runtime AI API in the app
 
-Sources reviewed: `VibeCoding_Challenge.txt` and the event poster; the LGU Portal Pro codebase and its gap-analysis/audit documents (`C:\lgu_portal`); the Region VIII GIS archive (`D:\lgu_portal - GIS`); the GPDSS / Project HABAGAT codebase and research documents (`D:\monica`).
+Sources reviewed: `docs/event/VibeCoding_Challenge.txt` and the event poster; the LGU Portal Pro codebase and its gap-analysis/audit documents (`C:\lgu_portal`); the Region VIII GIS archive (`D:\lgu_portal - GIS`); the GPDSS / Project HABAGAT codebase and research documents (`D:\monica`).
 
 ## Decisions
 
