@@ -80,6 +80,8 @@ describe("SixPanelPoster", () => {
       </PosterPage>,
     );
     const picture = () => screen.getByRole("region", { name: "The app in one picture" });
+    const root = () => document.querySelector<HTMLElement>("[data-slot=six-panel-poster]")!;
+    expect(root().style.contain).toBe("size");
     expect(picture().style.gridColumn).toBe("6 / 13");
     expect(picture().style.gridRow).toBe("2 / 4");
 
@@ -88,13 +90,15 @@ describe("SixPanelPoster", () => {
         <SixPanelPoster title="Andam" panels={panels} />
       </PosterPage>,
     );
-    expect(picture().style.gridColumn).toBe("4 / 10");
+    expect(picture().style.gridColumn).toBe("5 / 9");
+    expect(screen.getByRole("region", { name: "How AI built it" }).style.gridColumn).toBe("9 / 13");
     expect(screen.getByRole("region", { name: "How AI built it" }).style.gridRow).toBe("2 / 4");
   });
 
-  it("translates the panel headings", () => {
+  it("translates the panel headings, and grows with its content outside a sheet", () => {
     useLangStore.setState({ lang: "fil" });
     render(<SixPanelPoster title="Andam" panels={panels} />);
+    expect(document.querySelector<HTMLElement>("[data-slot=six-panel-poster]")!.style.contain).toBe("");
     expect(screen.getByRole("region", { name: "Ang problema" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Paano ito binuo ng AI" })).toBeTruthy();
   });

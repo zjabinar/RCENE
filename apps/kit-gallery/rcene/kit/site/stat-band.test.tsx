@@ -1,5 +1,5 @@
 import { act } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useLangStore } from "@rcene/i18n";
 

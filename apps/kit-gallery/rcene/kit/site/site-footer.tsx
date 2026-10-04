@@ -76,7 +76,7 @@ export function SiteFooter({ brand, columns, note, className }: SiteFooterProps)
     <footer data-slot="site-footer" className={cn("border-t bg-muted/40", className)}>
       <div aria-hidden="true" className="weave-band" />
       {(brand || note || count > 0) && (
-        <div className={cn(SITE_CONTAINER, "grid gap-10 py-12 sm:py-16 lg:grid-cols-12 lg:gap-12")}>
+        <div className={cn(SITE_CONTAINER, "grid gap-10 lg:grid-cols-12 lg:gap-12", count > 0 ? "py-12 sm:py-16" : "py-8")}>
           {(brand || note) && (
             <div className="flex flex-col gap-4 lg:col-span-4">
               {brand && (

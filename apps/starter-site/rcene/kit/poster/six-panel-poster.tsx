@@ -55,9 +55,9 @@ const LAYOUT: Record<PosterOrientation, Layout> = {
       impact: { gridColumn: "1 / -1", gridRow: "5" },
       footer: { gridColumn: "1 / -1", gridRow: "6" },
     },
-    title: "text-8xl",
+    title: "text-7xl",
     band: "p-[8mm]",
-    body: "text-lg",
+    body: "text-base",
     panel: "p-[6mm]",
   },
   landscape: {
@@ -119,7 +119,7 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
               <p
                 className={cn(
                   "mt-[4mm] max-w-[52ch] leading-snug text-pretty",
-                  orientation === "portrait" ? "text-2xl" : "text-xl",
+                  orientation === "portrait" ? "text-xl" : "text-lg",
                 )}
               >
                 {subtitle}

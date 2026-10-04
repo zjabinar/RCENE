@@ -117,7 +117,7 @@ export function PosterFigure({ title, caption, source, downloadSvg, className, c
           {downloadSvg && hasSvg && (
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               className="ms-auto print:hidden"
               onClick={download}

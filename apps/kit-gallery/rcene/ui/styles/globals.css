@@ -21,7 +21,12 @@
 @import "./patterns.css";
 
 /* dark: utilities follow data-mode (and the legacy .dark class) and apply inside a showcase surface. */
-@custom-variant dark (&:where(.dark, .dark *, [data-mode="dark"], [data-mode="dark"] *, [data-surface="showcase"], [data-surface="showcase"] *));
+/*
+ * dark: matches inside a dark <html> or a dark region (data-mode="dark", the showcase
+ * surface), but not inside a light region in the page (Surface mode="light", a poster
+ * sheet), so a light poster in a dark app stays light.
+ */
+@custom-variant dark (&:where(.dark, .dark *, [data-mode="dark"], [data-mode="dark"] *, [data-surface="showcase"], [data-surface="showcase"] *):not(:where(body [data-mode="light"], body [data-mode="light"] *)));
 
 :root {
   --radius: 0.625rem;

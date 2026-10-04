@@ -13,7 +13,7 @@ Ready-made, themed, accessible blocks built on `@rcene/ui`. Use them before writ
 |---|---|---|
 | `@rcene/kit/app` | Application screens: `PageHeader`, `ConsoleLayout`, `BoardShell`, `BoardRotator`, `KpiRow`, `DataTable`, `ChartCard`, form fields, `Wizard`, `StatusTimeline`, `CapacityMeter`, `QrDisplay`, `IllustratedState` | `app/README.md` |
 | `@rcene/kit/site` | Websites and data stories: `SiteShell`, `Section`, `Hero`, `FeatureGrid`, `StatBand`, `ScrollyChapter`, `BeforeAfter`, `StoryTimeline`, `CallToAction`, `SiteFooter`, `WeaveDivider` | `site/README.md` |
-| `@rcene/kit/poster` | The A3/A2 poster and the live demo: `PosterPage`, `SixPanelPoster`, `PosterFigure`, `AiBuiltPanel`, `QrToApp`, `PrintButton`, `PresenterMode` | `poster/README.md` |
+| `@rcene/kit/poster` | The A3/A2 poster and the live demo: `PosterPage`, `SixPanelPoster`, `PosterFigure`, `AiBuiltPanel`, `QrToApp`, `PrintButton`, `PresenterMode`, `PresenterNotes` | `poster/README.md` |
 | `@rcene/kit/brand` | The RCENE mark and decoration: `AppMark`, `Wordmark`, `WeavePattern`, `SpotIllustration`, `OgCard` | `brand/README.md` |
 | `@rcene/kit` | `Surface` (a region in the showcase look or another palette), `kitStrings`, `useKitStrings` | below |
 

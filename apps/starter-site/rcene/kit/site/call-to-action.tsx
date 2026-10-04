@@ -81,7 +81,7 @@ export function CallToAction({ title, body, actions, tone = "brand", className }
         ) : (
           <div className="relative isolate overflow-hidden rounded-3xl bg-brand px-6 py-12 text-brand-foreground shadow-overlay sm:px-12 sm:py-16 lg:px-16">
             <div aria-hidden="true" className="weave-band absolute inset-x-0 top-0" />
-            <Diamonds className="pointer-events-none absolute -right-20 -bottom-24 -z-10 size-80 text-brand-foreground/10 sm:size-96" />
+            <Diamonds className="pointer-events-none absolute -right-28 -bottom-36 -z-10 size-80 text-brand-foreground/10 sm:size-96 lg:-right-36 lg:-bottom-48" />
             {content}
           </div>
         )}
