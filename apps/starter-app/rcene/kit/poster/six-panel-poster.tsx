@@ -37,22 +37,22 @@ interface Layout {
 
 /**
  * Where each part sits on the 12-column grid, in reading order. Portrait:
- * problem and "what's different" beside a tall picture, then AI | data, then
- * impact. Landscape (thirds): problem / different | picture | AI, then
+ * problem and "what's different" beside a tall picture, then a tall AI panel
+ * beside data and impact. Landscape (thirds): problem / different | picture | AI, then
  * data | impact, with a compact title band. Text panels never clip: their
  * rows grow to fit and the picture gives way.
  */
 const LAYOUT: Record<PosterOrientation, Layout> = {
   portrait: {
-    rows: "auto minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 1.2fr) minmax(auto, 0.7fr) auto",
+    rows: "auto minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 0.8fr) auto",
     place: {
       header: { gridColumn: "1 / -1", gridRow: "1" },
       problem: { gridColumn: "1 / 6", gridRow: "2" },
       picture: { gridColumn: "6 / 13", gridRow: "2 / 4" },
       different: { gridColumn: "1 / 6", gridRow: "3" },
-      ai: { gridColumn: "1 / 8", gridRow: "4" },
+      ai: { gridColumn: "1 / 8", gridRow: "4 / 6" },
       data: { gridColumn: "8 / 13", gridRow: "4" },
-      impact: { gridColumn: "1 / -1", gridRow: "5" },
+      impact: { gridColumn: "8 / 13", gridRow: "5" },
       footer: { gridColumn: "1 / -1", gridRow: "6" },
     },
     title: "text-7xl",

@@ -9,7 +9,8 @@ import { cn } from "@rcene/ui/lib/utils";
 import { useKitStrings } from "../i18n.ts";
 
 export interface ConsoleNavItem {
-  to: string;
+  /** The section's route (rendered as a NavLink). Omit it for a state-driven console (see `onSelect`). */
+  to?: string;
   label: string;
   /** A lucide icon element; it is decorative (give it aria-hidden="true"). */
   icon?: ReactNode;
@@ -17,6 +18,10 @@ export interface ConsoleNavItem {
   badge?: ReactNode;
   /** Match the path exactly (use for an index route). */
   end?: boolean;
+  /** Instead of a route: switch the section in state. The item becomes a button; pair it with `active`. */
+  onSelect?: () => void;
+  /** With `onSelect`: this item is the section on screen (aria-current="page"). */
+  active?: boolean;
 }
 
 export interface ConsoleLayoutProps {
@@ -31,24 +36,17 @@ export interface ConsoleLayoutProps {
   className?: string;
 }
 
+const ITEM =
+  "group relative flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0";
+const ITEM_ACTIVE =
+  "bg-primary/10 text-foreground before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-primary hover:bg-primary/15 [&_svg]:text-primary";
+
 function ConsoleNavList({ nav, onNavigate }: { nav: ConsoleNavItem[]; onNavigate?: () => void }) {
   return (
     <ul className="flex flex-col gap-0.5">
-      {nav.map((item) => (
-        <li key={item.to}>
-          <NavLink
-            to={item.to}
-            end={item.end}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                "group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-                "[&_svg]:size-4 [&_svg]:shrink-0",
-                isActive &&
-                  "bg-primary/10 text-foreground before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-primary hover:bg-primary/15 [&_svg]:text-primary",
-              )
-            }
-          >
+      {nav.map((item) => {
+        const inner = (
+          <>
             {item.icon}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
             {item.badge !== undefined && item.badge !== null && (
@@ -56,9 +54,36 @@ function ConsoleNavList({ nav, onNavigate }: { nav: ConsoleNavItem[]; onNavigate
                 {item.badge}
               </span>
             )}
-          </NavLink>
-        </li>
-      ))}
+          </>
+        );
+        const select = item.onSelect;
+        return (
+          <li key={item.to ?? item.label}>
+            {select ? (
+              <button
+                type="button"
+                aria-current={item.active ? "page" : undefined}
+                onClick={() => {
+                  select();
+                  onNavigate?.();
+                }}
+                className={cn(ITEM, item.active && ITEM_ACTIVE)}
+              >
+                {inner}
+              </button>
+            ) : (
+              <NavLink
+                to={item.to ?? "."}
+                end={item.end}
+                onClick={onNavigate}
+                className={({ isActive }) => cn(ITEM, isActive && ITEM_ACTIVE)}
+              >
+                {inner}
+              </NavLink>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

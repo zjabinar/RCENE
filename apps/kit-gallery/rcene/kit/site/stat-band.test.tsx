@@ -19,14 +19,14 @@ function stubMotion(reduce: boolean) {
 }
 
 type IOCallback = (entries: Partial<IntersectionObserverEntry>[]) => void;
-let observer: { callback: IOCallback; targets: Element[] } | null = null;
+const instances: StubIntersectionObserver[] = [];
 
 class StubIntersectionObserver {
   callback: IOCallback;
   targets: Element[] = [];
   constructor(callback: IOCallback) {
     this.callback = callback;
-    observer = this;
+    instances.push(this);
   }
   observe(el: Element) {
     this.targets.push(el);
@@ -41,7 +41,7 @@ class StubIntersectionObserver {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  observer = null;
+  instances.length = 0;
   act(() => useLangStore.setState({ lang: "en" }));
 });
 
@@ -86,8 +86,9 @@ describe("StatBand", () => {
     const { container } = render(<StatBand items={ITEMS.slice(0, 2)} />);
     expect(shown(container)).toEqual(["0", "0"]);
     expect(spoken(container)).toEqual(["57", "12,345"]);
-    expect(observer!.targets[0]).toBe(container.querySelector("dl"));
-    act(() => observer!.callback([{ isIntersecting: true, target: observer!.targets[0] }]));
+    const observer = instances.at(-1)!;
+    expect(observer.targets[0]).toBe(container.querySelector("dl"));
+    act(() => observer.callback([{ isIntersecting: true, target: observer.targets[0] }]));
     // The count-up is now running toward the final values.
     expect(container.querySelector("dl")).toBeTruthy();
   });

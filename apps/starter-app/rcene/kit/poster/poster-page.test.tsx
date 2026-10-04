@@ -117,6 +117,19 @@ describe("PosterPage", () => {
     expect(screen.getByText("Preview at 50%")).toBeTruthy();
   });
 
+  it("fits the height of its box too with fit=contain", () => {
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1000);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(397);
+    render(
+      <PosterPage title="Contained" fit="contain" className="h-[40rem]">
+        x
+      </PosterPage>,
+    );
+    expect(screen.getByText("Preview at 25%")).toBeTruthy();
+    const sheet = screen.getByRole("article", { name: "Contained" });
+    expect(sheet.style.transform).toMatch(/^scale\(0\.25\d*\)$/);
+  });
+
   it("prints with the title as the document title, and hides its toolbar in print", () => {
     const print = vi.fn();
     vi.stubGlobal("print", print);

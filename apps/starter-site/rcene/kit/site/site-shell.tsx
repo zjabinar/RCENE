@@ -24,7 +24,7 @@ export interface SiteNavItem {
 export interface SiteShellProps {
   /** A mark before the title, e.g. <AppMark /> from @rcene/kit/brand. */
   brand?: ReactNode;
-  /** The site name in the top bar (links home) and the document title. */
+  /** The site name in the top bar (links home) and, by default, the document title. */
   title: string;
   nav?: SiteNavItem[];
   /** Extra controls before the theme and language menus (e.g. an "Open the app" button). */
@@ -33,6 +33,8 @@ export interface SiteShellProps {
   footer?: ReactNode;
   /** Lenis smooth scrolling for story pages. Native scrolling under reduced motion. */
   smooth?: boolean;
+  /** Set document.title to `title` (default true). False for a shell embedded in another page, e.g. a preview. */
+  documentTitle?: boolean;
   /** The app's string table, provided to everything inside (like AppShell `strings`). */
   strings?: AppStrings;
   className?: string;
@@ -84,14 +86,25 @@ function NavItemLink({
  * language menus, a menu sheet on phones), <main id="main">, then the footer.
  * Keeps <html> on the effective theme, like AppShell. Needs a router.
  */
-export function SiteShell({ brand, title, nav, actions, footer, smooth = false, strings, className, children }: SiteShellProps) {
+export function SiteShell({
+  brand,
+  title,
+  nav,
+  actions,
+  footer,
+  smooth = false,
+  documentTitle = true,
+  strings,
+  className,
+  children,
+}: SiteShellProps) {
   useThemeSync();
   const inherited = useAppStrings();
   const table = strings ?? inherited;
 
   useEffect(() => {
-    document.title = title;
-  }, [title]);
+    if (documentTitle) document.title = title;
+  }, [title, documentTitle]);
 
   const page = (
     <StringsProvider value={table}>
@@ -103,7 +116,7 @@ export function SiteShell({ brand, title, nav, actions, footer, smooth = false, 
   return smooth ? <SmoothScroll>{page}</SmoothScroll> : page;
 }
 
-function SiteFrame({ brand, title, nav, actions, footer, className, children }: Omit<SiteShellProps, "smooth" | "strings">) {
+function SiteFrame({ brand, title, nav, actions, footer, className, children }: Omit<SiteShellProps, "smooth" | "strings" | "documentTitle">) {
   const t = useT(useKitStrings());
   const sentinel = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);

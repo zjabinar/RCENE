@@ -129,7 +129,8 @@ export function DataTable<T>({
     onGlobalFilterChange: (updater) => setQuery((q) => (typeof updater === "function" ? updater(q) : String(updater ?? ""))),
     onPaginationChange: setPagination,
     globalFilterFn,
-    getColumnCanGlobalFilter: searchColumns ? (column) => searchColumns.includes(column.id) : undefined,
+    // Without `search.columns`, TanStack's default applies: columns whose values are text or numbers.
+    ...(searchColumns ? { getColumnCanGlobalFilter: (column: { id: string }) => searchColumns.includes(column.id) } : {}),
     sortDescFirst: false,
     getRowId,
     getCoreRowModel: getCoreRowModel(),

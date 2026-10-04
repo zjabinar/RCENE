@@ -1,7 +1,7 @@
 import { CheckIcon, PlusIcon } from "lucide-react";
 import { useT } from "@rcene/i18n";
 import { PageHeader } from "@rcene/kit/app";
-import { Surface } from "@rcene/kit";
+import { Surface, useKitStrings } from "@rcene/kit";
 import { Badge } from "@rcene/ui/components/badge";
 import { Button } from "@rcene/ui/components/button";
 import { PALETTES, useTheme, type Mode, type Palette } from "@rcene/ui/theme";
@@ -13,9 +13,10 @@ const BARS = [72, 48, 90, 36, 60];
 /** One palette x mode, painted with the same mini screen. */
 function Sample({ palette, mode }: { palette: Palette; mode: Mode }) {
   const t = useT(strings);
+  const ui = useT(useKitStrings());
   const { effective, setPalette, setMode } = useTheme();
-  const name = t(`ui.palette.${palette}` as never);
-  const modeName = t(`ui.mode.${mode}` as never);
+  const name = ui(`ui.palette.${palette}`);
+  const modeName = ui(`ui.mode.${mode}`);
   const inUse = effective.palette === palette && effective.mode === mode && !effective.surface;
 
   return (
@@ -78,6 +79,7 @@ function Sample({ palette, mode }: { palette: Palette; mode: Mode }) {
 /** "/themes": the five palettes in light and dark, side by side, plus the showcase surface. */
 export function Themes() {
   const t = useT(strings);
+  const ui = useT(useKitStrings());
   return (
     <div className="flex flex-col gap-8">
       <PageHeader eyebrow={t("app.title")} title={t("themes.title")} description={t("themes.lead")} />
@@ -85,9 +87,9 @@ export function Themes() {
         <section key={palette} aria-labelledby={`palette-${palette}`} className="flex flex-col gap-3">
           <div>
             <h2 id={`palette-${palette}`} className="font-display text-2xl font-semibold tracking-tight">
-              {t(`ui.palette.${palette}` as never)}
+              {ui(`ui.palette.${palette}`)}
             </h2>
-            <p className="text-sm text-muted-foreground">{t(`ui.palette.${palette}.note` as never)}</p>
+            <p className="text-sm text-muted-foreground">{ui(`ui.palette.${palette}.note`)}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {MODES.map((mode) => (

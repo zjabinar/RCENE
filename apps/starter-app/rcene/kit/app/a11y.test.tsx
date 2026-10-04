@@ -336,7 +336,7 @@ describe("kit/app accessibility (axe)", () => {
   it("IllustratedState, every spot", async () => {
     const { container } = render(
       <main>
-        {(["empty", "search", "offline", "done", "map"] as const).map((spot) => (
+        {(["empty", "search", "offline", "done", "map", "community", "heritage"] as const).map((spot) => (
           <IllustratedState key={spot} spot={spot} title={`State ${spot}`} description="Description" />
         ))}
         <IllustratedState spot="error" title="Error" actions={<button type="button">Try again</button>} />

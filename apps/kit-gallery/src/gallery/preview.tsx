@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { CheckIcon, CodeIcon, CopyIcon, ExternalLinkIcon } from "lucide-react";
 import { LANG_LABELS, LANGS, LangOverride, useLang, useLangOverride, useT, type Lang } from "@rcene/i18n";
-import { Surface } from "@rcene/kit";
+import { Surface, useKitStrings } from "@rcene/kit";
 import { cn, ErrorBoundary, toast } from "@rcene/ui";
 import { Badge } from "@rcene/ui/components/badge";
 import { Button } from "@rcene/ui/components/button";
@@ -37,6 +37,7 @@ function Field({ label, children }: { label: string; children: (id: string) => R
 /** Palette, mode, width and language for one preview. Native selects: compact and fully accessible. */
 export function PreviewControls({ name, value, onChange }: { name: string; value: PreviewSettings; onChange: (next: PreviewSettings) => void }) {
   const t = useT(strings);
+  const ui = useT(useKitStrings());
   const set = <K extends keyof PreviewSettings>(key: K, v: PreviewSettings[K]) => onChange({ ...value, [key]: v });
   return (
     <fieldset className="flex flex-wrap items-end gap-3">
@@ -47,7 +48,7 @@ export function PreviewControls({ name, value, onChange }: { name: string; value
             <option value="app">{t("preview.followApp")}</option>
             {PALETTES.map((p) => (
               <option key={p} value={p}>
-                {t(`ui.palette.${p}` as never)}
+                {ui(`ui.palette.${p}`)}
               </option>
             ))}
           </select>
@@ -57,8 +58,8 @@ export function PreviewControls({ name, value, onChange }: { name: string; value
         {(id) => (
           <select id={id} className={SELECT} value={value.mode} onChange={(e) => set("mode", e.target.value as PreviewSettings["mode"])}>
             <option value="app">{t("preview.followApp")}</option>
-            <option value="light">{t("ui.mode.light" as never)}</option>
-            <option value="dark">{t("ui.mode.dark" as never)}</option>
+            <option value="light">{ui("ui.mode.light")}</option>
+            <option value="dark">{ui("ui.mode.dark")}</option>
           </select>
         )}
       </Field>

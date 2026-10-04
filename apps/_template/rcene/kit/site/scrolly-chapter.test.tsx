@@ -7,7 +7,7 @@ import { useLangStore } from "@rcene/i18n";
 import { ScrollyChapter } from "./scrolly-chapter.tsx";
 
 type IOCallback = (entries: Partial<IntersectionObserverEntry>[]) => void;
-let observer: StubIntersectionObserver | null = null;
+const instances: StubIntersectionObserver[] = [];
 
 class StubIntersectionObserver {
   callback: IOCallback;
@@ -16,7 +16,7 @@ class StubIntersectionObserver {
   constructor(callback: IOCallback, options?: IntersectionObserverInit) {
     this.callback = callback;
     this.options = options;
-    observer = this;
+    instances.push(this);
   }
   observe(el: Element) {
     this.targets.push(el);
@@ -39,7 +39,7 @@ const STEPS = [
 ];
 
 beforeEach(() => {
-  observer = null;
+  instances.length = 0;
   vi.stubGlobal("IntersectionObserver", StubIntersectionObserver);
   Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 });
@@ -53,23 +53,24 @@ afterEach(() => {
 function setup(onStepChange = vi.fn()) {
   render(<ScrollyChapter steps={STEPS} visual={(i) => <p data-testid="visual">Visual {i}</p>} onStepChange={onStepChange} />);
   const cards = STEPS.map((s) => screen.getByRole("article", { name: s.title }));
-  return { cards, onStepChange };
+  return { cards, onStepChange, observer: instances.at(-1)! };
 }
 
 describe("ScrollyChapter", () => {
   it("starts on the first step and observes every step card", () => {
-    const { cards } = setup();
+    const { cards, observer } = setup();
     expect(screen.getByTestId("visual").textContent).toBe("Visual 0");
     expect(cards[0]!.getAttribute("aria-current")).toBe("step");
-    expect(observer!.targets).toEqual(cards);
-    expect(observer!.options?.rootMargin).toBe("-45% 0px -45% 0px");
+    expect(observer.targets).toEqual(cards);
+    expect(observer.options?.rootMargin).toBe("-45% 0px -45% 0px");
+    expect(observer.options?.root).toBeNull();
     expect(cards[0]!.closest("ol")!.getAttribute("aria-describedby")).toBeTruthy();
     expect(cards[1]!.textContent).toContain("Step 2 of 3");
   });
 
   it("switches the active step when the IntersectionObserver fires, and announces it politely", () => {
-    const { cards, onStepChange } = setup();
-    observer!.enter(1);
+    const { cards, onStepChange, observer } = setup();
+    observer.enter(1);
     expect(screen.getByTestId("visual").textContent).toBe("Visual 1");
     expect(cards[1]!.getAttribute("aria-current")).toBe("step");
     expect(cards[0]!.getAttribute("aria-current")).toBeNull();
@@ -78,10 +79,10 @@ describe("ScrollyChapter", () => {
     expect(status.textContent).toBe("Step 2 of 3: Barangays respond");
 
     // A step leaving the band does not change anything; the same step again does not re-notify.
-    act(() => observer!.callback([{ target: cards[1], isIntersecting: false, intersectionRatio: 0 }]));
-    observer!.enter(1);
+    act(() => observer.callback([{ target: cards[1], isIntersecting: false, intersectionRatio: 0 }]));
+    observer.enter(1);
     expect(onStepChange).toHaveBeenCalledTimes(1);
-    observer!.enter(2);
+    observer.enter(2);
     expect(screen.getByTestId("visual").textContent).toBe("Visual 2");
     expect(onStepChange).toHaveBeenLastCalledWith(2);
   });
@@ -112,6 +113,18 @@ describe("ScrollyChapter", () => {
     await user.click(screen.getByRole("button", { name: "Go to step 3: Everyone accounted for" }));
     expect(document.activeElement).toBe(cards[2]);
     expect(screen.getByRole("button", { name: "Go to step 3: Everyone accounted for" }).getAttribute("aria-current")).toBe("step");
+  });
+
+  it("inside a scroll box: observes against the box and sizes the panel from `height`", () => {
+    render(
+      <div data-testid="box" style={{ overflowY: "auto", height: "30rem" }}>
+        <ScrollyChapter steps={STEPS} visual={(i) => <p>Visual {i}</p>} height="30rem" />
+      </div>,
+    );
+    const observer = instances.at(-1)!;
+    expect(observer.options?.root).toBe(screen.getByTestId("box"));
+    const chapter = screen.getByTestId("box").firstElementChild as HTMLElement;
+    expect(chapter.style.getPropertyValue("--kit-scrolly-height")).toBe("30rem");
   });
 
   it("speaks Waray and Filipino", () => {

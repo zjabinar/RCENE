@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useT } from "@rcene/i18n";
 import { cn } from "@rcene/ui/lib/utils";
 import { useReducedMotion } from "@rcene/ui/motion";
@@ -20,7 +20,21 @@ export interface ScrollyChapterProps {
   onStepChange?: (index: number) => void;
   /** Heading level of each step title. Default 3 (under a Section's h2). */
   headingLevel?: 2 | 3 | 4;
+  /**
+   * Height of the sticky panel, a CSS length. Default: the viewport below the
+   * sticky header. Set it when the chapter lives in a scroll box (e.g. "30rem");
+   * the step spacing follows it.
+   */
+  height?: string;
   className?: string;
+}
+
+/** The nearest scrolling ancestor, so a chapter inside a scroll box detects steps against that box. */
+function scrollParent(el: Element | null): Element | null {
+  for (let node = el?.parentElement ?? null; node && node !== document.body; node = node.parentElement) {
+    if (/(auto|scroll|overlay)/.test(getComputedStyle(node).overflowY)) return node;
+  }
+  return null;
 }
 
 /**
@@ -31,14 +45,17 @@ export interface ScrollyChapterProps {
  * the dots on the panel jump to a step. Nothing depends on animation.
  *
  * The panel sticks below `--kit-sticky-top` (SiteShell sets it to its header
- * height). On a Lenis page, give a map in `visual` `data-lenis-prevent`.
+ * height) and fills the viewport below it, or `height` inside a scroll box
+ * (the nearest scrolling ancestor is then the observer's root). On a Lenis
+ * page, give a map in `visual` `data-lenis-prevent`.
  */
-export function ScrollyChapter({ steps, visual, onStepChange, headingLevel = 3, className }: ScrollyChapterProps) {
+export function ScrollyChapter({ steps, visual, onStepChange, headingLevel = 3, height, className }: ScrollyChapterProps) {
   const t = useT(useKitStrings());
   const reduced = useReducedMotion();
   const uid = useId();
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
+  const rootRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
   const onChangeRef = useRef(onStepChange);
   const Heading = `h${headingLevel}` as const;
@@ -68,7 +85,7 @@ export function ScrollyChapter({ steps, visual, onStepChange, headingLevel = 3, 
         const index = Number((best.target as HTMLElement).dataset.stepIndex);
         if (Number.isInteger(index)) activate(index);
       },
-      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.01] },
+      { root: scrollParent(rootRef.current), rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.01] },
     );
     for (const el of stepRefs.current.slice(0, total)) if (el) io.observe(el);
     return () => io.disconnect();
@@ -98,13 +115,15 @@ export function ScrollyChapter({ steps, visual, onStepChange, headingLevel = 3, 
 
   return (
     <div
+      ref={rootRef}
       data-slot="scrolly-chapter"
+      style={height ? ({ "--kit-scrolly-height": height } as CSSProperties) : undefined}
       className={cn("relative lg:grid lg:grid-cols-12 lg:gap-10 xl:gap-14", className)}
     >
       {/* Sticky visual: behind the cards on phones, the right-hand column on desktop. */}
       <div
         data-slot="scrolly-visual"
-        className="sticky top-(--kit-sticky-top,0px) z-0 h-[calc(100svh-var(--kit-sticky-top,0px))] py-3 lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:py-6"
+        className="sticky top-(--kit-sticky-top,0px) z-0 h-[var(--kit-scrolly-height,calc(100svh-var(--kit-sticky-top,0px)))] py-3 lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:py-6"
       >
         <div className="relative size-full overflow-hidden rounded-2xl border bg-muted shadow-raised">
           {visual(active)}
@@ -152,13 +171,16 @@ export function ScrollyChapter({ steps, visual, onStepChange, headingLevel = 3, 
       <ol
         role="list"
         aria-describedby={`${uid}-hint`}
-        className="relative z-10 -mt-[calc(100svh-var(--kit-sticky-top,0px))] pt-[45svh] pb-[35svh] lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:mt-0 lg:pt-[25svh] lg:pb-[40svh]"
+        className="relative z-10 -mt-[var(--kit-scrolly-height,calc(100svh-var(--kit-sticky-top,0px)))] pt-[calc(var(--kit-scrolly-height,100svh)*0.45)] pb-[calc(var(--kit-scrolly-height,100svh)*0.35)] lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:mt-0 lg:pt-[calc(var(--kit-scrolly-height,100svh)*0.25)] lg:pb-[calc(var(--kit-scrolly-height,100svh)*0.4)]"
       >
         {steps.map((step, i) => {
           const isActive = i === active;
           const titleId = `${uid}-step-${i}`;
           return (
-            <li key={step.id} className="flex min-h-[80svh] items-center px-2 sm:px-6 lg:min-h-[70svh] lg:px-0">
+            <li
+              key={step.id}
+              className="flex min-h-[calc(var(--kit-scrolly-height,100svh)*0.8)] items-center px-2 sm:px-6 lg:min-h-[calc(var(--kit-scrolly-height,100svh)*0.7)] lg:px-0"
+            >
               <article
                 ref={(el) => {
                   stepRefs.current[i] = el;

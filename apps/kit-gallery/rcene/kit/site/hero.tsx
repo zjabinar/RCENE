@@ -22,11 +22,7 @@ export interface HeroProps {
   className?: string;
 }
 
-/**
- * Type shared by the showcase h1 and its glow layer, so both wrap identically.
- * Joined without cn(): tailwind-merge reads text-display-1 as a colour and
- * would drop it next to text-transparent.
- */
+/** Type shared by the showcase h1 and its glow layer, so both wrap identically. */
 const SHOWCASE_TITLE =
   "font-showcase text-display-1 font-extrabold tracking-tight text-balance italic pr-[0.12em] pb-[0.12em]";
 const SHOWCASE_GRADIENT = "bg-linear-to-r from-primary via-brand to-chart-3 bg-clip-text text-transparent";
@@ -183,14 +179,14 @@ export function Hero({ eyebrow, title, lead, actions, media, variant = "calm", c
 
   const titleEl = showcase ? (
     <div className="relative isolate w-fit max-w-full">
-      <span aria-hidden="true" data-hero-glow className={`${SHOWCASE_TITLE} absolute inset-0 -z-10 select-none text-transparent glow-text`}>
+      <span aria-hidden="true" data-hero-glow className={cn(SHOWCASE_TITLE, "absolute inset-0 -z-10 select-none text-transparent glow-text")}>
         {title}
       </span>
       <h1
         key={revealKey || undefined}
         ref={heading}
         id={titleId}
-        className={`${SHOWCASE_TITLE} ${SHOWCASE_GRADIENT} data-[split]:bg-none`}
+        className={cn(SHOWCASE_TITLE, SHOWCASE_GRADIENT, "data-[split]:bg-none")}
       >
         {title}
       </h1>

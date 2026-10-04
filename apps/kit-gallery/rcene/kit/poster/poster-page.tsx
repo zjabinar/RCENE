@@ -121,6 +121,12 @@ export interface PosterPageProps {
   printTone?: PosterPrintTone;
   /** Names the sheet, shows in the toolbar and becomes the PDF file name while printing. */
   title?: string;
+  /**
+   * "width" (default): the preview fills the width and is as tall as it needs.
+   * "contain": it also fits the height of the PosterPage box, so the whole
+   * sheet is in view (give the PosterPage a height, e.g. `className="h-dvh"`).
+   */
+  fit?: "width" | "contain";
   /** Show the size / orientation / print toolbar (default true). Never printed. */
   toolbar?: boolean;
   /** Called when the toolbar switches size or orientation. */
@@ -141,6 +147,7 @@ export function PosterPage({
   orientation: orientationProp = "portrait",
   printTone = "light",
   title,
+  fit = "width",
   toolbar = true,
   onChange,
   className,
@@ -192,13 +199,16 @@ export function PosterPage({
     };
   }, [title]);
 
-  // Fit-to-width preview: scale the physical sheet down to the space available.
+  // Preview: scale the physical sheet down to the space available.
   const measureRef = useRef<HTMLDivElement>(null);
-  const [available, setAvailable] = useState(0);
+  const [available, setAvailable] = useState({ width: 0, height: 0 });
   useLayoutEffect(() => {
     const el = measureRef.current;
     if (!el) return;
-    const update = () => setAvailable(el.clientWidth);
+    const update = () => {
+      const next = { width: el.clientWidth, height: el.clientHeight };
+      setAvailable((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
+    };
     update();
     if (typeof ResizeObserver === "undefined") {
       window.addEventListener("resize", update);
@@ -210,7 +220,8 @@ export function PosterPage({
   }, []);
   const widthPx = widthMm * PX_PER_MM;
   const heightPx = heightMm * PX_PER_MM;
-  const scale = available > 0 ? Math.min(1, available / widthPx) : 1;
+  const fitHeight = fit === "contain" && available.height > 0 ? available.height / heightPx : Infinity;
+  const scale = available.width > 0 ? Math.min(1, available.width / widthPx, fitHeight) : 1;
 
   const change = (next: { size: PosterSize; orientation: PosterOrientation }) => {
     setSize(next.size);
@@ -244,7 +255,7 @@ export function PosterPage({
   const info: PosterSheetInfo = { size, orientation, widthMm, heightMm, zoom, inSheet: true };
 
   return (
-    <div data-slot="poster-page" className={cn("flex w-full min-w-0 flex-col gap-3", className)}>
+    <div data-slot="poster-page" data-fit={fit} className={cn("flex w-full min-w-0 flex-col gap-3", className)}>
       {toolbar && (
         <div className="flex flex-col gap-2 print:hidden">
           <div
@@ -291,8 +302,8 @@ export function PosterPage({
         </div>
       )}
 
-      <div className="rounded-xl bg-muted p-3 weave-bg sm:p-6">
-        <div ref={measureRef} className="w-full min-w-0">
+      <div className={cn("rounded-xl bg-muted p-3 weave-bg sm:p-6", fit === "contain" && "min-h-0 flex-1")}>
+        <div ref={measureRef} className={cn("w-full min-w-0", fit === "contain" && "h-full")}>
           <div className="relative mx-auto" style={{ width: widthPx * scale, height: heightPx * scale }}>
             <PosterSheetContext value={info}>
               <article

@@ -57,7 +57,7 @@ Import from the family sub-path so a page only bundles what it uses: `@rcene/kit
 | A staff or role console with a side nav | `ConsoleLayout` (+ `KpiRow`, `DataTable`, `ChartCard`) |
 | A table of records (sort, search, paging, CSV) | `DataTable` |
 | A chart that judges can also read as a table | `ChartCard` around a `ChartContainer` from `@rcene/ui/components/chart` |
-| A form | `TextField`, `SelectField`, `RadioField`, `CheckboxField`, `NumberField`, `BarangayField` with react-hook-form + zod (`kitZodErrors(t)` for messages) |
+| A form | `TextField`, `TextareaField`, `SelectField`, `RadioField`, `CheckboxField`, `NumberField`, `BarangayField` with react-hook-form + zod (`useKitZodErrors()` gives the messages in three languages) |
 | A form in steps | `Wizard` + `useWizard` |
 | A request's progress | `StatusTimeline` |
 | Capacity, stock, slots | `CapacityMeter` (never a hazard colour) |
@@ -67,7 +67,7 @@ Import from the family sub-path so a page only bundles what it uses: `@rcene/kit
 | A landing page or "about" | `SiteShell`, `Hero`, `Section`, `FeatureGrid`, `StatBand`, `CallToAction`, `SiteFooter`, `WeaveDivider` |
 | A data story | `ScrollyChapter` (sticky map or figure, steps that scroll), `BeforeAfter`, `StoryTimeline` |
 | The A3 poster | `PosterPage` + `SixPanelPoster`, `PosterFigure`, `AiBuiltPanel`, `QrToApp`, `PrintButton` |
-| The live demo | `PresenterMode` (steps with notes; a second window shows the notes) |
+| The live demo | `PresenterMode` (steps with notes) and `PresenterNotes` (the second window) |
 | The app's mark, a favicon, a social card | `AppMark`, `Wordmark`, `WeavePattern`, `SpotIllustration`, `OgCard` |
 
 Building something no block covers? Build it from the shadcn primitives in `@rcene/ui/components/*` with the same tokens, and keep it in `src/`. If it is generic and good, list it in `NOTES.md` under "Shared-code changes (for the template)". Do not edit `rcene/kit` for one app.
@@ -112,7 +112,7 @@ A `/poster` route with `PosterPage size="A3"` and `SixPanelPoster` (problem, the
 
 ### The demo
 
-`PresenterMode` with the demo script's steps (`docs/brief.md` "Demo script"): arrow keys or the clicker move, `T` shows the timer, `Esc` hides it. Open the notes in a second window. Rehearse with Wi-Fi off.
+`PresenterMode` with the steps of `DEMO.md` (`{ id, caption, route?, notes?, seconds? }`): arrow keys or the clicker move, `T` starts the timer, `Esc` hides the bar and `P` brings it back. Put `PresenterNotes` with the same steps on its own route and open it in a second window: the two stay in step. Rehearse with Wi-Fi off.
 
 ## Checklist for the polish window
 

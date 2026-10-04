@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -45,6 +46,28 @@ describe("ConsoleLayout", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     const navs = screen.getAllByRole("navigation", { name: "Operator console" });
     expect(within(navs[0]!).getByRole("link", { name: "Reports" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("switches sections in state with onSelect buttons", async () => {
+    const user = userEvent.setup();
+    function StateConsole() {
+      const [section, setSection] = useState("queue");
+      const item = (id: string, label: string) => ({ label, active: section === id, onSelect: () => setSection(id) });
+      return (
+        <ConsoleLayout title="Desk" nav={[item("queue", "Queue"), item("teams", "Teams")]}>
+          <p>Section: {section}</p>
+        </ConsoleLayout>
+      );
+    }
+    const router = createMemoryRouter([{ path: "*", element: <StateConsole /> }]);
+    render(<RouterProvider router={router} />);
+    const nav = screen.getByRole("navigation", { name: "Desk" });
+    expect(within(nav).getByRole("button", { name: "Queue" }).getAttribute("aria-current")).toBe("page");
+    await user.click(within(nav).getByRole("button", { name: "Teams" }));
+    expect(screen.getByText("Section: teams")).toBeTruthy();
+    expect(within(nav).getByRole("button", { name: "Teams" }).getAttribute("aria-current")).toBe("page");
+    expect(within(nav).getByRole("button", { name: "Queue" }).getAttribute("aria-current")).toBeNull();
+    expect(router.state.location.pathname).toBe("/");
   });
 
   it("renders the aside as a labelled complementary region", () => {

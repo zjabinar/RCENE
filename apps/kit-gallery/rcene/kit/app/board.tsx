@@ -110,8 +110,10 @@ export interface BoardRotatorProps {
   items: ReactNode[];
   /** Time on each page (default 10 s). */
   intervalMs?: number;
-  /** Hold the current page (e.g. while an alert shows). */
+  /** Hold the current page (e.g. while an alert shows). Overrides the Play button. */
   paused?: boolean;
+  /** Start on Pause, so the viewer presses Play (a gallery, a page with many blocks). Default false. */
+  defaultPaused?: boolean;
   /** Accessible name of the pages region (default "Board pages"). */
   label?: string;
   className?: string;
@@ -123,11 +125,18 @@ export interface BoardRotatorProps {
  * pointer is over it or focus is inside it, and starts paused when the viewer
  * asked for reduced motion (Play still works).
  */
-export function BoardRotator({ items, intervalMs = 10_000, paused = false, label, className }: BoardRotatorProps) {
+export function BoardRotator({
+  items,
+  intervalMs = 10_000,
+  paused = false,
+  defaultPaused = false,
+  label,
+  className,
+}: BoardRotatorProps) {
   const t = useT(useKitStrings());
   const reduced = useReducedMotion();
   const [index, setIndex] = useState(0);
-  const [userPaused, setUserPaused] = useState(reduced);
+  const [userPaused, setUserPaused] = useState(defaultPaused || reduced);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const bar = useRef<HTMLDivElement>(null);

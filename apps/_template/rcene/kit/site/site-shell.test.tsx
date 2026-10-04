@@ -139,6 +139,12 @@ describe("SiteShell", () => {
     expect(screen.getByRole("link", { name: "Lumaktaw sa nilalaman" })).toBeTruthy();
   });
 
+  it("leaves document.title alone with documentTitle={false}", () => {
+    document.title = "Host page";
+    renderAt("/", <SiteShell title="Embedded" documentTitle={false}>body</SiteShell>);
+    expect(document.title).toBe("Host page");
+  });
+
   it("works with smooth scrolling on (native scrolling under reduced motion)", () => {
     renderAt("/", <SiteShell title="Site" smooth>Smooth body</SiteShell>);
     expect(screen.getByRole("main").textContent).toBe("Smooth body");

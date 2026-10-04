@@ -1,10 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { IllustratedState, type IllustrationSpot } from "./illustrated-state.tsx";
+import { SPOT_NAMES } from "../brand/spot-illustration.tsx";
+import { IllustratedState } from "./illustrated-state.tsx";
 
 afterEach(cleanup);
-
-const SPOTS: IllustrationSpot[] = ["empty", "search", "offline", "error", "done", "map"];
 
 describe("IllustratedState", () => {
   it("renders the title, description and actions with a decorative illustration", () => {
@@ -25,14 +24,17 @@ describe("IllustratedState", () => {
     expect(status.getAttribute("data-spot")).toBe("map");
   });
 
-  it("draws every spot with theme tokens only", () => {
-    for (const spot of SPOTS) {
+  it("draws every brand spot (SpotIllustration) with theme tokens only, sized per size", () => {
+    for (const spot of SPOT_NAMES) {
       const { container, unmount } = render(<IllustratedState spot={spot} title={spot} />);
-      const svg = container.querySelector("svg")!;
-      expect(svg.children.length).toBeGreaterThan(2);
+      const svg = container.querySelector("svg[data-slot='spot-illustration']")!;
+      expect(svg.getAttribute("data-spot")).toBe(spot);
+      expect(svg.getAttribute("width")).toBe("148");
       expect(svg.outerHTML).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
       unmount();
     }
+    render(<IllustratedState spot="search" size="sm" title="No match" />);
+    expect(document.querySelector("svg")?.getAttribute("width")).toBe("104");
   });
 
   it("uses role=alert for the error spot", () => {

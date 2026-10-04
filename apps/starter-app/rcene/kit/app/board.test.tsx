@@ -131,6 +131,17 @@ describe("BoardRotator", () => {
     expect(document.querySelector("[data-slot='board-page']")?.getAttribute("aria-live")).toBe("polite");
   });
 
+  it("can start on Pause with defaultPaused", () => {
+    render(<BoardRotator items={PAGES} intervalMs={1000} defaultPaused />);
+    act(() => vi.advanceTimersByTime(3000));
+    expect(screen.getByText("Page 1 of 3")).toBeTruthy();
+    const play = screen.getByRole("button", { name: "Play" });
+    fireEvent.click(play);
+    fireEvent.blur(play, { relatedTarget: document.body });
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText("Page 2 of 3")).toBeTruthy();
+  });
+
   it("moves with Previous and Next", () => {
     render(<BoardRotator items={PAGES} intervalMs={1000} paused />);
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
