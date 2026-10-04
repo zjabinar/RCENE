@@ -103,7 +103,12 @@ describe("site pages", () => {
 
   it("story: one step per layer, a chart with its table", async () => {
     renderRoute("/story");
-    const steps = await screen.findAllByRole("article");
+    // A placeholder step shows while the layers load; the real steps replace it.
+    const steps = await waitFor(() => {
+      const found = screen.getAllByRole("article");
+      expect(found).toHaveLength(5);
+      return found;
+    });
     expect(steps.map((s) => s.querySelector("h3")?.textContent)).toEqual([
       expect.stringMatching(/^\d+ barangays, one city$/),
       expect.stringMatching(/^\d+ places people rely on$/),

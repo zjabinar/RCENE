@@ -36,18 +36,48 @@ export interface ThemeOverride {
   surface?: "showcase";
 }
 
+export interface OverrideEntry {
+  id: string;
+  /** Nesting depth in the React tree (AppShell 0, a page inside it 1, …). */
+  depth: number;
+  /** Registration order, kept when the value changes; breaks ties between equal depths. */
+  seq: number;
+  value: ThemeOverride;
+}
+
 interface OverrideState {
-  stack: { id: string; value: ThemeOverride }[];
-  push: (id: string, value: ThemeOverride) => void;
+  stack: OverrideEntry[];
+  push: (id: string, depth: number, value: ThemeOverride) => void;
   remove: (id: string) => void;
 }
 
+let nextSeq = 0;
+
 /**
- * Overrides from the current view (AppShell palette/surface props,
- * useThemeOverride): not persisted, last one mounted wins, removed on unmount.
+ * Overrides from the current view (AppShell palette/mode/surface props,
+ * useThemeOverride): not persisted, removed on unmount. They are merged field
+ * by field, the deeper one winning (see mergeOverrides), so the result does not
+ * depend on which effect happened to run first.
  */
 export const useOverrideStore = create<OverrideState>()((set) => ({
   stack: [],
-  push: (id, value) => set((s) => ({ stack: [...s.stack.filter((o) => o.id !== id), { id, value }] })),
+  push: (id, depth, value) =>
+    set((s) => {
+      const existing = s.stack.find((o) => o.id === id);
+      const entry = { id, depth, seq: existing?.seq ?? nextSeq++, value };
+      return { stack: existing ? s.stack.map((o) => (o.id === id ? entry : o)) : [...s.stack, entry] };
+    }),
   remove: (id) => set((s) => ({ stack: s.stack.filter((o) => o.id !== id) })),
 }));
+
+/** One override from many: shallower first, then deeper ones replace the fields they set. */
+export function mergeOverrides(stack: readonly OverrideEntry[]): ThemeOverride | null {
+  if (stack.length === 0) return null;
+  const merged: ThemeOverride = {};
+  for (const { value } of [...stack].sort((a, b) => a.depth - b.depth || a.seq - b.seq)) {
+    if (value.palette) merged.palette = value.palette;
+    if (value.mode) merged.mode = value.mode;
+    if (value.surface) merged.surface = value.surface;
+  }
+  return merged;
+}

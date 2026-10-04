@@ -65,6 +65,25 @@ describe("CapacityMeter", () => {
     expect((m.firstElementChild as HTMLElement).style.width).toBe("100%");
   });
 
+  it("never uses a hazard colour: primary, brand, then foreground with a hatch", () => {
+    const bar = () => meter().firstElementChild as HTMLElement;
+    const chip = () => document.querySelector("[data-slot='capacity-state']") as HTMLElement;
+    const { rerender } = render(<CapacityMeter value={10} max={100} label="Hall" />);
+    expect(bar().className).toContain("bg-primary");
+    rerender(<CapacityMeter value={80} max={100} label="Hall" />);
+    expect(bar().className).toContain("bg-brand");
+    expect(chip().className).toContain("bg-brand");
+    rerender(<CapacityMeter value={100} max={100} label="Hall" />);
+    expect(bar().className).toMatch(/bg-foreground .*repeating-linear-gradient\(135deg/);
+    rerender(<CapacityMeter value={120} max={100} label="Hall" />);
+    expect(bar().className).toMatch(/repeating-linear-gradient\(135deg.*repeating-linear-gradient\(45deg/);
+    const root = document.querySelector("[data-slot='capacity-meter']")!;
+    expect(root.outerHTML).not.toMatch(/warning|destructive|level-/);
+    // None of the hazard-level icons (circle-alert, triangle-alert, octagon-alert, siren).
+    expect(root.querySelector(".lucide-circle-alert, .lucide-triangle-alert, .lucide-octagon-alert, .lucide-siren")).toBeNull();
+    expect(chip().querySelector("svg")).not.toBeNull();
+  });
+
   it("can hide the numbers and follows the language", () => {
     act(() => useLangStore.setState({ lang: "fil" }));
     render(<CapacityMeter value={9} max={10} label="Kama" showNumbers={false} />);

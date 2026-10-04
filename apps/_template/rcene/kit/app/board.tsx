@@ -122,8 +122,9 @@ export interface BoardRotatorProps {
 /**
  * Pages through `items` on a timer with a visible "Page n of N", a progress
  * line and Previous / Pause-Play / Next buttons. It holds still while the
- * pointer is over it or focus is inside it, and starts paused when the viewer
- * asked for reduced motion (Play still works).
+ * pointer is over it or focus is inside it, until the viewer presses Play
+ * (an explicit Play rotates even with focus on the button). It starts paused
+ * when the viewer asked for reduced motion or with `defaultPaused`.
  */
 export function BoardRotator({
   items,
@@ -139,10 +140,12 @@ export function BoardRotator({
   const [userPaused, setUserPaused] = useState(defaultPaused || reduced);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  // An explicit Play means "rotate": it wins over the hover/focus hold until the next Pause.
+  const [played, setPlayed] = useState(false);
   const bar = useRef<HTMLDivElement>(null);
   const total = items.length;
   const current = total === 0 ? 0 : Math.min(index, total - 1);
-  const holding = paused || userPaused || hovered || focused || total < 2;
+  const holding = paused || userPaused || (!played && (hovered || focused)) || total < 2;
 
   useEffect(() => {
     if (holding) return;
@@ -223,7 +226,10 @@ export function BoardRotator({
               variant="outline"
               size="sm"
               className="h-9 min-w-24"
-              onClick={() => setUserPaused((p) => !p)}
+              onClick={() => {
+                setPlayed(userPaused);
+                setUserPaused(!userPaused);
+              }}
             >
               {userPaused ? <PlayIcon aria-hidden="true" /> : <PauseIcon aria-hidden="true" />}
               {userPaused ? t("kit.board.play") : t("kit.board.pause")}

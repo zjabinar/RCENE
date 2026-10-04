@@ -69,7 +69,7 @@ Five palettes, each in light and dark. The values are in `styles/themes.css`, an
   - `<html data-palette data-mode>` (plus the `.dark` class) is set before first paint by a boot script that `rceneApp()` injects into `index.html`.
   - The order is the user's choice (the **Theme** menu in the AppShell header, persisted as `rcene:theme` and synced across windows), then the app's default (`project.json` `"theme": { "palette": "dagat", "mode": "system" }`), then habi + the device setting.
   - **Reset demo** keeps the theme.
-- **A view forces its own colours** with AppShell `palette` / `mode` / `surface` props, or `useThemeOverride({ palette: "malinaw", mode: "dark" })`. The override is not persisted, is removed on unmount, and the menu then says "This view sets its own colours". Public boards use `palette="malinaw"`.
+- **A view forces its own colours** with AppShell `palette` / `mode` / `surface` props, or `useThemeOverride({ palette: "malinaw", mode: "dark" })`. The override is not persisted, is removed on unmount, and the menu then says "This view sets its own colours". Overrides merge field by field and the deeper one wins (a page inside AppShell beats the shell's own props; AppShell wraps its content in `ThemeOverrideScope`), whatever order they mounted in. They apply in layout effects, so a forced view never paints a frame in the wrong theme. Public boards use `palette="malinaw"`.
 - **Showcase surface.**
   - `surface="showcase"` on AppShell paints the whole view in gabi dark (landing pages, the demo).
   - `<Surface variant="showcase">` from `@rcene/kit` paints one region.

@@ -57,13 +57,17 @@ export function ZoneLayer({
     [opacity],
   );
 
+  // The casing layer is always mounted and only shown or hidden: a layer added later would land above
+  // the outline (react-map-gl inserts new layers right under beforeId) and hide the level colours.
+  const casingLayout = useMemo(() => ({ visibility: casing ? "visible" : "none" }) as const, [casing]);
+
   if (!zones) return null;
 
   // key: react-map-gl can't change a source or layer id in place, so a new id remounts.
   return (
     <Source key={layerId} id={layerId} type="geojson" data={zones}>
       <Layer id={layerId} type="fill" paint={fillPaint} {...filterProps} beforeId={beforeId} />
-      {casing && <Layer id={`${layerId}-casing`} type="line" paint={CASING_PAINT} {...filterProps} beforeId={beforeId} />}
+      <Layer id={`${layerId}-casing`} type="line" paint={CASING_PAINT} layout={casingLayout} {...filterProps} beforeId={beforeId} />
       {outline && (
         <Layer id={`${layerId}-outline`} type="line" paint={linePaint} {...filterProps} beforeId={beforeId} />
       )}

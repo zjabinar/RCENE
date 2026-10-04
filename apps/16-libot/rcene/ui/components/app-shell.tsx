@@ -7,7 +7,7 @@ import { resetDemo } from "@rcene/store";
 
 import { cn } from "../lib/utils.ts";
 import type { ModeSetting, Palette } from "../theme/palettes.ts";
-import { useThemeOverride, useThemeSync } from "../theme/sync.ts";
+import { ThemeOverrideScope, useThemeOverride, useThemeSync } from "../theme/sync.ts";
 import { ThemeMenu } from "../theme/theme-menu.tsx";
 import { Button } from "./ui/button.tsx";
 import { Toaster } from "./ui/sonner.tsx";
@@ -199,7 +199,7 @@ export function AppShell({
         </header>
 
         <main id="main" tabIndex={-1} className={cn("flex-1 focus:outline-none", MAIN[width])}>
-          {children}
+          <ThemeOverrideScope>{children}</ThemeOverrideScope>
         </main>
 
         <DisclaimerFooter className={FRAME[width]} />

@@ -139,6 +139,13 @@ describe("SiteShell", () => {
     expect(screen.getByRole("link", { name: "Lumaktaw sa nilalaman" })).toBeTruthy();
   });
 
+  it("renders no skip link and no second main landmark when embedded", () => {
+    const { container } = renderAt("/", <SiteShell title="Embedded" embedded>body</SiteShell>);
+    expect(container.querySelector("main")).toBeNull();
+    expect(container.querySelector("#main")).toBeNull();
+    expect(container.textContent).toContain("body");
+  });
+
   it("leaves document.title alone with documentTitle={false}", () => {
     document.title = "Host page";
     renderAt("/", <SiteShell title="Embedded" documentTitle={false}>body</SiteShell>);

@@ -48,11 +48,19 @@ export interface LangOverrideProps {
 
 /**
  * Renders `children` in `lang` whatever the chosen language is: `useT` and
- * `useFormat` inside it use `lang`. For side-by-side previews (the gallery shows
- * one block in en, war and fil at once) and print layouts. Not persisted.
+ * `useFormat` inside it use `lang`, and a layout-neutral wrapper
+ * (`display: contents`) carries `lang` so screen readers pronounce it right.
+ * For side-by-side previews (the gallery shows one block in en, war and fil at
+ * once) and print layouts. Not persisted.
  */
 export function LangOverride({ lang, children }: LangOverrideProps) {
-  return <LangOverrideContext value={lang}>{children}</LangOverrideContext>;
+  return (
+    <LangOverrideContext value={lang}>
+      <div lang={lang} data-slot="lang-override" style={{ display: "contents" }}>
+        {children}
+      </div>
+    </LangOverrideContext>
+  );
 }
 
 /** The language forced by the nearest `LangOverride`, or null. */

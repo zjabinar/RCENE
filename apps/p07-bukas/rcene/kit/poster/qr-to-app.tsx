@@ -15,8 +15,12 @@ export interface QrToAppProps {
   className?: string;
 }
 
+/** Quiet zone in modules: the QR spec asks for 4, and the code may sit on a dark band. */
+const QUIET_ZONE = 4;
+
 /**
- * The QR code as an SVG string, black on white with a one-module quiet zone,
+ * The QR code as an SVG string, black on white with a 4-module white quiet
+ * zone (whose outer corners are slightly rounded; the code itself never is),
  * hidden from assistive technology (the wrapper carries the name). Null if the
  * text is too long for a QR code. The callback form of qrcode's toString runs
  * synchronously, so this works during render.
@@ -24,13 +28,16 @@ export interface QrToAppProps {
 export function qrSvg(url: string): string | null {
   const result: { svg?: string } = {};
   try {
-    qrToString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" }, (error, svg) => {
+    qrToString(url, { type: "svg", margin: QUIET_ZONE, errorCorrectionLevel: "M" }, (error, svg) => {
       if (!error) result.svg = svg;
     });
   } catch {
     return null;
   }
-  return result.svg ? result.svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" ') : null;
+  if (!result.svg) return null;
+  return result.svg
+    .replace("<svg ", '<svg aria-hidden="true" focusable="false" ')
+    .replace(/<path fill="#ffffff" d="M0 0h(\d+)v\d+H0z"\/>/, '<rect width="$1" height="$1" rx="1.5" fill="#ffffff"/>');
 }
 
 /** "https://example.org/app/" → "example.org/app": shorter to read and type off a poster. */
@@ -48,7 +55,7 @@ export function QrToApp({ url, label, size = 160, className }: QrToAppProps) {
         <div
           role="img"
           aria-label={t("kit.qrToApp.alt", { url })}
-          className="overflow-hidden rounded-md [&>svg]:block [&>svg]:size-full"
+          className="[&>svg]:block [&>svg]:size-full"
           style={{ width: size, height: size, printColorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}
           dangerouslySetInnerHTML={{ __html: svg }}
         />

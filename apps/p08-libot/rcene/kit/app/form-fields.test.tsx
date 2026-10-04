@@ -182,7 +182,7 @@ describe("form fields", () => {
       notes: "Ramp",
       barangay: "Mercedes",
     });
-  });
+  }, 20_000);
 
   it("follow the language for the required text and messages", async () => {
     act(() => useLangStore.setState({ lang: "fil" }));

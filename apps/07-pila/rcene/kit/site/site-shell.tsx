@@ -35,6 +35,11 @@ export interface SiteShellProps {
   smooth?: boolean;
   /** Set document.title to `title` (default true). False for a shell embedded in another page, e.g. a preview. */
   documentTitle?: boolean;
+  /**
+   * A shell shown inside another page (a gallery preview): no skip link, its content
+   * in a <div> instead of a second <main id="main">, and document.title left alone.
+   */
+  embedded?: boolean;
   /** The app's string table, provided to everything inside (like AppShell `strings`). */
   strings?: AppStrings;
   className?: string;
@@ -94,6 +99,7 @@ export function SiteShell({
   footer,
   smooth = false,
   documentTitle = true,
+  embedded = false,
   strings,
   className,
   children,
@@ -103,12 +109,12 @@ export function SiteShell({
   const table = strings ?? inherited;
 
   useEffect(() => {
-    if (documentTitle) document.title = title;
-  }, [title, documentTitle]);
+    if (documentTitle && !embedded) document.title = title;
+  }, [title, documentTitle, embedded]);
 
   const page = (
     <StringsProvider value={table}>
-      <SiteFrame brand={brand} title={title} nav={nav} actions={actions} footer={footer} className={className}>
+      <SiteFrame brand={brand} title={title} nav={nav} actions={actions} footer={footer} embedded={embedded} className={className}>
         {children}
       </SiteFrame>
     </StringsProvider>
@@ -116,7 +122,7 @@ export function SiteShell({
   return smooth ? <SmoothScroll>{page}</SmoothScroll> : page;
 }
 
-function SiteFrame({ brand, title, nav, actions, footer, className, children }: Omit<SiteShellProps, "smooth" | "strings" | "documentTitle">) {
+function SiteFrame({ brand, title, nav, actions, footer, embedded, className, children }: Omit<SiteShellProps, "smooth" | "strings" | "documentTitle">) {
   const t = useT(useKitStrings());
   const sentinel = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -138,7 +144,7 @@ function SiteFrame({ brand, title, nav, actions, footer, className, children }: 
       className={cn("relative flex min-h-svh flex-col bg-background text-foreground", className)}
     >
       <div ref={sentinel} aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-2" />
-      <SkipLink label={t("app.skipToContent")} />
+      {!embedded && <SkipLink label={t("app.skipToContent")} />}
 
       <header
         data-slot="site-header"
@@ -215,9 +221,13 @@ function SiteFrame({ brand, title, nav, actions, footer, className, children }: 
         </div>
       </header>
 
-      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-        {children}
-      </main>
+      {embedded ? (
+        <div className="flex-1">{children}</div>
+      ) : (
+        <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+          {children}
+        </main>
+      )}
 
       {footer === undefined ? (
         <SiteFooter

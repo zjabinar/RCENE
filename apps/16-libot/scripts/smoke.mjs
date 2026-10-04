@@ -272,11 +272,13 @@ export function isOsmTile(url) {
 export async function offlineContext(browser, viewport, aborted, colorScheme = "light") {
   // Service workers are blocked: Playwright cannot route their requests, so the offline check would miss them.
   // Catbalogan time and locale, whatever the machine running the smoke test uses, so times on screenshots are right.
+  // Reduced motion: GSAP reveals, count-ups and Recharts' grow-in are skipped, so screenshots show the settled page.
   const context = await browser.newContext({
     viewport,
     deviceScaleFactor: 1,
     serviceWorkers: "block",
     colorScheme,
+    reducedMotion: "reduce",
     timezoneId: "Asia/Manila",
     locale: "en-PH",
   });

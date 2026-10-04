@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { BanIcon, DoorOpenIcon, OctagonAlertIcon, TriangleAlertIcon, type LucideIcon } from "lucide-react";
+import { BanIcon, DoorClosedIcon, DoorOpenIcon, GaugeIcon, type LucideIcon } from "lucide-react";
 import { useFormat, useT } from "@rcene/i18n";
 import { cn } from "@rcene/ui/lib/utils";
 
@@ -52,29 +52,37 @@ const STATE_KEY = {
 
 const ICONS: Record<CapacityState, LucideIcon> = {
   open: DoorOpenIcon,
-  nearlyFull: TriangleAlertIcon,
-  full: BanIcon,
-  over: OctagonAlertIcon,
+  nearlyFull: GaugeIcon,
+  full: DoorClosedIcon,
+  over: BanIcon,
 };
 
+/*
+ * Capacity is not a hazard: no warning (yellow) or destructive (red) colours
+ * and none of the hazard-level icons, so a meter next to hazard answers never
+ * reads as a hazard level. The state is carried by the icon + word; the bar adds
+ * a pattern for "full" (diagonal hatch) and "over capacity" (cross-hatch), so it
+ * never relies on colour. Class names are written out in full for Tailwind.
+ */
 const BAR: Record<CapacityState, string> = {
   open: "bg-primary",
-  nearlyFull: "bg-warning-foreground",
-  full: "bg-destructive",
-  over: "bg-destructive bg-[repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklab,var(--destructive-foreground)_40%,transparent)_6px_12px)]",
+  nearlyFull: "bg-brand",
+  full: "bg-foreground bg-[image:repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklab,var(--background)_45%,transparent)_6px_9px)]",
+  over: "bg-foreground bg-[image:repeating-linear-gradient(135deg,transparent_0_5px,color-mix(in_oklab,var(--background)_45%,transparent)_5px_8px),repeating-linear-gradient(45deg,transparent_0_5px,color-mix(in_oklab,var(--background)_45%,transparent)_5px_8px)]",
 };
 
 const CHIP: Record<CapacityState, string> = {
   open: "bg-primary/10 text-primary",
-  nearlyFull: "bg-warning text-warning-foreground",
-  full: "bg-destructive text-destructive-foreground",
-  over: "bg-destructive text-destructive-foreground",
+  nearlyFull: "bg-brand text-brand-foreground",
+  full: "bg-foreground text-background",
+  over: "bg-foreground text-background",
 };
 
 /**
- * How full a place is: a role="meter" bar (primary, then warning, then
- * destructive), the numbers, and an icon + word state (OPEN, NEARLY FULL,
- * FULL, OVER CAPACITY). Screen readers hear "{value} of {max} — {state}".
+ * How full a place is: a role="meter" bar (primary, then brand, then
+ * foreground with a hatch; never a hazard colour), the numbers, and an icon +
+ * word state (OPEN, NEARLY FULL, FULL, OVER CAPACITY). Screen readers hear
+ * "{value} of {max} — {state}".
  */
 export function CapacityMeter({
   value,

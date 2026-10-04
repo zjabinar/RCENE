@@ -83,3 +83,37 @@ export const usePresenterStore = createSyncedStore<PresenterState>(
   }),
   { version: 1 },
 );
+
+/** Per-tab flag (sessionStorage): this tab was the stage when its bar went away (a reload, a bfcache visit, an unmount). */
+const STAGE_FLAG = "rcene:presenter-stage";
+
+/**
+ * Gives up the stage when this window's bar goes away (pagehide or unmount):
+ * a closed window must not keep it, or changes made in the notes window would
+ * navigate no window at all. Remembers it per tab so a reload can take it back.
+ */
+export function releaseStage(): void {
+  if (usePresenterStore.getState().stage !== WINDOW_ID) return;
+  usePresenterStore.setState({ stage: null });
+  try {
+    sessionStorage.setItem(STAGE_FLAG, "1");
+  } catch {
+    // Storage blocked: the stage stays free, so every app window follows the notes window.
+  }
+}
+
+/**
+ * Called when the bar mounts (and on a bfcache restore): a tab that was the
+ * stage takes it back under its new window id, unless another window has
+ * driven the demo since.
+ */
+export function reclaimStage(): void {
+  let was = false;
+  try {
+    was = sessionStorage.getItem(STAGE_FLAG) === "1";
+    sessionStorage.removeItem(STAGE_FLAG);
+  } catch {
+    return;
+  }
+  if (was && usePresenterStore.getState().stage === null) usePresenterStore.setState({ stage: WINDOW_ID });
+}

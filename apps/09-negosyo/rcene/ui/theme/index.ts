@@ -19,11 +19,12 @@ export {
   type ThemeDefaults,
 } from "./palettes.ts";
 export { resolveDefaults, themeBootScript } from "./boot.ts";
-export { useOverrideStore, useThemeStore, type ThemeChoice, type ThemeOverride } from "./store.ts";
+export { mergeOverrides, useOverrideStore, useThemeStore, type OverrideEntry, type ThemeChoice, type ThemeOverride } from "./store.ts";
 export {
   applyTheme,
   readThemeDefaults,
   resolveTheme,
+  ThemeOverrideScope,
   useSystemDark,
   useTheme,
   useThemeOverride,

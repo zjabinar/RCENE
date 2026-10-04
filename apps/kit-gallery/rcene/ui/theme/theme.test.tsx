@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { themeBootScript } from "./boot.ts";
 import { THEME_STORAGE_KEY } from "./palettes.ts";
 import { useThemeStore } from "./store.ts";
-import { resolveTheme, useThemeOverride, useThemeSync } from "./sync.ts";
+import { mergeOverrides } from "./store.ts";
+import { resolveTheme, ThemeOverrideScope, useThemeOverride, useThemeSync } from "./sync.ts";
 import { ThemeMenu } from "./theme-menu.tsx";
 
 const root = () => document.documentElement;
@@ -131,6 +132,38 @@ describe("ThemeMenu and useThemeSync", () => {
       render(<Synced />);
     });
     expect([root().dataset.palette, root().dataset.mode]).toEqual(["habi", "light"]);
+  });
+
+  it("merges nested overrides field by field, the deeper one winning, whatever the mount order", () => {
+    function Page() {
+      useThemeOverride({ palette: "malinaw" });
+      return null;
+    }
+    function Shell({ page }: { page: boolean }) {
+      useThemeSync();
+      useThemeOverride({ mode: "dark", palette: "dagat" });
+      return <ThemeOverrideScope>{page && <Page />}</ThemeOverrideScope>;
+    }
+    // Direct load: the page's effect runs before the shell's.
+    const { unmount } = render(<Shell page />);
+    expect([root().dataset.palette, root().dataset.mode]).toEqual(["malinaw", "dark"]);
+    unmount();
+    // Client-side navigation: the shell is already there when the page mounts.
+    const second = render(<Shell page={false} />);
+    expect([root().dataset.palette, root().dataset.mode]).toEqual(["dagat", "dark"]);
+    second.rerender(<Shell page />);
+    expect([root().dataset.palette, root().dataset.mode]).toEqual(["malinaw", "dark"]);
+  });
+
+  it("mergeOverrides keeps registration order between equal depths", () => {
+    expect(mergeOverrides([])).toBeNull();
+    expect(
+      mergeOverrides([
+        { id: "b", depth: 0, seq: 2, value: { palette: "fiesta" } },
+        { id: "a", depth: 0, seq: 1, value: { palette: "habi", mode: "light" } },
+        { id: "c", depth: 1, seq: 0, value: { surface: "showcase" } },
+      ]),
+    ).toEqual({ palette: "fiesta", mode: "light", surface: "showcase" });
   });
 
   it("marks a showcase view on <html>", () => {

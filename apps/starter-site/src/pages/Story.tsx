@@ -11,6 +11,7 @@ import { SpotIllustration } from "@rcene/kit/brand";
 import { BeforeAfter, CallToAction, Hero, ScrollyChapter, Section, StoryTimeline, type ScrollyStep } from "@rcene/kit/site";
 import { LoadGate } from "@rcene/ui";
 import { Button } from "@rcene/ui/components/button";
+import { Skeleton } from "@rcene/ui/components/skeleton";
 import type { CityStats } from "@/domain/city-stats.ts";
 import { CityMapSvg } from "@/features/city-map-svg/CityMapSvg.tsx";
 import { MapKey } from "@/features/city-map-svg/MapKey.tsx";
@@ -24,11 +25,28 @@ import { strings } from "@/i18n/strings.ts";
 type Chapter = ScrollyStep & { view: StoryView };
 
 /** The story's steps, built from the numbers. Steps whose layer is missing are left out. */
-function useChapters(stats: CityStats): Chapter[] {
+function useChapters(stats: CityStats | null): Chapter[] {
   const t = useT(strings);
   const fmt = useFormat();
   const share = useShareFormat();
   const n = fmt.number;
+
+  // While the layers load: one placeholder step, so the map can already draw beside it.
+  if (!stats) {
+    return [
+      {
+        id: "loading",
+        view: "city",
+        title: t("data.loadingNumbers"),
+        body: (
+          <span className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </span>
+        ),
+      },
+    ];
+  }
 
   const chapters: Chapter[] = [
     {
@@ -75,14 +93,10 @@ function useChapters(stats: CityStats): Chapter[] {
   return chapters;
 }
 
-function Chapters({ data }: { data: CityData }) {
-  const chapters = useChapters(data.stats);
-  return (
-    <ScrollyChapter
-      steps={chapters}
-      visual={(i) => <StoryMap layers={data.layers} stats={data.stats} view={chapters[i]?.view ?? "city"} />}
-    />
-  );
+/** Rendered while loading (data null) and when ready: the same element, so the map stays mounted. */
+function Chapters({ data }: { data: CityData | null }) {
+  const chapters = useChapters(data?.stats ?? null);
+  return <ScrollyChapter steps={chapters} visual={(i) => <StoryMap data={data} view={chapters[i]?.view ?? "city"} />} />;
 }
 
 const TIMELINE = [
@@ -119,7 +133,9 @@ export function Story() {
       />
 
       <Section id="chapter" eyebrow={t("story.chapter.eyebrow")} title={t("story.chapter.title")} lead={t("story.chapter.lead")}>
-        <LoadGate state={city}>{(data) => <Chapters data={data} />}</LoadGate>
+        <LoadGate state={city} loading={<Chapters data={null} />}>
+          {(data) => <Chapters data={data} />}
+        </LoadGate>
       </Section>
 
       <LoadGate state={city} loading={null}>

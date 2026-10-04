@@ -7,7 +7,15 @@ import { cn } from "@rcene/ui/lib/utils";
 import { useReducedMotion } from "@rcene/ui/motion";
 
 import { useKitStrings } from "../i18n.ts";
-import { formatClock, NOTES_ORIGIN, presenterElapsed, usePresenterStore, WINDOW_ID } from "./presenter-store.ts";
+import {
+  formatClock,
+  NOTES_ORIGIN,
+  presenterElapsed,
+  reclaimStage,
+  releaseStage,
+  usePresenterStore,
+  WINDOW_ID,
+} from "./presenter-store.ts";
 
 export interface PresenterStep {
   id: string;
@@ -263,6 +271,22 @@ export function PresenterMode({ steps, open, onOpenChange, onNavigate, className
     seenNonce.current = nonce;
     follow();
   }, [nonce]);
+
+  // Window ids change on every page load: hand the stage over across a reload
+  // (and a bfcache visit), and free it when this window closes.
+  useEffect(() => {
+    reclaimStage();
+    const onShow = (event: PageTransitionEvent) => {
+      if (event.persisted) reclaimStage();
+    };
+    window.addEventListener("pagehide", releaseStage);
+    window.addEventListener("pageshow", onShow);
+    return () => {
+      window.removeEventListener("pagehide", releaseStage);
+      window.removeEventListener("pageshow", onShow);
+      releaseStage();
+    };
+  }, []);
 
   usePresenterKeys((action) => {
     if (total === 0) return false;

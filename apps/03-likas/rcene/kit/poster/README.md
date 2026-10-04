@@ -26,7 +26,7 @@ Inside the sheet, `printTone="light"` (default) paints the light variant of the 
 4. Present: **→ / Space / PageDown** next (a presentation clicker works), **← / PageUp** back, **T** starts or pauses the timer, **Esc** hides the bar, **P** brings it back. While the bar is hidden only P works, so the app gets its arrow keys back when a judge wants to try something. Keys typed in inputs, sliders, tabs, maps, dialogs and anything inside `data-presenter-keys="off"` are left alone.
 5. Rehearse with the timer; reset it with the reset button in the notes window, or reset everything with **Reset demo** (`resetDemo`, which also clears the presenter store).
 
-With several app windows (a platform's roles side by side), the window you press keys in navigates; a change made in the notes window navigates the window that last drove the demo (or every app window before any of them did).
+With several app windows (a platform's roles side by side), the window you press keys in navigates; a change made in the notes window navigates the window that last drove the demo (it keeps that role across a reload; before any window drove it, or after that window closes, every app window follows).
 
 ## Blocks
 
@@ -75,7 +75,7 @@ With several app windows (a platform's roles side by side), the window you press
 />
 ```
 
-**`QrToApp`** `{ url: string; label?: string; size?: number | string; className? }`. A QR code (the `qrcode` package, SVG, black on white, one-module quiet zone, error correction M) as one image named "QR code that opens {url}", with the label ("Scan to open the app") and the address below it without `http(s)://`. `size` is CSS px (default 160, about 42 mm on paper) or any length (`"40mm"`). On the day, use the laptop's LAN address (`npm run preview -- --host`) so phones on the same Wi-Fi can open it. `qrSvg(url)` returns the SVG string.
+**`QrToApp`** `{ url: string; label?: string; size?: number | string; className? }`. A QR code (the `qrcode` package, SVG, black on white with a 4-module white quiet zone, so it scans on a dark band too; error correction M) as one image named "QR code that opens {url}", with the label ("Scan to open the app") and the address below it without `http(s)://`. `size` is CSS px (default 160, about 42 mm on paper) or any length (`"40mm"`). On the day, use the laptop's LAN address (`npm run preview -- --host`) so phones on the same Wi-Fi can open it. `qrSvg(url)` returns the SVG string.
 
 ```tsx
 <QrToApp url="http://192.168.1.20:5101/" label={t("poster.scan")} size="38mm" />

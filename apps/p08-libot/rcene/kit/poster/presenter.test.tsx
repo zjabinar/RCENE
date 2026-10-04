@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PresenterMode, PresenterNotes, presenterKeyAction, type PresenterStep } from "./presenter.tsx";
-import { formatClock, NOTES_ORIGIN, usePresenterStore } from "./presenter-store.ts";
+import { formatClock, NOTES_ORIGIN, usePresenterStore, WINDOW_ID } from "./presenter-store.ts";
 
 const steps: PresenterStep[] = [
   { id: "open", caption: "A resident checks a barangay", route: "/", notes: "Say what was pre-built.", seconds: 20 },
@@ -22,19 +22,22 @@ function press(key: string, target: Element = document.body) {
 
 /** What another window's write looks like to this one: localStorage changes, then a storage event. */
 function writeFromAnotherWindow(patch: Record<string, unknown>) {
-  const { go: _go, toggleTimer: _toggle, resetTimer: _reset, ...state } = usePresenterStore.getState();
+  const { go: _go, toggleTimer: _toggle, resetTimer: _reset, ...live } = usePresenterStore.getState();
+  // What another window sees: the persisted state (the truth across windows), else this store's.
+  const state = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.state ?? live;
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { ...state, ...patch }, version: 1 }));
   act(() => {
     window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY, storageArea: localStorage }));
   });
 }
 
-function persisted(): { index: number; running: boolean } {
+function persisted(): { index: number; running: boolean; stage: string | null } {
   return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}").state;
 }
 
 beforeEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
   usePresenterStore.setState(INITIAL, true);
 });
 
@@ -197,6 +200,56 @@ describe("PresenterMode", () => {
     writeFromAnotherWindow({ index: 0, nonce: nonce + 2, origin: "another-window", stage: "another-window" });
     expect(screen.getByRole("region", { name: "Presenter" }).textContent).toContain("Step 1 of 3");
     expect(onNavigate).toHaveBeenCalledTimes(2);
+  });
+
+  it("is driven from the notes window again after the app window reloads", async () => {
+    render(<PresenterMode steps={steps} onNavigate={() => {}} />);
+    press("ArrowRight");
+    expect(usePresenterStore.getState().stage).toBe(WINDOW_ID);
+
+    // F5 in the app window: pagehide, then a fresh page with a new window id and a store rehydrated from localStorage.
+    act(() => {
+      window.dispatchEvent(new Event("pagehide"));
+    });
+    cleanup();
+    vi.resetModules();
+    const reloaded = await import("./presenter.tsx");
+    const reloadedStore = await import("./presenter-store.ts");
+    expect(reloadedStore.WINDOW_ID).not.toBe(WINDOW_ID);
+    const onNavigate = vi.fn();
+    render(<reloaded.PresenterMode steps={steps} onNavigate={onNavigate} />);
+    expect(reloadedStore.usePresenterStore.getState().stage).toBe(reloadedStore.WINDOW_ID);
+
+    const { nonce } = reloadedStore.usePresenterStore.getState();
+    writeFromAnotherWindow({ index: 2, nonce: nonce + 1, origin: NOTES_ORIGIN });
+    expect(onNavigate).toHaveBeenLastCalledWith("/board");
+  });
+
+  it("frees the stage when the driving window closes, so the other app windows follow the notes", () => {
+    const onNavigate = vi.fn();
+    const { unmount } = render(<PresenterMode steps={steps} onNavigate={onNavigate} />);
+    press("ArrowRight");
+    act(() => {
+      window.dispatchEvent(new Event("pagehide"));
+    });
+    expect(usePresenterStore.getState().stage).toBeNull();
+    expect(persisted()).toMatchObject({ stage: null });
+    unmount();
+
+    // Another app window (another tab: no stage flag) now follows a change made in the notes window.
+    sessionStorage.clear();
+    render(<PresenterMode steps={steps} onNavigate={onNavigate} />);
+    expect(usePresenterStore.getState().stage).toBeNull();
+    const { nonce } = usePresenterStore.getState();
+    writeFromAnotherWindow({ index: 2, nonce: nonce + 1, origin: NOTES_ORIGIN });
+    expect(onNavigate).toHaveBeenLastCalledWith("/board");
+  });
+
+  it("does not take the stage back from a window that drove the demo since", () => {
+    sessionStorage.setItem("rcene:presenter-stage", "1");
+    usePresenterStore.setState({ stage: "another-window" });
+    render(<PresenterMode steps={steps} />);
+    expect(usePresenterStore.getState().stage).toBe("another-window");
   });
 
   it("navigates with react-router when inside a router and no onNavigate is given", () => {

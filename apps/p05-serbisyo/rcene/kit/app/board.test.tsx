@@ -142,6 +142,34 @@ describe("BoardRotator", () => {
     expect(screen.getByText("Page 2 of 3")).toBeTruthy();
   });
 
+  it("rotates after an explicit Play even while focus stays on the button", () => {
+    render(<BoardRotator items={PAGES} intervalMs={1000} defaultPaused />);
+    const region = screen.getByRole("region", { name: "Board pages" });
+    const play = screen.getByRole("button", { name: "Play" });
+    fireEvent.pointerEnter(region);
+    fireEvent.focus(play);
+    fireEvent.click(play);
+    expect(screen.getByRole("button", { name: "Pause" })).toBe(play);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText("Page 2 of 3")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText("Page 3 of 3")).toBeTruthy();
+    // Pause holds again, and hover/focus hold once more until the next Play.
+    fireEvent.click(play);
+    act(() => vi.advanceTimersByTime(3000));
+    expect(screen.getByText("Page 3 of 3")).toBeTruthy();
+  });
+
+  it("rotates under reduced motion once the viewer presses Play, focus or not", () => {
+    stubReducedMotion(true);
+    render(<BoardRotator items={PAGES} intervalMs={1000} />);
+    const play = screen.getByRole("button", { name: "Play" });
+    fireEvent.focus(play);
+    fireEvent.click(play);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText("Page 2 of 3")).toBeTruthy();
+  });
+
   it("moves with Previous and Next", () => {
     render(<BoardRotator items={PAGES} intervalMs={1000} paused />);
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));

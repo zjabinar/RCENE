@@ -77,7 +77,7 @@ export function Example() {
       <SiteShell
         title={t("site")}
         brand={<AppMark size={32} />}
-        documentTitle={false}
+        embedded
         nav={[
           { to: "#shell-features", label: t("features") },
           { to: "#shell-plan", label: t("plan") },

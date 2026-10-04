@@ -33,22 +33,28 @@ const GRID_LINES =
   "bg-[linear-gradient(to_right,color-mix(in_oklab,var(--primary)_16%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--primary)_16%,transparent)_1px,transparent_1px)] bg-size-[48px_48px]";
 const GRID_CELL = 48;
 
-/** Plain text of a title, for re-running the reveal when it changes (e.g. a language switch). */
-function textKey(node: ReactNode): string {
-  return typeof node === "string" || typeof node === "number" ? String(node) : "";
+/**
+ * The title as plain text, or null when it is a node (<em>, <span>…). Only a
+ * text title is split into words: SplitText rewrites the h1's children, and
+ * React must never meet that DOM again. The text also keys the h1, so a new
+ * title (a language switch) mounts a fresh element instead of updating one
+ * SplitText has touched.
+ */
+function textKey(node: ReactNode): string | null {
+  return typeof node === "string" || typeof node === "number" ? String(node) : null;
 }
 
 /**
- * The entrance: the title's words rise in (GSAP SplitText), then the eyebrow,
- * lead, actions and media fade up; the showcase backdrop drifts. Skipped
- * entirely under reduced motion. The split is reverted as soon as the words
- * land, so React owns plain text again; while split, SplitText's aria "auto"
- * labels the h1 with its full text and hides the word pieces.
+ * The entrance: a text title's words rise in (GSAP SplitText; a node title
+ * rises as a whole, untouched), then the eyebrow, lead, actions and media fade
+ * up; the showcase backdrop drifts. Skipped entirely under reduced motion. The
+ * split is reverted as soon as the words land; while split, SplitText's aria
+ * "auto" labels the h1 with its full text and hides the word pieces.
  */
 function useHeroReveal(
   root: RefObject<HTMLElement | null>,
   heading: RefObject<HTMLHeadingElement | null>,
-  { showcase, reduced, revealKey }: { showcase: boolean; reduced: boolean; revealKey: string },
+  { showcase, reduced, revealKey }: { showcase: boolean; reduced: boolean; revealKey: string | null },
 ) {
   useGSAP(
     () => {
@@ -64,6 +70,7 @@ function useHeroReveal(
         delete h1.dataset.split;
       };
       try {
+        if (revealKey === null) throw new Error("node title: not split");
         split = SplitText.create(h1, {
           type: "words",
           tag: "span",
@@ -82,7 +89,7 @@ function useHeroReveal(
           h1.dataset.split = "true";
         }
       } catch {
-        // No layout (or an unusual title): show the title as is.
+        // A node title (or no layout): never split; the h1 rises as a whole below.
         unsplit();
         split = null;
       }
@@ -96,6 +103,9 @@ function useHeroReveal(
           stagger: STAGGER.base,
           onComplete: unsplit,
         });
+      } else {
+        // opacity, not autoAlpha: the heading stays in the accessibility tree while it fades in.
+        tl.from(h1, { y: 24, opacity: 0, duration: DURATION.slow, clearProps: "transform,opacity" });
       }
       const rest = q("[data-hero-reveal]");
       if (rest.length) {
@@ -183,7 +193,7 @@ export function Hero({ eyebrow, title, lead, actions, media, variant = "calm", c
         {title}
       </span>
       <h1
-        key={revealKey || undefined}
+        key={revealKey ?? undefined}
         ref={heading}
         id={titleId}
         className={cn(SHOWCASE_TITLE, SHOWCASE_GRADIENT, "data-[split]:bg-none")}
@@ -193,7 +203,7 @@ export function Hero({ eyebrow, title, lead, actions, media, variant = "calm", c
     </div>
   ) : (
     <h1
-      key={revealKey || undefined}
+      key={revealKey ?? undefined}
       ref={heading}
       id={titleId}
       className="font-display text-display-1 font-semibold tracking-tight text-balance text-foreground [&_em]:text-primary [&_em]:not-italic"

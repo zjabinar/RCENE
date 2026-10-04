@@ -98,3 +98,76 @@ describe("Hero", () => {
     });
   }
 });
+
+describe("Hero title changes (motion on)", () => {
+  const finish = () => gsap.globalTimeline.getChildren(true, true, false).forEach((tl) => tl.progress(1));
+
+  for (const variant of ["calm", "showcase"] as const) {
+    it(`${variant}: a node title is never split, and re-renders (same shape and new shape) stay in sync`, () => {
+      stubMotion(false);
+      vi.stubGlobal("IntersectionObserver", StubIntersectionObserver);
+      const { rerender } = render(
+        <Hero
+          variant={variant}
+          title={
+            <>
+              Know your <em>hazard</em>
+            </>
+          }
+        />,
+      );
+      const h1 = () => screen.getByRole("heading", { level: 1 });
+      expect(h1().querySelector("[aria-hidden]")).toBeNull();
+      expect(h1().textContent).toBe("Know your hazard");
+      finish();
+
+      rerender(
+        <Hero
+          variant={variant}
+          title={
+            <>
+              Know your <em>route</em>
+            </>
+          }
+        />,
+      );
+      expect(h1().textContent).toBe("Know your route");
+      expect(screen.getByRole("heading", { level: 1, name: "Know your route" })).toBeTruthy();
+
+      // A different node shape, mid-animation and after it.
+      expect(() =>
+        rerender(
+          <Hero
+            variant={variant}
+            title={
+              <>
+                <strong>Plan</strong> ahead, <em>together</em>
+              </>
+            }
+          />,
+        ),
+      ).not.toThrow();
+      expect(h1().textContent).toBe("Plan ahead, together");
+      finish();
+      expect(() => rerender(<Hero variant={variant} title={<span>Handa kita</span>} />)).not.toThrow();
+      expect(h1().textContent).toBe("Handa kita");
+    });
+
+    it(`${variant}: a string title change (a language switch) remounts cleanly, after and during the reveal`, () => {
+      stubMotion(false);
+      vi.stubGlobal("IntersectionObserver", StubIntersectionObserver);
+      const { rerender } = render(<Hero variant={variant} title="Ready together, Catbalogan" />);
+      finish();
+      rerender(<Hero variant={variant} title="Andam kita, Catbalogan" />);
+      // The new title is split for its own reveal; its name is the new text.
+      expect(screen.getByRole("heading", { level: 1, name: "Andam kita, Catbalogan" })).toBeTruthy();
+      // Change again mid-reveal.
+      expect(() => rerender(<Hero variant={variant} title="Handa tayo, Catbalogan" />)).not.toThrow();
+      finish();
+      const h1 = screen.getByRole("heading", { level: 1, name: "Handa tayo, Catbalogan" });
+      expect(h1.textContent).toBe("Handa tayo, Catbalogan");
+      expect(h1.querySelector("[aria-hidden]")).toBeNull();
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    });
+  }
+});

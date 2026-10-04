@@ -9,11 +9,11 @@
  * the app's defaults (project.json "theme", recorded on <html> by the boot
  * script), else habi + the device setting. A showcase surface means gabi dark.
  */
-import { useEffect, useId, useSyncExternalStore } from "react";
+import { createContext, createElement, useContext, useId, useLayoutEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 
 import { resolveDefaults } from "./boot.ts";
 import type { Mode, ModeSetting, Palette, ThemeDefaults } from "./palettes.ts";
-import { useOverrideStore, useThemeStore, type ThemeChoice, type ThemeOverride } from "./store.ts";
+import { mergeOverrides, useOverrideStore, useThemeStore, type ThemeChoice, type ThemeOverride } from "./store.ts";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
@@ -74,8 +74,21 @@ export function applyTheme(el: HTMLElement, theme: EffectiveTheme): void {
   }
 }
 
-function useTopOverride(): ThemeOverride | null {
-  return useOverrideStore((s) => s.stack[s.stack.length - 1]?.value ?? null);
+function useMergedOverride(): ThemeOverride | null {
+  const stack = useOverrideStore((s) => s.stack);
+  return useMemo(() => mergeOverrides(stack), [stack]);
+}
+
+/** How deep the calling component sits under theme-overriding shells. */
+const OverrideDepth = createContext(0);
+
+/**
+ * Marks its children as one level deeper for useThemeOverride, so a page's
+ * override beats its shell's (AppShell wraps its content in one).
+ */
+export function ThemeOverrideScope({ children }: { children?: ReactNode }) {
+  const depth = useContext(OverrideDepth);
+  return createElement(OverrideDepth.Provider, { value: depth + 1 }, children);
 }
 
 export interface UseTheme {
@@ -95,7 +108,7 @@ export function useTheme(): UseTheme {
   const mode = useThemeStore((s) => s.mode);
   const setPalette = useThemeStore((s) => s.setPalette);
   const setMode = useThemeStore((s) => s.setMode);
-  const override = useTopOverride();
+  const override = useMergedOverride();
   const systemDark = useSystemDark();
   const defaults = readThemeDefaults();
   const choice = { palette, mode };
@@ -113,7 +126,8 @@ export function useTheme(): UseTheme {
 export function useThemeSync(): EffectiveTheme {
   const { effective } = useTheme();
   const { palette, mode, surface } = effective;
-  useEffect(() => {
+  // A layout effect, so a view that forces its theme never paints a frame in the wrong one.
+  useLayoutEffect(() => {
     applyTheme(document.documentElement, { palette, mode, surface });
   }, [palette, mode, surface]);
   return effective;
@@ -122,22 +136,25 @@ export function useThemeSync(): EffectiveTheme {
 /**
  * Forces a palette, mode or the showcase surface while the calling view is
  * mounted, without touching the user's choice. Pass null/undefined for none.
+ * Overrides merge field by field; one set deeper in the tree (a page inside
+ * AppShell) wins over a shallower one (AppShell's own props).
  *   useThemeOverride({ palette: "malinaw", mode: "dark" })   // a public board
  *   useThemeOverride({ surface: "showcase" })                 // a landing page
  */
 export function useThemeOverride(value: ThemeOverride | null | undefined): void {
   const id = useId();
+  const depth = useContext(OverrideDepth);
   const push = useOverrideStore((s) => s.push);
   const remove = useOverrideStore((s) => s.remove);
   const palette = value?.palette;
   const mode = value?.mode;
   const surface = value?.surface;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!palette && !mode && !surface) {
       remove(id);
       return;
     }
-    push(id, { palette, mode, surface });
+    push(id, depth, { palette, mode, surface });
     return () => remove(id);
-  }, [id, palette, mode, surface, push, remove]);
+  }, [id, depth, palette, mode, surface, push, remove]);
 }

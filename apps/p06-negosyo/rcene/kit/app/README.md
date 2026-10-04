@@ -82,7 +82,7 @@ const columns: ColumnDef<Centre>[] = [
 ```
 
 ### CapacityMeter
-`{ value: number; max: number; label: string; thresholds?: { warn; full } (0.75, 1); showNumbers?: boolean (true); size?: "default" | "lg" }` — `role="meter"` with `aria-valuenow/min/max` and `aria-valuetext` "{value} of {max} — Nearly full"; the bar goes primary → warning → destructive (hatched when over), with an icon + word chip (OPEN, NEARLY FULL, FULL, OVER CAPACITY) and "n left" / "n over". `capacityState(value, max, thresholds?)` gives the state for your own logic.
+`{ value: number; max: number; label: string; thresholds?: { warn; full } (0.75, 1); showNumbers?: boolean (true); size?: "default" | "lg" }` — `role="meter"` with `aria-valuenow/min/max` and `aria-valuetext` "{value} of {max} — Nearly full"; the bar goes primary (open) → brand (nearly full) → foreground with a diagonal hatch (full) or a cross-hatch (over), with an icon + word chip (OPEN, NEARLY FULL, FULL, OVER CAPACITY) and "n left" / "n over". It never uses a hazard colour (no warning or destructive, no hazard-level icons), so it can sit next to hazard answers on a board. `capacityState(value, max, thresholds?)` gives the state for your own logic.
 
 ```tsx
 <CapacityMeter label={centre.name} value={centre.evacuees} max={centre.capacity} />
