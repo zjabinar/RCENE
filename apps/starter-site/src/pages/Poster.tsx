@@ -1,0 +1,127 @@
+/**
+ * The A3 poster (portrait): the six panels of the competition poster, with
+ * SVG figures drawn from the same layers as the site (a WebGL map does not
+ * print). Print from Chrome or Edge with the toolbar's Print button: Save as
+ * PDF, margins None, background graphics on. Only the sheet prints.
+ */
+import { useT } from "@rcene/i18n";
+import { Wordmark } from "@rcene/kit/brand";
+import { AiBuiltPanel, PosterFigure, PosterPage, QrToApp, SixPanelPoster } from "@rcene/kit/poster";
+import { SITE_CONTAINER } from "@rcene/kit/site";
+import { LoadGate } from "@rcene/ui";
+import { cn } from "@rcene/ui/lib/utils";
+import { CityMapSvg } from "@/features/city-map-svg/CityMapSvg.tsx";
+import { MapKey } from "@/features/city-map-svg/MapKey.tsx";
+import { useCityStats, type CityData } from "@/features/city-data/use-city-data.ts";
+import { useShareFormat } from "@/features/city-data/use-share-format.ts";
+import { HazardShareSvg } from "@/features/hazard-chart/HazardShareSvg.tsx";
+import { strings } from "@/i18n/strings.ts";
+
+function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
+  const t = useT(strings);
+  const share = useShareFormat();
+  const { layers, stats } = data;
+  const flood = stats.flood;
+
+  return (
+    <SixPanelPoster
+      title={t("app.title")}
+      subtitle={t("poster.subtitle")}
+      qr={<QrToApp url={siteUrl} label={t("about.qr.label")} size="34mm" />}
+      footer={
+        <>
+          <span>{t("poster.footer.event")}</span>
+          <span className="flex items-center gap-3">
+            {t("poster.footer.kit")}
+            <Wordmark variant="compact" className="text-lg text-foreground" />
+          </span>
+        </>
+      }
+      panels={{
+        problem: (
+          <>
+            <p>{t("poster.problem.1")}</p>
+            <p>{t("poster.problem.2")}</p>
+          </>
+        ),
+        picture: (
+          <PosterFigure
+            title={t("poster.picture.title")}
+            caption={
+              flood
+                ? t("poster.picture.caption", { share: share(flood.share), n: flood.facilities.inZone.length, total: stats.facilities })
+                : t("data.layerMissing", { hazard: t("hazard.flood") })
+            }
+            source={t("poster.picture.source")}
+            downloadSvg="catbalogan-flood-zones"
+          >
+            <CityMapSvg
+              layers={layers}
+              hazard={flood ? "flood" : undefined}
+              facilities={flood ? "split" : "all"}
+              split={flood?.facilities}
+              label={
+                flood
+                  ? t("map.floodLabel", { inZone: flood.facilities.inZone.length, f: stats.facilities })
+                  : t("map.cityLabel", { n: stats.barangays, f: stats.facilities })
+              }
+              width={720}
+            />
+            <MapKey hazard={flood ? "flood" : undefined} facilities={flood ? "split" : "all"} className="mt-[3mm]" />
+          </PosterFigure>
+        ),
+        different: (
+          <ul className="flex list-disc flex-col gap-2 ps-6">
+            <li>{t("poster.different.1")}</li>
+            <li>{t("poster.different.2")}</li>
+            <li>{t("poster.different.3")}</li>
+          </ul>
+        ),
+        ai: (
+          <AiBuiltPanel
+            tools={[
+              { name: "Claude Code", role: t("about.ai.tool.claude") },
+              { name: "Playwright", role: t("about.ai.tool.playwright") },
+            ]}
+            steps={[t("about.ai.step.brief"), t("about.ai.step.domain"), t("about.ai.step.kit"), t("about.ai.step.review")]}
+            disclosure={t("about.ai.disclosure")}
+          />
+        ),
+        data: (
+          <div className="flex flex-col gap-[3mm]">
+            <PosterFigure title={t("poster.data.chart")} caption={t("poster.data.chartCaption")} downloadSvg="catbalogan-hazard-shares">
+              <HazardShareSvg shares={stats.byHazard} />
+            </PosterFigure>
+            <ul className="flex list-disc flex-col gap-1 ps-6 text-[0.9em]">
+              <li>{t("poster.data.1")}</li>
+              <li>{t("poster.data.2")}</li>
+              <li>{t("poster.data.3")}</li>
+            </ul>
+          </div>
+        ),
+        impact: (
+          <ul className="grid list-disc grid-cols-3 gap-x-[10mm] gap-y-2 ps-6">
+            <li>{t("poster.impact.1")}</li>
+            <li>{t("poster.impact.2")}</li>
+            <li>{t("poster.impact.3")}</li>
+          </ul>
+        ),
+      }}
+    />
+  );
+}
+
+export function Poster() {
+  const t = useT(strings);
+  const city = useCityStats();
+  // The QR code follows the address in the browser bar: open the poster from the laptop's LAN address before printing.
+  const siteUrl = typeof window === "undefined" ? "/" : `${window.location.origin}/`;
+
+  return (
+    <div className={cn(SITE_CONTAINER, "py-6 sm:py-8")}>
+      <PosterPage title={t("poster.sheet")} size="A3" fit="contain" className="h-[calc(100svh-5.5rem)] min-h-[40rem]">
+        <LoadGate state={city}>{(data) => <SixPanels data={data} siteUrl={siteUrl} />}</LoadGate>
+      </PosterPage>
+    </div>
+  );
+}

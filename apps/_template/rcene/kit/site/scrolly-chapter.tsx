@@ -40,7 +40,8 @@ function scrollParent(el: Element | null): Element | null {
 /**
  * Scrollytelling: a sticky visual panel beside the step cards (desktop) or
  * behind them (phone). The step crossing the middle of the screen is active
- * (IntersectionObserver, no pinning), and the change is announced politely.
+ * (IntersectionObserver, no pinning; settled again when a scroll jump skips
+ * the band), and the change is announced politely.
  * Steps are focusable: Tab or the up/down arrow keys move between them, and
  * the dots on the panel jump to a step. Nothing depends on animation.
  *
@@ -89,6 +90,33 @@ export function ScrollyChapter({ steps, visual, onStepChange, headingLevel = 3, 
     );
     for (const el of stepRefs.current.slice(0, total)) if (el) io.observe(el);
     return () => io.disconnect();
+  }, [activate, total]);
+
+  // A jump (scrollbar drag, Page Down, an anchor) can carry a step across the band between two
+  // observations. When scrolling settles, the last step whose top is above the band wins.
+  useEffect(() => {
+    const root = scrollParent(rootRef.current);
+    const target: Element | Window = root ?? window;
+    let timer = 0;
+    const settle = () => {
+      const top = root ? root.getBoundingClientRect().top : 0;
+      const height = root ? root.clientHeight : window.innerHeight;
+      const line = top + height * 0.55;
+      let index = -1;
+      stepRefs.current.slice(0, total).forEach((el, i) => {
+        if (el && el.getBoundingClientRect().top <= line) index = i;
+      });
+      if (index >= 0) activate(index);
+    };
+    const onScroll = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(settle, 120);
+    };
+    target.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      target.removeEventListener("scroll", onScroll);
+    };
   }, [activate, total]);
 
   const goTo = (index: number) => {

@@ -35,6 +35,7 @@ export const strings = extendStrings(common, {
       "Map of Catbalogan City with the mapped flood zones coloured by level; {inZone} of the {f} mapped facilities stand in a mapped flood zone.",
     "key.facilities": "Facilities",
     "key.inZone": "In a mapped flood zone",
+    "key.inSurgeZone": "In a mapped storm-surge zone",
     "key.other": "Other mapped facility",
 
     // Home
@@ -96,6 +97,7 @@ export const strings = extendStrings(common, {
     "story.compare.before": "Without hazard layers",
     "story.compare.after": "With mapped flood zones",
     "story.chart.eyebrow": "Every hazard",
+    "story.chart.section": "How much of the city each hazard layer covers",
     "story.chart.title": "Share of the city's land in a mapped zone",
     "story.chart.lead": "One bar per hazard layer. Each hazard counts once, whatever the level; different hazards overlap.",
     "story.chart.hazard": "Hazard",
@@ -136,7 +138,8 @@ export const strings = extendStrings(common, {
     "about.ai.step.review": "A person reviews every change before it is kept",
     "about.ai.disclosure":
       "Built before today, with AI: data, shared libraries, the design kit and 20 single-feature apps (Claude Code, parallel sessions). Built today: everything after the pre-event-freeze tag, shown by git diff pre-event-freeze..HEAD.",
-    "about.qr.eyebrow": "On your phone",
+    "about.share.eyebrow": "Share it",
+    "about.share.title": "On a phone, or on the big screen",
     "about.qr.title": "Open this site on a phone",
     "about.qr.body":
       "The code opens the address shown in your browser bar. For phones on the same Wi-Fi, start the site with npm run preview -- --host and open this page from the laptop's network address first.",
@@ -226,6 +229,7 @@ export const strings = extendStrings(common, {
       "Mapa han Syudad han Catbalogan upod an mga nakamapa nga zone han baha nga may kolor kada level; {inZone} han {f} nga nakamapa nga pasilidad an aada ha nakamapa nga zone han baha.",
     "key.facilities": "Mga pasilidad",
     "key.inZone": "Aada ha nakamapa nga zone han baha",
+    "key.inSurgeZone": "Aada ha nakamapa nga zone han daluyong",
     "key.other": "Iba nga nakamapa nga pasilidad",
     "home.hero.eyebrow": "Syudad han Catbalogan · Bukas nga datos",
     "home.hero.title": "Usa nga syudad, hinabol tikang ha bukas nga datos",
@@ -283,6 +287,7 @@ export const strings = extendStrings(common, {
     "story.compare.before": "Waray hazard nga layer",
     "story.compare.after": "Upod an nakamapa nga zone han baha",
     "story.chart.eyebrow": "Kada hazard",
+    "story.chart.section": "Pira han syudad an sakop han kada hazard nga layer",
     "story.chart.title": "Bahin han tuna han syudad nga aada ha nakamapa nga zone",
     "story.chart.lead": "Usa nga bar kada hazard nga layer. Kada hazard usa la kaihap, bisan ano an level; nagsasapaw an magkalain-lain nga hazard.",
     "story.chart.hazard": "Hazard",
@@ -321,7 +326,8 @@ export const strings = extendStrings(common, {
     "about.ai.step.review": "Ginsusi han tawo an kada pagbag-o antes ini tipigan",
     "about.ai.disclosure":
       "Ginhimo antes yana, upod an AI: datos, shared libraries, an design kit ngan 20 nga single-feature app (Claude Code, parallel nga session). Ginhimo yana: ngatanan katapos han pre-event-freeze tag, makikita ha git diff pre-event-freeze..HEAD.",
-    "about.qr.eyebrow": "Ha imo telepono",
+    "about.share.eyebrow": "Ipaambit",
+    "about.share.title": "Ha telepono, o ha dako nga screen",
     "about.qr.title": "Abrihi ini nga site ha telepono",
     "about.qr.body":
       "Gin-aabrihan han code an address nga aada ha imo browser bar. Para ha mga telepono ha pareho nga Wi-Fi, patikanga an site gamit an npm run preview -- --host ngan abrihi anay ini nga pahina tikang ha network address han laptop.",
@@ -405,6 +411,7 @@ export const strings = extendStrings(common, {
       "Mapa ng Lungsod ng Catbalogan na may mga nakamapang zone ng baha na may kulay ayon sa antas; {inZone} sa {f} na nakamapang pasilidad ang nasa nakamapang zone ng baha.",
     "key.facilities": "Mga pasilidad",
     "key.inZone": "Nasa nakamapang zone ng baha",
+    "key.inSurgeZone": "Nasa nakamapang zone ng daluyong",
     "key.other": "Ibang nakamapang pasilidad",
     "home.hero.eyebrow": "Lungsod ng Catbalogan · Bukas na datos",
     "home.hero.title": "Iisang lungsod, hinabi mula sa bukas na datos",
@@ -462,6 +469,7 @@ export const strings = extendStrings(common, {
     "story.compare.before": "Walang hazard na layer",
     "story.compare.after": "May nakamapang zone ng baha",
     "story.chart.eyebrow": "Bawat hazard",
+    "story.chart.section": "Gaano kalaki ng lungsod ang sakop ng bawat hazard na layer",
     "story.chart.title": "Bahagi ng lupa ng lungsod na nasa nakamapang zone",
     "story.chart.lead": "Isang bar bawat hazard na layer. Isang beses binibilang ang bawat hazard, anuman ang antas; nagsasapawan ang magkakaibang hazard.",
     "story.chart.hazard": "Hazard",
@@ -500,7 +508,8 @@ export const strings = extendStrings(common, {
     "about.ai.step.review": "Sinusuri ng isang tao ang bawat pagbabago bago ito panatilihin",
     "about.ai.disclosure":
       "Binuo bago ngayong araw, gamit ang AI: datos, shared libraries, ang design kit at 20 single-feature app (Claude Code, parallel na session). Binuo ngayong araw: lahat pagkatapos ng pre-event-freeze tag, makikita sa git diff pre-event-freeze..HEAD.",
-    "about.qr.eyebrow": "Sa iyong telepono",
+    "about.share.eyebrow": "Ibahagi",
+    "about.share.title": "Sa telepono, o sa malaking screen",
     "about.qr.title": "Buksan ang site na ito sa telepono",
     "about.qr.body":
       "Binubuksan ng code ang address na nasa browser bar mo. Para sa mga telepono sa parehong Wi-Fi, simulan ang site gamit ang npm run preview -- --host at buksan muna ang pahinang ito mula sa network address ng laptop.",

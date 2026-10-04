@@ -9,9 +9,9 @@ All content props take text that is **already translated** (`t("…")`); the blo
 | Block | Props (main) | Use for |
 |---|---|---|
 | `PageHeader` | `title; description?; eyebrow?; actions?; breadcrumbs?: { label; to? }[]` | the top of every route (the page's only h1) |
-| `ConsoleLayout` | `nav: { to; label; icon?; badge?; end? }[]; aside?; asideLabel?; title?; children` | staff and operator consoles; the side nav becomes a sheet below `lg` |
+| `ConsoleLayout` | `nav: { to; label; icon?; badge?; end?; onSelect?; active? }[]; aside?; asideLabel?; title?; children` | staff and operator consoles; the side nav becomes a sheet below `lg` |
 | `BoardShell` | `title; subtitle?; status?; clock? (true); children; footer?` | public displays and kiosks (pair with `palette="malinaw"`) |
-| `BoardRotator` | `items: ReactNode[]; intervalMs? (10000); paused?; label?` | several board panels in turn, with pause and previous/next |
+| `BoardRotator` | `items: ReactNode[]; intervalMs? (10000); paused?; defaultPaused?; label?` | several board panels in turn, with pause and previous/next |
 | `KpiRow` | `items: StatTileProps[]; columns? (4); label?` | three or four headline numbers |
 | `DataTable<T>` | `columns: ColumnDef<T>[]; data; caption; search?; pageSize? (10); onRowActivate?; exportCsv?: { filename; columns }; empty?; toolbar?` | any list of records: sort, search, paging, CSV |
 | `ChartCard` | `title; description?; caveat?; table: { columns; rows }; children (the chart); defaultView?; actions?` | every chart: a Chart / Table switch so the data is readable |

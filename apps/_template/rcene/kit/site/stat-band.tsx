@@ -69,7 +69,7 @@ export function StatBand({ items, tone = "default", className }: StatBandProps) 
         "grid grid-cols-2 gap-px overflow-hidden rounded-2xl border shadow-raised",
         COLUMNS[count],
         items.length > 4 && "lg:grid-cols-4",
-        brand ? "border-brand bg-brand-foreground/20" : "bg-border",
+        brand ? "border-brand bg-[color-mix(in_oklab,var(--brand-foreground)_28%,var(--brand))]" : "bg-border",
         className,
       )}
     >

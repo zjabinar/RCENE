@@ -87,6 +87,26 @@ describe("ScrollyChapter", () => {
     expect(onStepChange).toHaveBeenLastCalledWith(2);
   });
 
+  it("settles on the right step after a scroll jump that skipped the middle band", async () => {
+    vi.useFakeTimers();
+    try {
+      const { cards, onStepChange } = setup();
+      // Cards 1 and 2 are above the line (55% of the viewport), card 3 below it.
+      const tops = [-900, 100, 2000];
+      cards.forEach((card, i) => {
+        card.getBoundingClientRect = () => ({ top: tops[i]!, bottom: tops[i]! + 200 }) as DOMRect;
+      });
+      act(() => {
+        window.dispatchEvent(new Event("scroll"));
+        vi.advanceTimersByTime(200);
+      });
+      expect(screen.getByTestId("visual").textContent).toBe("Visual 1");
+      expect(onStepChange).toHaveBeenLastCalledWith(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("step cards are focusable and navigable with the arrow keys, Home and End", async () => {
     const user = userEvent.setup();
     const { cards } = setup();
