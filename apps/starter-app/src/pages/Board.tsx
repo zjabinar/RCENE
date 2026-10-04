@@ -7,6 +7,7 @@ import { computeKpis, crewLoad } from "@/domain/kpis.ts";
 import { CATEGORIES, newestFirst, type RequestRecord } from "@/domain/records.ts";
 import { demoNow } from "@/domain/time.ts";
 import { CATEGORY_ICONS, StatusBadge } from "@/features/requests/badges.tsx";
+import { fill } from "@/i18n/fill.tsx";
 import { strings } from "@/i18n/strings.ts";
 import { useRecords } from "@/store.ts";
 
@@ -36,7 +37,7 @@ export function Board() {
         newest && (
           <>
             <BellRingIcon aria-hidden="true" className="size-8 shrink-0 text-primary" />
-            {t("board.status", { n: fmt.number(kpis.open), code: newest.code })}
+            <span>{fill(t("board.status", { n: fmt.number(kpis.open) }), { code: <span className="whitespace-nowrap">{newest.code}</span> })}</span>
           </>
         )
       }

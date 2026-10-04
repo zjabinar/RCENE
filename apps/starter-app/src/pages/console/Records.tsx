@@ -36,7 +36,7 @@ export function ConsoleRecords() {
           </Button>
         }
       />
-      <ol aria-label={t("records.steps")} className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+      <ol aria-label={t("records.steps")} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {STATUSES.map((status) => (
           <StatusColumn key={status} status={status} records={records.filter((r) => r.status === status)} now={now} />
         ))}
@@ -54,7 +54,7 @@ function StatusColumn({ status, records, now }: { status: Status; records: Reque
 
   return (
     <li className="flex min-w-0 flex-col rounded-xl border bg-muted/40">
-      <h2 className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
+      <h2 className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 font-sans">
         <StatusBadge status={status} />
         <span className="text-sm font-semibold text-muted-foreground tabular-nums">{fmt.number(records.length)}</span>
       </h2>

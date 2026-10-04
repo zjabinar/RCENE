@@ -5,44 +5,31 @@
  *   @import "tailwindcss" source(none);
  *   @import "../rcene/ui/styles/globals.css";
  *
- * Fonts are self-hosted (@fontsource-variable/inter) because the demo runs
- * with Wi-Fi off. Never add a font CDN.
+ * Colours come from themes.css (5 palettes x light/dark, chosen with
+ * data-palette / data-mode on <html>); this file holds the hazard tokens,
+ * which never change with the theme, and maps everything to Tailwind.
+ * Fonts are self-hosted (@fontsource-variable/*) because the demo runs with
+ * Wi-Fi off. Never add a font CDN. A browser downloads a font file only when
+ * a page uses that font.
  */
 @import "tw-animate-css";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/exo-2";
+@import "@fontsource-variable/exo-2/wght-italic.css";
+@import "./themes.css";
+@import "./patterns.css";
 
-@custom-variant dark (&:is(.dark *));
+/* dark: utilities follow data-mode (and the legacy .dark class) and apply inside a showcase surface. */
+/*
+ * dark: matches inside a dark <html> or a dark region (data-mode="dark", the showcase
+ * surface), but not inside a light region in the page (Surface mode="light", a poster
+ * sheet), so a light poster in a dark app stays light.
+ */
+@custom-variant dark (&:where(.dark, .dark *, [data-mode="dark"], [data-mode="dark"] *, [data-surface="showcase"], [data-surface="showcase"] *):not(:where(body [data-mode="light"], body [data-mode="light"] *)));
 
 :root {
   --radius: 0.625rem;
-
-  /* Calm civic palette: slate neutrals, teal primary. */
-  --background: oklch(0.984 0.003 247.858);
-  --foreground: oklch(0.208 0.042 265.755);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.208 0.042 265.755);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.208 0.042 265.755);
-  --primary: oklch(0.511 0.096 186.391);
-  --primary-foreground: oklch(0.984 0.014 180.72);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.446 0.043 257.281);
-  --accent: oklch(0.953 0.02 190);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --warning: oklch(0.962 0.059 95.617);
-  --warning-foreground: oklch(0.414 0.112 45.904);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.64 0.04 257);
-  --ring: oklch(0.511 0.096 186.391);
-  --chart-1: oklch(0.6 0.118 184.704);
-  --chart-2: oklch(0.588 0.158 241.966);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.558 0.288 302.321);
-  --chart-5: oklch(0.554 0.046 257.417);
 
   /*
    * Hazard tokens. Values MUST equal LEVEL_HEX / STATUS_HEX in
@@ -64,37 +51,10 @@
   --status-outside-foreground: #111827;
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.777 0.152 181.912);
-  --primary-foreground: oklch(0.277 0.046 192.524);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.208 0.042 265.755);
-  --warning: oklch(0.279 0.077 45.635);
-  --warning-foreground: oklch(0.924 0.12 95.746);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 25%);
-  --ring: oklch(0.704 0.14 182.503);
-  --chart-1: oklch(0.704 0.14 182.503);
-  --chart-2: oklch(0.685 0.169 237.323);
-  --chart-3: oklch(0.828 0.189 84.429);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.704 0.04 256.788);
-}
-
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--display-family);
+  --font-showcase: "Exo 2 Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -127,6 +87,23 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-weave-1: var(--weave-1);
+  --color-weave-2: var(--weave-2);
+  --color-weave-3: var(--weave-3);
+  --color-glow: var(--glow);
+  --color-seq-1: var(--seq-1);
+  --color-seq-2: var(--seq-2);
+  --color-seq-3: var(--seq-3);
+  --color-seq-4: var(--seq-4);
+  --color-seq-5: var(--seq-5);
+
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 14px rgb(0 0 0 / 0.07);
+  --shadow-overlay: 0 10px 30px rgb(0 0 0 / 0.16), 0 2px 6px rgb(0 0 0 / 0.08);
+  --shadow-glow: 0 0 0 1px var(--glow), 0 0 28px var(--glow);
 
   --color-level-low: var(--level-low);
   --color-level-low-foreground: var(--level-low-foreground);
@@ -142,6 +119,23 @@
   --color-status-outside-foreground: var(--status-outside-foreground);
 }
 
+/* Type scale for heroes and boards, and the shared easing (motion/tokens.ts mirrors it for GSAP). */
+@theme {
+  --text-display-1: clamp(2.5rem, 1.6rem + 3.2vw, 4.5rem);
+  --text-display-1--line-height: 1.05;
+  --text-display-2: clamp(2rem, 1.5rem + 2vw, 3.25rem);
+  --text-display-2--line-height: 1.1;
+  --text-display-3: clamp(1.5rem, 1.25rem + 1vw, 2.25rem);
+  --text-display-3--line-height: 1.15;
+  --text-board-1: clamp(3rem, 2rem + 3vw, 5.5rem);
+  --text-board-1--line-height: 1;
+  --text-board-2: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+  --text-board-2--line-height: 1.1;
+  --text-board-3: clamp(1.75rem, 1.5rem + 0.8vw, 2.25rem);
+  --text-board-3--line-height: 1.2;
+  --ease-weave: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -153,6 +147,12 @@
 
   body {
     @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* The palette's display face (Fraunces, Exo 2 for gabi, Inter for malinaw) on page and section titles. */
+  h1,
+  h2 {
+    font-family: var(--display-family);
   }
 
   /* Visible keyboard focus everywhere. Components that draw their own ring set outline-none. */

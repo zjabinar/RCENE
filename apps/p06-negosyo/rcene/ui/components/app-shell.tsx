@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { Link, NavLink } from "react-router";
 import { RotateCcwIcon } from "lucide-react";
 import type { LayerName } from "@rcene/data";
@@ -6,11 +6,15 @@ import { StringsProvider, useAppStrings, useT, type AppStrings } from "@rcene/i1
 import { resetDemo } from "@rcene/store";
 
 import { cn } from "../lib/utils.ts";
+import type { ModeSetting, Palette } from "../theme/palettes.ts";
+import { useThemeOverride, useThemeSync } from "../theme/sync.ts";
+import { ThemeMenu } from "../theme/theme-menu.tsx";
 import { Button } from "./ui/button.tsx";
 import { Toaster } from "./ui/sonner.tsx";
 import { DisclaimerFooter } from "./disclaimer-footer.tsx";
 import { LangToggle } from "./lang-toggle.tsx";
 import { SampleDataBadge } from "./sample-data-badge.tsx";
+import { SkipLink } from "./skip-link.tsx";
 
 export interface NavItem {
   to: string;
@@ -31,7 +35,7 @@ export interface AppShellProps {
   layers?: readonly LayerName[];
   /** phone = max-w-md (resident views, designed at 390px); wide (default) = max-w-7xl; full = full-bleed, no padding. */
   width?: AppShellWidth;
-  /** Show a "Reset demo" button that clears every persisted store except the language. */
+  /** Show a "Reset demo" button that clears every persisted store except the language and theme. */
   showReset?: boolean;
   /**
    * The app's string table (`extendStrings(common, …)`). Everything inside the
@@ -43,6 +47,18 @@ export interface AppShellProps {
   disclaimer?: string;
   /** Mount the shared, themed sonner <Toaster/> once (default true). Then call `toast("…")` from `@rcene/ui`. */
   toaster?: boolean;
+  /** A mark before the title, e.g. <AppMark /> from @rcene/kit/brand. Decorative (aria-hidden) unless you label it. */
+  brand?: ReactNode;
+  /** Show the theme menu (light/dark + palettes) in the header (default true). */
+  themeMenu?: boolean;
+  /** Force a palette for this view (e.g. "malinaw" on a public board). Not persisted; the menu says the view sets its colours. */
+  palette?: Palette;
+  /** Force light or dark for this view. Not persisted. */
+  mode?: ModeSetting;
+  /** "showcase": the whole view in the bold dark gabi look (landing pages, the demo). */
+  surface?: "showcase";
+  /** A woven band under the header (the Living Tapestry signature). Default true. */
+  weave?: boolean;
   children: ReactNode;
 }
 
@@ -58,19 +74,6 @@ const MAIN: Record<AppShellWidth, string> = {
   full: "flex min-h-0 w-full flex-col",
 };
 
-/**
- * Moves focus to <main> without changing the URL hash (which the router would
- * see as a navigation). <main> starts right under the sticky header, so
- * scrolling to the top shows its start instead of hiding it under the header.
- */
-function skipToMain(event: MouseEvent<HTMLAnchorElement>) {
-  const main = document.getElementById("main");
-  if (!main) return;
-  event.preventDefault();
-  main.focus({ preventScroll: true });
-  window.scrollTo({ top: 0 });
-}
-
 /** `strings` with one key replaced in every language (an explicit, already-translated override). */
 function withString(strings: AppStrings, key: keyof AppStrings["en"] & string, text: string): AppStrings {
   return {
@@ -81,10 +84,10 @@ function withString(strings: AppStrings, key: keyof AppStrings["en"] & string, t
 }
 
 /**
- * App chrome: skip link, sticky header (title, tagline, sample-data badge,
- * actions, reset, language), optional nav row, <main id="main">, the
- * disclaimer footer and the toast region. Provides `strings` to every shared
- * component inside it.
+ * App chrome: skip link, sticky header (brand, title, tagline, sample-data
+ * badge, actions, reset, theme, language), optional nav row, <main id="main">,
+ * the disclaimer footer and the toast region. Provides `strings` to every
+ * shared component inside it, and keeps <html> on the effective theme.
  */
 export function AppShell({
   title,
@@ -97,8 +100,16 @@ export function AppShell({
   strings,
   disclaimer,
   toaster = true,
+  brand,
+  themeMenu = true,
+  palette,
+  mode,
+  surface,
+  weave = true,
   children,
 }: AppShellProps) {
+  useThemeSync();
+  useThemeOverride(palette || mode || surface ? { palette, mode, surface } : null);
   const inherited = useAppStrings();
   const base = strings ?? inherited;
   const table = useMemo(
@@ -114,16 +125,11 @@ export function AppShell({
   return (
     <StringsProvider value={table}>
       <div data-slot="app-shell" data-width={width} className="flex min-h-svh flex-col bg-background text-foreground">
-        <a
-          href="#main"
-          onClick={skipToMain}
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg"
-        >
-          {t("app.skipToContent")}
-        </a>
+        <SkipLink label={t("app.skipToContent")} />
 
         <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className={cn("mx-auto flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2", FRAME[width])}>
+            {brand && <div className="shrink-0">{brand}</div>}
             <div className="min-w-0 flex-1 basis-40">
               <Link
                 to="/"
@@ -142,12 +148,13 @@ export function AppShell({
                   variant="outline"
                   size="sm"
                   title={t("app.resetDemo")}
-                  onClick={() => resetDemo({ keep: ["lang"] })}
+                  onClick={() => resetDemo({ keep: ["lang", "theme"] })}
                 >
                   <RotateCcwIcon aria-hidden="true" />
                   <span className="sr-only sm:not-sr-only">{t("app.resetDemo")}</span>
                 </Button>
               )}
+              {themeMenu && <ThemeMenu />}
               <LangToggle />
             </div>
           </div>
@@ -173,6 +180,7 @@ export function AppShell({
               </ul>
             </nav>
           )}
+          {weave && <div aria-hidden="true" data-slot="weave-band" className="weave-band" />}
         </header>
 
         <main id="main" tabIndex={-1} className={cn("flex-1 focus:outline-none", MAIN[width])}>

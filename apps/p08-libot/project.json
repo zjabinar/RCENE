@@ -15,6 +15,13 @@
     "/enterprise",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "theme": {
+    "palette": "fiesta"
+  },
   "kind": "platform",
   "modules": [
     "16-libot",

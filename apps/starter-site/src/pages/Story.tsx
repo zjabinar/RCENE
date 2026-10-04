@@ -5,7 +5,7 @@
  * removes its steps instead of showing a guess.
  */
 import { Link } from "react-router";
-import { BookOpenTextIcon, CalculatorIcon, DatabaseIcon, FolderInputIcon, ListChecksIcon, ShuffleIcon } from "lucide-react";
+import { ArrowDownIcon, BookOpenTextIcon, CalculatorIcon, DatabaseIcon, FolderInputIcon, ListChecksIcon, ShuffleIcon } from "lucide-react";
 import { useFormat, useT } from "@rcene/i18n";
 import { SpotIllustration } from "@rcene/kit/brand";
 import { BeforeAfter, CallToAction, Hero, ScrollyChapter, Section, StoryTimeline, type ScrollyStep } from "@rcene/kit/site";
@@ -103,6 +103,14 @@ export function Story() {
         eyebrow={t("story.hero.eyebrow")}
         title={t("story.hero.title")}
         lead={t("story.hero.lead")}
+        actions={
+          <Button size="lg" asChild>
+            <a href="#chapter">
+              <ArrowDownIcon aria-hidden="true" />
+              {t("story.hero.start")}
+            </a>
+          </Button>
+        }
         media={
           <div className="grid place-items-center bg-card p-6 sm:p-10">
             <SpotIllustration name="map" size={360} className="h-auto w-full max-w-sm" />

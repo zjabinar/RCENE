@@ -17,6 +17,13 @@ import { strings } from "@/i18n/strings.ts";
 /** Bars stay thin (at most 24 px) with a 4 px rounded end, per the dataviz mark spec. */
 const BAR_SIZE = 24;
 
+/**
+ * Axis labels in the theme's muted ink. ChartContainer targets `.recharts-cartesian-axis-tick text`,
+ * but Recharts 3 wraps tick labels in `.recharts-cartesian-axis-tick-label`, so they kept Recharts'
+ * #666 (too faint on dark). Reported in NOTES.md for the template; harmless once the kit is fixed.
+ */
+const CHART_CLASS = "aspect-auto h-60 w-full [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground";
+
 interface ChartProps {
   records: readonly RequestRecord[];
   className?: string;
@@ -40,7 +47,7 @@ export function StatusChart({ records, className }: ChartProps) {
       caveat={t("chart.caveat")}
       table={{ columns: [t("col.status"), t("chart.requests")], rows: rows.map((r) => [r.label, r.requests]) }}
     >
-      <ChartContainer config={config} className="aspect-auto h-60 w-full">
+      <ChartContainer config={config} className={CHART_CLASS}>
         <BarChart data={rows} accessibilityLayer margin={{ top: 24, right: 4, bottom: 0, left: 4 }}>
           <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "var(--border)" }} tickMargin={10} interval={0} />
           <YAxis hide allowDecimals={false} />
@@ -71,7 +78,7 @@ export function CategoryChart({ records, className }: ChartProps) {
       caveat={t("chart.caveat")}
       table={{ columns: [t("col.category"), t("chart.requests")], rows: rows.map((r) => [r.label, r.requests]) }}
     >
-      <ChartContainer config={config} className="aspect-auto h-60 w-full">
+      <ChartContainer config={config} className={CHART_CLASS}>
         <BarChart data={rows} layout="vertical" accessibilityLayer margin={{ top: 4, right: 32, bottom: 4, left: 4 }}>
           <YAxis dataKey="label" type="category" tickLine={false} axisLine={{ stroke: "var(--border)" }} width={104} tickMargin={8} />
           <XAxis type="number" hide allowDecimals={false} />

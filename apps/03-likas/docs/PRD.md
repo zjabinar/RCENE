@@ -233,6 +233,12 @@ Waray labels are prepared with the content in §11.
 
 ## 9. Experience and visual design
 
+- **Look: "the Living Tapestry"** (the design kit in each app's `rcene/kit`, skill `rcene-design`):
+  - a calm palette for the working views (`habi`: abaca cream, Samar sea teal, banig violet; `dagat` and `fiesta` for coastal and heritage apps), each in light and dark, chosen from a Theme menu;
+  - one bold **showcase** surface per page (neon cyan and magenta on navy, like the event poster) for the landing hero, the demo opener and the "how AI built it" panel;
+  - public boards in the black-and-white `malinaw` palette at 7:1 contrast;
+  - a woven band under every header, Fraunces titles, and the RCENE mark.
+  - Hazard colours are the same in every palette and mode, and no UI colour sits in their yellow-to-red band.
 - **Tone:** calm by default, urgent only when a warning is active. Color carries state: neutral on calm days, amber and red during a warning. Risk levels always pair color with an icon and a text label, never color alone.
 - **Signature motion moments** (see the `gsap-motion` skill):
   - hazard chips stagger in on each lookup (GSAP)
@@ -271,7 +277,7 @@ No AI runs inside the app, by decision. The AI score therefore rests on the buil
 | Before October 7 | On October 7 |
 |---|---|
 | Data conversion → `data/files/` (local data session, batch B0) | Pick one app and continue it: new routes, components and domain functions |
-| The generic `apps/_template` with its shared code (`rcene/`) | Integration toward the platform (for #1: the scenario from #5, live capacity from #3) |
+| The generic `apps/_template` with its shared code (`rcene/`), including the design kit (`rcene/kit`: themes, app, site, poster and brand blocks), and the reference projects `apps/kit-gallery`, `apps/starter-app` and `apps/starter-site` that show it | Integration toward the platform (for #1: the scenario from #5, live capacity from #3) |
 | All 20 single-feature apps `apps/01-ligtas` … `apps/20-sumat`, built in parallel from the briefs in `docs/projects/` | Unit tests for every new domain function |
 | String tables and "what to do" checklists (EN + Waray + Filipino drafts) inside each app | Polish, accessibility pass and Wi-Fi-off check |
 | Evacuation-center list (Plan A) or the Plan B decision | The chosen app's `AI-LOG.md` entries for the day |
@@ -291,7 +297,7 @@ The four hours continue a pre-built app (§11); they do not start from an empty 
 | T+1:35–2:45 | **Integrate Core 3** from `apps/03-likas`: live capacity, and `isEligible` with the active-scenario hazard exclusion, tested. Golden path end-to-end by **T+2:15**, then stretch only if green. |
 | T+2:45 | **Feature freeze** |
 | T+2:45–3:15 | Polish: motion, empty/loading states, accessibility pass, Wi-Fi-off check |
-| T+3:15–3:45 | Poster |
+| T+3:15–3:45 | Poster: the app's `/poster` route on the kit's `PosterPage` + `SixPanelPoster` (§14), printed to PDF at A3 |
 | T+3:45–4:00 | Rehearse the golden path twice |
 
 ## 13. Pre-event checklist (October 2–6)
@@ -312,7 +318,9 @@ The four hours continue a pre-built app (§11); they do not start from an empty 
 
 ## 14. Demo and poster
 
-**Demo:** the golden path (§5), rehearsed. The backup is a 60-second screen recording of the golden path, made at T+3:40. Before the golden path, say plainly what was pre-built and how to check it (`docs/DISCLOSURE.md`).
+**Demo:** the golden path (§5), rehearsed. The backup is a 60-second screen recording of the golden path, made at T+3:40. Before the golden path, say plainly what was pre-built and how to check it (`docs/DISCLOSURE.md`). The kit's `PresenterMode` (`@rcene/kit/poster`) carries the steps and the speaker notes: arrow keys or a clicker move, `T` shows the timer, and a second window can show the notes.
+
+**Poster build:** a `/poster` route in the app, built from `@rcene/kit/poster` (`PosterPage size="A3"`, `SixPanelPoster` with the six panels below, `PosterFigure` for SVG figures, since a WebGL map does not print, `AiBuiltPanel` with the disclosure line, `QrToApp`), printed from Chrome to PDF. The starter `apps/starter-site` has a complete example.
 
 **Poster outline** (the competition requires problem statement, AI tools, development process, and impact):
 1. **Problem** — §2, in one sentence each, with the "safe vs no data" point made generally

@@ -16,6 +16,12 @@ describe("app strings", () => {
     }
   });
 
+  it("drafts every key in Waray and Filipino (no silent fallback to English)", () => {
+    for (const lang of ["war", "fil"] as const) {
+      expect(Object.keys(strings.en).filter((k) => !(k in strings[lang])), lang).toEqual([]);
+    }
+  });
+
   it("never says 'safe' in a hazard answer, in any language", () => {
     for (const lang of LANGS) {
       for (const [key, text] of Object.entries(strings[lang])) {

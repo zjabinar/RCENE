@@ -148,7 +148,7 @@ function RecordView({ record }: { record: RequestRecord }) {
           <h2 id="details-heading" className="mb-5 font-display text-lg font-semibold">
             {t("detail.details")}
           </h2>
-          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
             {details.map(([label, value]) => (
               <div key={label} className="flex min-w-0 flex-col gap-1">
                 <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</dt>

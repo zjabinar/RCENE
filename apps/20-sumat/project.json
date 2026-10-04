@@ -11,5 +11,9 @@
   "smokeRoutes": [
     "/",
     "/sources"
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
   ]
 }

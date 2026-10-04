@@ -42,9 +42,10 @@ describe("hazard color tokens", () => {
     expect(token(name)).toBe(STATUS_HEX[status as keyof typeof STATUS_HEX].toLowerCase());
   });
 
-  it("is never redefined for dark mode (the map paint does not change)", () => {
-    const dark = /\.dark\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
-    expect(dark).not.toMatch(/--(level|status)-/);
+  it("is defined once, in globals.css, and never by a theme (the map paint does not change)", () => {
+    const themes = readFileSync(new URL("./styles/themes.css", import.meta.url), "utf8");
+    expect(themes).not.toMatch(/--(level|status)-[\w-]+\s*:/);
+    expect(css.match(/--level-low:/g)).toHaveLength(1);
   });
 
   const pairs = [...LEVELS.map((l) => `level-${l}`), ...Object.values(STATUS_TOKENS)];

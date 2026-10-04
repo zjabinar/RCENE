@@ -4,6 +4,7 @@ import { PageHeader } from "@rcene/kit/app";
 import { RoleLauncher } from "@rcene/ui";
 import type { RoleId } from "@/roles.ts";
 import { ROLES } from "@/roles.ts";
+import { fill } from "@/i18n/fill.tsx";
 import { strings } from "@/i18n/strings.ts";
 import { useRecords } from "@/store.ts";
 
@@ -63,7 +64,7 @@ export function Start() {
           ))}
         </ol>
         <p className="mt-6 border-t pt-4 text-sm text-muted-foreground">
-          {t("start.sample", { n: fmt.number(records.length), last })}
+          {fill(t("start.sample", { n: fmt.number(records.length) }), { last: <span className="whitespace-nowrap">{last}</span> })}
         </p>
       </section>
     </div>

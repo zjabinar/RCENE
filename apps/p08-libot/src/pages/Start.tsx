@@ -1,5 +1,6 @@
 import { RoleLauncher } from "@rcene/ui";
 import { useT } from "@rcene/i18n";
+import { PageHeader } from "@rcene/kit/app";
 import { strings } from "../i18n/strings.ts";
 import { ROLES } from "../roles.ts";
 
@@ -7,13 +8,8 @@ import { ROLES } from "../roles.ts";
 export function Start() {
   const t = useT(strings);
   return (
-    <section aria-labelledby="start-heading" className="flex flex-col gap-6">
-      <header>
-        <h1 id="start-heading" className="text-2xl font-semibold tracking-tight">
-          {t("start.heading")}
-        </h1>
-        <p className="mt-1 text-muted-foreground">{t("start.hint")}</p>
-      </header>
+    <section className="flex flex-col gap-2">
+      <PageHeader title={t("start.heading")} description={t("start.hint")} />
       <RoleLauncher
         windowPrefix="p08-libot"
         roles={ROLES.map((role) => ({

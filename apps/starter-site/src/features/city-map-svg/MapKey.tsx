@@ -21,17 +21,20 @@ export interface MapKeyProps {
   facilities?: "none" | "all" | "split";
   /** Label of the highlighted dots in "split" mode. Default: in a mapped flood zone. */
   inZoneLabel?: string;
+  /** One item per line (a narrow column beside a figure). Default: items flow in rows. */
+  stacked?: boolean;
   className?: string;
 }
 
-export function MapKey({ hazard, facilities = "none", inZoneLabel, className }: MapKeyProps) {
+export function MapKey({ hazard, facilities = "none", inZoneLabel, stacked = false, className }: MapKeyProps) {
   const t = useT(strings);
+  const list = stacked ? "flex flex-col gap-1" : "flex flex-wrap gap-x-3 gap-y-1";
   return (
-    <div className={cn("flex flex-wrap gap-x-6 gap-y-2 text-[0.85em]", className)}>
+    <div className={cn("flex gap-x-6 gap-y-3 text-[0.85em]", stacked ? "flex-col" : "flex-wrap", className)}>
       {hazard && (
         <div className="flex flex-col gap-1">
           <p className="font-semibold">{t(`hazard.${hazard}`)}</p>
-          <ul className="flex flex-wrap gap-x-3 gap-y-1">
+          <ul className={list}>
             {LEVELS.map((level) => {
               const Icon = LEVEL_ICONS[level];
               return (
@@ -48,7 +51,7 @@ export function MapKey({ hazard, facilities = "none", inZoneLabel, className }: 
       {facilities !== "none" && (
         <div className="flex flex-col gap-1">
           <p className="font-semibold">{t("key.facilities")}</p>
-          <ul className="flex flex-wrap gap-x-3 gap-y-1">
+          <ul className={list}>
             {facilities === "split" && (
               <li className="flex items-center gap-1.5">
                 <span aria-hidden="true" className="size-3.5 rounded-full border-2 border-card bg-brand shadow-[0_0_0_1px_var(--border)]" />

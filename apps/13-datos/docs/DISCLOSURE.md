@@ -9,6 +9,7 @@ Part of this entry was built before today. We say so up front, and the repositor
 All of this lives in the RCENE monorepo, frozen at the git tag `pre-event-freeze`:
 
 - **Shared code** (reference copy in `apps/_template/rcene/`): data contracts and loaders, geometry helpers, a cross-window store, translations, UI and map components. It is generic and holds no project's features. Every app carries its own copy in `rcene/`, so each app folder works on its own.
+- **Design kit** (in the same shared code, `apps/_template/rcene/kit` and `rcene/ui/theme`): five colour palettes in light and dark, and generic page blocks for application screens, websites, the poster, the demo and the brand. It holds no project's features. Three reference projects show it in use: `apps/kit-gallery`, `apps/starter-app` and `apps/starter-site`.
 - **20 single-feature apps** (`apps/01-ligtas` … `apps/20-sumat`), one per proposal in `docs/PROPOSALS.md`, built as working apps. Each is a self-contained folder: its own `package.json` and lockfile, shared code, data, Claude Code instructions and smoke test.
 - **Data conversion:** Catbalogan boundaries and barangays (OCHA/HDX), CDRRMO/CPDCO risk maps (used with LGU permission) and OpenStreetMap facilities, converted into the root `data/files/` and copied into each app's `data/`.
 - **Briefs:** one written spec per app in `docs/projects/` (each app also has it as `docs/brief.md`).
@@ -94,4 +95,4 @@ If the answer is no, the entry starts from the generic template only (`apps/_tem
 
 ## Poster version
 
-> **Built before today, with AI:** data, shared libraries and 20 single-feature apps (Claude Code, parallel sessions). **Built today:** everything after the `pre-event-freeze` tag, shown by `git diff pre-event-freeze..HEAD`.
+> **Built before today, with AI:** data, shared libraries, the design kit and 20 single-feature apps (Claude Code, parallel sessions). **Built today:** everything after the `pre-event-freeze` tag, shown by `git diff pre-event-freeze..HEAD`.

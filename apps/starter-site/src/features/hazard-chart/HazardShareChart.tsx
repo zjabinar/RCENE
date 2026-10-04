@@ -26,7 +26,7 @@ export function HazardShareChart({ stats, headingLevel = 3, className }: HazardS
   const percent = (v: number | string) => `${fmt.number(Number(v), Number.isInteger(Number(v)) ? 0 : 1)}%`;
   const config = { share: { label: t("story.chart.share"), color: "var(--chart-1)" } } satisfies ChartConfig;
 
-  const caveats = [t("data.landNotPeople"), t("data.computedHere")];
+  const caveats = [t("data.landNotPeople")];
   if (stats.missing.length > 0) {
     caveats.unshift(t("story.chart.missing", { hazards: stats.missing.map((h) => t(`hazard.${h}`)).join(", ") }));
   }

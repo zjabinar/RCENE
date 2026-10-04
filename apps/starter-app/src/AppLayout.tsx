@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router";
+import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { AppShell } from "@rcene/ui";
 import { useT } from "@rcene/i18n";
 import { AppMark } from "@rcene/kit/brand";
@@ -33,6 +33,8 @@ export function AppLayout() {
       strings={strings}
     >
       <Outlet />
+      {/* New page, top of the page (and Back returns to where you were). */}
+      <ScrollRestoration />
     </AppShell>
   );
 }

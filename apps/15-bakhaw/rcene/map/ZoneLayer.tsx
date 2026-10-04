@@ -18,11 +18,15 @@ export interface ZoneLayerProps {
   opacity?: number;
   /** Draw a thin outline in the level color. Default true. */
   outline?: boolean;
+  /** A light casing line under the outline, so dark levels (very high) stay visible on a dark basemap. Default false. */
+  casing?: boolean;
   /** Layer and source id. Default `zone-${hazard}`; the outline is `${id}-outline`. */
   id?: string;
   /** Insert below this layer. Default SLOT.data (above land, below barangay outlines). */
   beforeId?: string;
 }
+
+const CASING_PAINT = { "line-color": "#f8fafc", "line-width": 2.5, "line-opacity": 0.9 } satisfies LineLayerSpecification["paint"];
 
 /** Hazard zones as a fill colored by `level` (LEVEL_HEX), plus an optional outline. */
 export function ZoneLayer({
@@ -31,6 +35,7 @@ export function ZoneLayer({
   minLevel,
   opacity = 0.45,
   outline = true,
+  casing = false,
   id,
   beforeId = SLOT.data,
 }: ZoneLayerProps) {
@@ -58,6 +63,7 @@ export function ZoneLayer({
   return (
     <Source key={layerId} id={layerId} type="geojson" data={zones}>
       <Layer id={layerId} type="fill" paint={fillPaint} {...filterProps} beforeId={beforeId} />
+      {casing && <Layer id={`${layerId}-casing`} type="line" paint={CASING_PAINT} {...filterProps} beforeId={beforeId} />}
       {outline && (
         <Layer id={`${layerId}-outline`} type="line" paint={linePaint} {...filterProps} beforeId={beforeId} />
       )}

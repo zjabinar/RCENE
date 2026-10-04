@@ -45,7 +45,7 @@ const STATUS_TONE: Record<Status, string> = {
   done: "border-transparent bg-primary text-primary-foreground",
 };
 
-const CHIP = "inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border font-medium whitespace-nowrap";
+const CHIP = "inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border font-sans font-medium whitespace-nowrap";
 const SIZE = {
   sm: "px-2.5 py-0.5 text-xs [&>svg]:size-3.5",
   lg: "px-4 py-1.5 text-lg font-semibold [&>svg]:size-5",

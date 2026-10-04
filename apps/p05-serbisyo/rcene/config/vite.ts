@@ -11,8 +11,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { mergeConfig, normalizePath, type Alias, type PluginOption, type UserConfig } from "vite";
+import { mergeConfig, normalizePath, type Alias, type Plugin, type PluginOption, type UserConfig } from "vite";
 import { defineConfig } from "vitest/config";
+import { themeBootScript } from "../ui/theme/boot.ts";
+import type { ThemeDefaults } from "../ui/theme/palettes.ts";
 import { rceneStatic, type StaticMount } from "./static.ts";
 
 export interface RceneAppOptions {
@@ -38,6 +40,12 @@ export interface ProjectInfo {
   brief?: string;
   branch?: string;
   smokeRoutes?: string[];
+  /** Color schemes the smoke test checks ("light", "dark"); default ["light"]. */
+  smokeSchemes?: string[];
+  /** The app's default theme; the user's choice in the theme menu wins. */
+  theme?: ThemeDefaults;
+  /** "platform" for P1-P10; "gallery" and "starter" for the reference projects. */
+  kind?: string;
 }
 
 /** Reads <dir>/project.json, this app's only metadata file. */
@@ -64,10 +72,28 @@ export function rceneAliases(dir: string): Alias[] {
     { find: /^@rcene\/ui\/components\/([\w-]+)$/, replacement: `${at("rcene/ui/components/ui")}/$1.tsx` },
     { find: /^@rcene\/ui\/lib\/utils$/, replacement: at("rcene/ui/lib/utils.ts") },
     { find: /^@rcene\/ui\/motion$/, replacement: at("rcene/ui/motion/index.ts") },
+    { find: /^@rcene\/ui\/theme$/, replacement: at("rcene/ui/theme/index.ts") },
+    { find: /^@rcene\/kit\/(app|site|poster|brand)$/, replacement: `${at("rcene/kit")}/$1/index.ts` },
     { find: /^@rcene\/data\/schemas$/, replacement: at("rcene/data/schemas.ts") },
-    { find: /^@rcene\/(data|geo|i18n|map|store|ui)$/, replacement: `${at("rcene")}/$1/index.ts` },
+    { find: /^@rcene\/(data|geo|i18n|kit|map|store|ui)$/, replacement: `${at("rcene")}/$1/index.ts` },
     { find: /^@\//, replacement: `${at("src")}/` },
   ];
+}
+
+/**
+ * Injects the theme boot script at the top of <head>, so the stored or default
+ * palette and light/dark mode are on <html> before the first paint (no flash).
+ */
+export function rceneTheme(defaults: ThemeDefaults | undefined): Plugin {
+  return {
+    name: "rcene-theme",
+    transformIndexHtml() {
+      return [
+        { tag: "meta", attrs: { name: "theme-color", content: "#f7f2e8" }, injectTo: "head-prepend" },
+        { tag: "script", children: themeBootScript(defaults), injectTo: "head-prepend" },
+      ];
+    },
+  };
 }
 
 export function rceneApp(options: RceneAppOptions): UserConfig {
@@ -78,7 +104,7 @@ export function rceneApp(options: RceneAppOptions): UserConfig {
   if (ai) mounts.push({ url: "/models/", dirs: [path.join(options.dir, "models")] });
 
   const config = defineConfig({
-    plugins: [react(), tailwindcss(), rceneStatic(mounts), ...(options.plugins ?? [])],
+    plugins: [react(), tailwindcss(), rceneStatic(mounts), rceneTheme(project.theme), ...(options.plugins ?? [])],
     resolve: {
       alias: rceneAliases(options.dir),
       dedupe: ["react", "react-dom", "react-router", "zustand", "maplibre-gl"],

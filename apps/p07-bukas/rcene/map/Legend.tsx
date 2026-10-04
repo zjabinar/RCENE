@@ -1,7 +1,8 @@
 import { useId } from "react";
 import { LEVEL_HEX, LEVELS, type Hazard, type Level } from "@rcene/data";
 import { useAppStrings, useT } from "@rcene/i18n";
-import { BOUNDARY_COLOR, COVERAGE_COLOR, LAND_COLOR } from "./style.ts";
+import { useMapTone } from "./BaseMap.tsx";
+import { BASEMAP, type MapTone } from "./style.ts";
 
 export interface LegendProps {
   /** Title becomes the hazard name; otherwise "Legend". */
@@ -12,6 +13,8 @@ export interface LegendProps {
   showStates?: boolean;
   /** Match the ZoneLayer's fill opacity so swatches look like the map. Default 0.45. */
   opacity?: number;
+  /** The tone of the map it explains (BaseMap `tone`), so swatches match. Default "light". */
+  tone?: MapTone | "auto";
   className?: string;
 }
 
@@ -20,8 +23,9 @@ export interface LegendProps {
  * Swatches mimic the map: level fills over the coverage color with a level
  * outline, "not in zone" as plain coverage, "outside coverage" as land.
  */
-export function Legend({ hazard, levels = LEVELS, showStates = true, opacity = 0.45, className }: LegendProps) {
+export function Legend({ hazard, levels = LEVELS, showStates = true, opacity = 0.45, tone, className }: LegendProps) {
   const t = useT(useAppStrings());
+  const colors = BASEMAP[useMapTone(tone)];
   const titleId = useId();
   const title = hazard ? t(`hazard.${hazard}`) : t("map.legend");
   const percent = Math.round(Math.min(1, Math.max(0, opacity)) * 100);
@@ -30,7 +34,7 @@ export function Legend({ hazard, levels = LEVELS, showStates = true, opacity = 0
     <section
       aria-labelledby={titleId}
       className={[
-        "z-10 rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-xs text-slate-800 shadow-sm backdrop-blur-sm",
+        "z-10 rounded-lg border bg-card/90 px-3 py-2 text-xs text-card-foreground shadow-sm backdrop-blur-sm",
         className,
       ]
         .filter(Boolean)
@@ -43,7 +47,7 @@ export function Legend({ hazard, levels = LEVELS, showStates = true, opacity = 0
         {levels.map((level) => (
           <li key={level} className="flex items-center gap-2">
             <Swatch
-              fill={`color-mix(in srgb, ${LEVEL_HEX[level]} ${percent}%, ${COVERAGE_COLOR})`}
+              fill={`color-mix(in srgb, ${LEVEL_HEX[level]} ${percent}%, ${colors.coverage})`}
               border={LEVEL_HEX[level]}
             />
             {t(`level.${level}`)}
@@ -52,11 +56,11 @@ export function Legend({ hazard, levels = LEVELS, showStates = true, opacity = 0
         {showStates && (
           <>
             <li className="flex items-center gap-2">
-              <Swatch fill={COVERAGE_COLOR} border={BOUNDARY_COLOR} />
+              <Swatch fill={colors.coverage} border={colors.boundary} />
               {t("status.notInZone")}
             </li>
             <li className="flex items-center gap-2">
-              <Swatch fill={LAND_COLOR} border={BOUNDARY_COLOR} dashed />
+              <Swatch fill={colors.land} border={colors.boundary} dashed />
               {t("status.outsideCoverage")}
             </li>
           </>

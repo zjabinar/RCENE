@@ -17,15 +17,16 @@ import { BaseMap, ZoneLayer, PointLayer, SelectedPoint, Legend, useFlyTo, SLOT }
 
 | Export | What it does |
 |---|---|
-| `<BaseMap>` | Offline map. Props: `onClick(lngLat)`, `onFeatureClick(feature, lngLat)` + `interactiveLayerIds`, `showBarangays`, `showBarangayLabels`, `allowOnlineBasemap`, `fitToBoundary` (all default `true`), `initialViewState` (default `CATBALOGAN_VIEW`), `mapRef`, `cursor`, `className`. Any other react-map-gl `<Map>` prop passes through (`onMouseMove`, `minZoom`, `dragRotate`, …). It fills its parent, so **give the parent a height**. |
-| `<ZoneLayer hazard zones minLevel? opacity? outline? id? beforeId?>` | Hazard zones filled by `level` (`LEVEL_HEX`). Renders nothing while `zones` is undefined. Layer id `zone-${hazard}`. |
+| `<BaseMap>` | Offline map. Props: `onClick(lngLat)`, `onFeatureClick(feature, lngLat)` + `interactiveLayerIds`, `showBarangays`, `showBarangayLabels`, `allowOnlineBasemap`, `fitToBoundary` (all default `true`), `initialViewState` (default `CATBALOGAN_VIEW`), `tone` (`"light"` default, `"dark"`, or `"auto"` to follow the app's theme), `mapRef`, `cursor`, `className`. Any other react-map-gl `<Map>` prop passes through (`onMouseMove`, `minZoom`, `dragRotate`, …). It fills its parent, so **give the parent a height**. |
+| `<ZoneLayer hazard zones minLevel? opacity? outline? casing? id? beforeId?>` | Hazard zones filled by `level` (`LEVEL_HEX`). `casing` adds a light outline so the fills read on a dark basemap. Renders nothing while `zones` is undefined. Layer id `zone-${hazard}`. |
 | `<PointLayer id data color? radius? strokeColor? promoteId? beforeId?>` | Circles for a point FeatureCollection (facilities, centers, reports). |
 | `<SelectedPoint lngLat label?>` | Pin marker. Pass `label` for an accessible name. |
-| `<Legend hazard? levels? showStates? opacity? className?>` | Level swatches with text, plus "not in a mapped zone" and "outside coverage". Place it *outside* `<BaseMap>`, absolutely positioned. |
+| `<Legend hazard? levels? showStates? opacity? tone? className?>` | Level swatches with text, plus "not in a mapped zone" and "outside coverage". Place it *outside* `<BaseMap>`, absolutely positioned. |
 | `useFlyTo()` | `(lngLat, zoom?) => void`. Jumps instead of flying under reduced motion. Works inside `<BaseMap>` or under a `<MapProvider>`. |
 | `hasWebGL2()` | MapLibre 6 needs WebGL2. BaseMap already checks it and shows `map.noWebgl`. |
 | `loadMapLib()` | The `maplibre-gl` module with its worker URL set. Use it if you ever construct a map yourself. |
-| `style.ts` helpers | `SEA_COLOR`, `LAND_COLOR`, `COVERAGE_COLOR`, `levelColorExpression()`, `levelsAtOrAbove(min)`, `minLevelFilter(min)`, `SLOT`, `CATBALOGAN_VIEW` |
+| `useMapTone(tone)` | Resolves `"auto"` against the app theme (`light` or `dark`). |
+| `style.ts` helpers | `BASEMAP.light` / `BASEMAP.dark` (sea, land, coverage, boundary, labels), `SEA_COLOR`, `LAND_COLOR`, `COVERAGE_COLOR`, `levelColorExpression()`, `levelsAtOrAbove(min)`, `minLevelFilter(min)`, `SLOT`, `CATBALOGAN_VIEW` |
 | Re-exports | `Source`, `Layer`, `Marker`, `Popup`, `useMap`, `useControl`, `MapProvider`, `NavigationControl`, `AttributionControl`, types `MapRef`, `MapLayerMouseEvent`, `MapGeoJSONFeature`, `ViewState`, `LayerProps`, `GeoJSONSource`, `ExpressionSpecification`, `FilterSpecification` |
 
 Import map things from `@rcene/map`, not straight from `react-map-gl/maplibre`, so every app uses one set of versions.
@@ -80,6 +81,7 @@ A hazard answer is exactly one of `inZone {level}`, `notInZone` or `outsideCover
 - **Outside the boundary is `outsideCoverage`**, not `notInZone`. There is no data there.
 - **A missing layer is not an answer.** `useZones` lists missing hazards in `missing`; show "not available", never a guess.
 - **Distances are straight-line** (`nearest()` uses great-circle km). Always render them with `t("distance.straightLine", { km })`. Never say "walk", "minutes" or "route" unless you actually computed a route.
+- **Dark maps are opt-in.** The hazard fills were tuned on the light basemap, so maps stay light in a dark theme unless you pass `tone="auto"` or `"dark"`; then pass the same `tone` to `<Legend>` and `casing` to `<ZoneLayer>`. Map controls already use the theme tokens.
 - Color is never the only signal: the Legend and HazardStatusList pair every color with text, and the list adds an icon.
 
 ## Offline rules

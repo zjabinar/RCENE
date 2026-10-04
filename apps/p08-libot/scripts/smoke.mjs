@@ -13,7 +13,8 @@
  *      OSM tiles of the opt-in online basemap are only a warning)
  *   4. each route at 390x844 and 1280x800: no console or page errors, the map
  *      canvas (if any) is not blank, no serious/critical axe violations, and a
- *      screenshot in docs/screenshots/<route>-<width>.png
+ *      screenshot in docs/screenshots/<route>-<width>[-dark].png (light, and dark
+ *      with --scheme dark or project.json "smokeSchemes")
  *   5. PASS/FAIL summary; exit code 1 on any failure
  * The preview server is always stopped (with --keep-open: when you press Ctrl+C).
  *
@@ -43,9 +44,11 @@ const OSM_TILE_HOST = /(^|\.)tile\.openstreetmap\.org$|(^|\.)tile\.osm\.org$/i;
 const BROWSER_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"];
 const MAP_WAIT_MS = 10_000;
 
-const USAGE = `Usage: node scripts/smoke.mjs [--route /path ...] [--no-build] [--keep-open]
+const USAGE = `Usage: node scripts/smoke.mjs [--route /path ...] [--scheme light|dark ...] [--no-build] [--keep-open]
 
   --route <p>    route to visit (default: project.json "smokeRoutes", else / and /sources); repeatable
+  --scheme <s>   colour scheme the browser reports, light or dark (default: project.json "smokeSchemes",
+                 else light); repeatable. Apps on the default theme follow it, so dark checks contrast in dark mode
   --no-build     reuse the existing dist/ instead of running tsc -b and vite build
   --keep-open    leave the preview server running until Ctrl+C`;
 
@@ -54,7 +57,7 @@ const USAGE = `Usage: node scripts/smoke.mjs [--route /path ...] [--no-build] [-
 // ---------------------------------------------------------------------------
 
 export function parseArgs(argv) {
-  const opts = { routes: [], build: true, keepOpen: false, help: false, app: null };
+  const opts = { routes: [], schemes: [], build: true, keepOpen: false, help: false, app: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const [flag, inline] = arg.startsWith("--") && arg.includes("=") ? [arg.slice(0, arg.indexOf("=")), arg.slice(arg.indexOf("=") + 1)] : [arg, undefined];
@@ -67,6 +70,12 @@ export function parseArgs(argv) {
       case "--route":
         opts.routes.push(normalizeRoute(value()));
         break;
+      case "--scheme": {
+        const scheme = value();
+        if (scheme !== "light" && scheme !== "dark") throw new Error(`--scheme must be light or dark, not ${scheme}`);
+        if (!opts.schemes.includes(scheme)) opts.schemes.push(scheme);
+        break;
+      }
       case "--app": // accepted for the old monorepo-wide call, but it must name this app
         opts.app = value();
         break;
@@ -111,7 +120,10 @@ export function readProject(root = APP_ROOT) {
   } catch {
     // keep "-"
   }
-  return { ...project, slug: project.slug ?? path.basename(root), pkg, previewPort: project.port + 1000, routes };
+  const schemes = Array.isArray(project.smokeSchemes)
+    ? project.smokeSchemes.filter((x) => x === "light" || x === "dark")
+    : [];
+  return { ...project, slug: project.slug ?? path.basename(root), pkg, previewPort: project.port + 1000, routes, schemes: schemes.length ? schemes : ["light"] };
 }
 
 /** True when `--app x` names this app (slug, id, "template" for _template, or "."). */
@@ -257,9 +269,9 @@ export function isOsmTile(url) {
 }
 
 /** A browser context that aborts every request leaving the machine and records it. */
-export async function offlineContext(browser, viewport, aborted) {
+export async function offlineContext(browser, viewport, aborted, colorScheme = "light") {
   // Service workers are blocked: Playwright cannot route their requests, so the offline check would miss them.
-  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block" });
+  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block", colorScheme });
   await context.route("**/*", (route) => {
     const url = route.request().url();
     if (isLocalUrl(url)) return route.continue();
@@ -399,9 +411,9 @@ export async function axeViolations(page, file = axePath()) {
 // One route at one viewport
 // ---------------------------------------------------------------------------
 
-export async function checkPage(browser, { baseUrl, route, viewport, screenshotPath, axeFile }) {
+export async function checkPage(browser, { baseUrl, route, viewport, screenshotPath, axeFile, scheme = "light" }) {
   const aborted = [];
-  const context = await offlineContext(browser, viewport, aborted);
+  const context = await offlineContext(browser, viewport, aborted, scheme);
   const page = await context.newPage();
   const consoleErrors = [];
   const pageErrors = [];
@@ -411,7 +423,7 @@ export async function checkPage(browser, { baseUrl, route, viewport, screenshotP
   });
   page.on("pageerror", (err) => pageErrors.push(String(err?.message ?? err)));
 
-  const result = { route, viewport, failures: [], warnings, aborted: [], osmTiles: [], map: "none", axe: [], screenshot: null };
+  const result = { route, viewport, scheme, failures: [], warnings, aborted: [], osmTiles: [], map: "none", axe: [], screenshot: null };
   try {
     try {
       const response = await page.goto(new URL(route, baseUrl).href, { waitUntil: "load", timeout: 30_000 });
@@ -475,10 +487,10 @@ function distinctLines(messages) {
 }
 
 function printPage(r) {
-  const size = `${r.viewport.width}x${r.viewport.height}`;
+  const size = `${r.viewport.width}x${r.viewport.height}${r.scheme === "dark" ? " dark" : ""}`;
   const status = r.failures.length ? "FAIL" : "PASS";
   const shot = r.screenshot ? path.relative(APP_ROOT, r.screenshot).split(path.sep).join("/") : "-";
-  console.log(`  ${status}  ${r.route.padEnd(16)} ${size.padEnd(9)} map:${r.map.padEnd(6)} axe:${String(r.axe.length).padEnd(3)} ${shot}`);
+  console.log(`  ${status}  ${r.route.padEnd(16)} ${size.padEnd(14)} map:${r.map.padEnd(6)} axe:${String(r.axe.length).padEnd(3)} ${shot}`);
   for (const f of r.failures) console.log(`        x ${f}`);
   for (const w of r.warnings) console.log(`        ! ${w}`);
   for (const e of distinctLines(r.consoleErrors ?? [])) console.log(`        console: ${e}`);
@@ -523,6 +535,7 @@ async function main() {
     return 2;
   }
   const routes = opts.routes.length ? opts.routes : app.routes;
+  const schemes = opts.schemes.length ? opts.schemes : app.schemes;
 
   let server = null;
   let interrupted = false;
@@ -557,12 +570,15 @@ async function main() {
       if (server) {
         browser = await launchBrowser(chromium);
         const baseUrl = `http://127.0.0.1:${app.previewPort}`;
-        for (const route of routes) {
-          for (const viewport of VIEWPORTS) {
-            const screenshotPath = path.join(APP_ROOT, "docs", "screenshots", `${routeName(route)}-${viewport.width}.png`);
-            const result = await checkPage(browser, { baseUrl, route, viewport, screenshotPath, axeFile });
-            console.log(`  ${result.failures.length ? "FAIL" : "ok  "} ${route} @ ${viewport.width}`);
-            report.pages.push(result);
+        for (const scheme of schemes) {
+          for (const route of routes) {
+            for (const viewport of VIEWPORTS) {
+              const suffix = scheme === "dark" ? "-dark" : "";
+              const screenshotPath = path.join(APP_ROOT, "docs", "screenshots", `${routeName(route)}-${viewport.width}${suffix}.png`);
+              const result = await checkPage(browser, { baseUrl, route, viewport, screenshotPath, axeFile, scheme });
+              console.log(`  ${result.failures.length ? "FAIL" : "ok  "} ${route} @ ${viewport.width}${scheme === "dark" ? " dark" : ""}`);
+              report.pages.push(result);
+            }
           }
         }
       }

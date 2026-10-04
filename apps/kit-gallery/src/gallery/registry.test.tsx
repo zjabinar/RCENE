@@ -40,7 +40,7 @@ describe("gallery registry", () => {
   it("strips the gallery metadata from the copyable code", () => {
     const raw = [
       'import { useT } from "@rcene/i18n";',
-      'import type { ExampleMeta } from "../../gallery/registry.ts";',
+      'import type { ExampleMeta } from "./registry.ts";',
       "",
       "export const meta: ExampleMeta = {",
       '  title: "X",',

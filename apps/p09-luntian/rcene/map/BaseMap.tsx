@@ -30,18 +30,17 @@ import { area, pointOnFeature } from "@turf/turf";
 import { useLayer, type BarangayCollection } from "@rcene/data";
 import { featureBounds, type LngLat } from "@rcene/geo";
 import { useAppStrings, useT } from "@rcene/i18n";
+import { useTheme } from "@rcene/ui/theme";
 import {
-  BARANGAY_LINE_COLOR,
-  BOUNDARY_COLOR,
+  BASEMAP,
   CATBALOGAN_VIEW,
-  COVERAGE_COLOR,
-  LAND_COLOR,
   OFFLINE_STYLE,
   OSM_ATTRIBUTION,
   OSM_SOURCE_ID,
   OSM_TILES,
-  SEA_COLOR,
   SLOT,
+  type BasemapColors,
+  type MapTone,
 } from "./style.ts";
 import { hasWebGL2 } from "./webgl.ts";
 import { loadMapLib } from "./maplib.ts";
@@ -77,19 +76,36 @@ export type BaseMapProps = MapPassThrough & {
   mapRef?: Ref<MapRef>;
   /** CSS cursor over the map canvas. */
   cursor?: string;
+  /**
+   * Basemap colours: "light" (default; the hazard fills were tuned on it), "dark",
+   * or "auto" (follows the app's light/dark theme). Hazard colours never change.
+   */
+  tone?: MapTone | "auto";
 };
 
-const LAND_PAINT = { "fill-color": LAND_COLOR } satisfies FillLayerSpecification["paint"];
-const COVERAGE_PAINT = { "fill-color": COVERAGE_COLOR } satisfies FillLayerSpecification["paint"];
-const BOUNDARY_PAINT = {
-  "line-color": BOUNDARY_COLOR,
-  "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1.25, 15, 2.5],
-} satisfies LineLayerSpecification["paint"];
-const BARANGAY_PAINT = {
-  "line-color": BARANGAY_LINE_COLOR,
-  "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.5, 15, 1.5],
-  "line-dasharray": [3, 2],
-} satisfies LineLayerSpecification["paint"];
+/** The basemap tone to draw: "auto" follows the effective theme mode. */
+export function useMapTone(tone: MapTone | "auto" = "light"): MapTone {
+  const { effective } = useTheme();
+  return tone === "auto" ? effective.mode : tone;
+}
+
+/** The basemap layers' paint for one tone (module-level, so a re-render never re-sets paint). */
+function basemapPaint(colors: BasemapColors) {
+  return {
+    land: { "fill-color": colors.land } satisfies FillLayerSpecification["paint"],
+    coverage: { "fill-color": colors.coverage } satisfies FillLayerSpecification["paint"],
+    boundary: {
+      "line-color": colors.boundary,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1.25, 15, 2.5],
+    } satisfies LineLayerSpecification["paint"],
+    barangay: {
+      "line-color": colors.barangayLine,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.5, 15, 1.5],
+      "line-dasharray": [3, 2],
+    } satisfies LineLayerSpecification["paint"],
+  };
+}
+const PAINT = { light: basemapPaint(BASEMAP.light), dark: basemapPaint(BASEMAP.dark) } as const;
 const OSM_PAINT = { "raster-saturation": -0.3 } satisfies RasterLayerSpecification["paint"];
 
 /** Padding in degrees around the boundary for maxBounds (~16 km). */
@@ -108,8 +124,12 @@ export function BaseMap({
   className,
   mapRef,
   cursor,
+  tone: toneProp,
   ...rest
 }: BaseMapProps) {
+  const tone = useMapTone(toneProp);
+  const colors = BASEMAP[tone];
+  const paint = PAINT[tone];
   const { onLoad, onError, onMouseEnter, onMouseLeave, maxBounds: maxBoundsProp, ...mapProps } = rest;
   const t = useT(useAppStrings());
   const [webgl] = useState(hasWebGL2);
@@ -146,8 +166,8 @@ export function BaseMap({
     return (
       <div
         role="alert"
-        className={cx("grid h-full w-full place-items-center p-6 text-center text-sm text-slate-700", className)}
-        style={{ backgroundColor: SEA_COLOR }}
+        className={cx("grid h-full w-full place-items-center p-6 text-center text-sm", className)}
+        style={{ backgroundColor: colors.sea, color: colors.label }}
       >
         {t("map.noWebgl")}
       </div>
@@ -157,12 +177,13 @@ export function BaseMap({
   return (
     <div
       data-lenis-prevent
+      data-map-tone={tone}
       className={cx(
         "relative h-full w-full overflow-hidden",
-        "[&_.maplibregl-canvas:focus-visible]:outline-2 [&_.maplibregl-canvas:focus-visible]:-outline-offset-2 [&_.maplibregl-canvas:focus-visible]:outline-blue-600",
+        "[&_.maplibregl-canvas:focus-visible]:outline-2 [&_.maplibregl-canvas:focus-visible]:-outline-offset-2 [&_.maplibregl-canvas:focus-visible]:outline-ring",
         className,
       )}
-      style={{ backgroundColor: SEA_COLOR }}
+      style={{ backgroundColor: colors.sea }}
     >
       <MapGL
         {...mapProps}
@@ -202,17 +223,18 @@ export function BaseMap({
         }}
       >
         <NavigationControl position="top-right" visualizePitch={false} />
+        <SeaColor color={colors.sea} />
 
         {land.status === "ready" && (
           <Source id="rcene-land" type="geojson" data={land.data}>
-            <Layer id="rcene-land" type="fill" paint={LAND_PAINT} beforeId={SLOT.land} />
+            <Layer id="rcene-land" type="fill" paint={paint.land} beforeId={SLOT.land} />
           </Source>
         )}
 
         {boundaryData && (
           <Source id="rcene-boundary" type="geojson" data={boundaryData}>
-            <Layer id="rcene-coverage" type="fill" paint={COVERAGE_PAINT} beforeId={SLOT.coverage} />
-            <Layer id="rcene-boundary-line" type="line" paint={BOUNDARY_PAINT} beforeId={SLOT.boundary} />
+            <Layer id="rcene-coverage" type="fill" paint={paint.coverage} beforeId={SLOT.coverage} />
+            <Layer id="rcene-boundary-line" type="line" paint={paint.boundary} beforeId={SLOT.boundary} />
           </Source>
         )}
 
@@ -232,9 +254,9 @@ export function BaseMap({
         {showBarangays && barangays.status === "ready" && (
           <>
             <Source id="rcene-barangays" type="geojson" data={barangays.data}>
-              <Layer id="rcene-barangays-line" type="line" paint={BARANGAY_PAINT} beforeId={SLOT.outlines} />
+              <Layer id="rcene-barangays-line" type="line" paint={paint.barangay} beforeId={SLOT.outlines} />
             </Source>
-            {showBarangayLabels && <BarangayLabels data={barangays.data} />}
+            {showBarangayLabels && <BarangayLabels data={barangays.data} colors={colors} />}
           </>
         )}
 
@@ -248,9 +270,9 @@ export function BaseMap({
           type="button"
           aria-pressed={online}
           onClick={() => setOnline((on) => !on)}
-          className="absolute top-2 left-2 z-10 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white/90 px-2 py-1 text-xs font-medium text-slate-800 shadow-sm backdrop-blur-sm hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          className="absolute top-2 left-2 z-10 inline-flex items-center gap-1.5 rounded-md border bg-card/90 px-2 py-1 text-xs font-medium text-card-foreground shadow-sm backdrop-blur-sm hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          <span aria-hidden="true" className={cx("size-2 rounded-full", online ? "bg-emerald-500" : "bg-slate-400")} />
+          <span aria-hidden="true" className={cx("size-2 rounded-full", online ? "bg-primary" : "bg-muted-foreground")} />
           {t("map.onlineBasemap")}
         </button>
       )}
@@ -258,13 +280,32 @@ export function BaseMap({
       {!loaded && (
         <div
           role="status"
-          className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-slate-600"
+          className="pointer-events-none absolute inset-0 grid place-items-center text-sm"
+          style={{ color: colors.label }}
         >
           {t("map.loading")}
         </div>
       )}
     </div>
   );
+}
+
+/** Sets the style's sea (background layer) colour; the offline style object itself never changes. */
+function SeaColor({ color }: { color: string }) {
+  const { current: map } = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const gl = map.getMap();
+    const apply = () => {
+      if (gl.getLayer("background")) gl.setPaintProperty("background", "background-color", color);
+    };
+    if (gl.isStyleLoaded()) apply();
+    gl.on("styledata", apply);
+    return () => {
+      gl.off("styledata", apply);
+    };
+  }, [map, color]);
+  return null;
 }
 
 /** Fits the camera to the boundary once, without animation. */
@@ -284,7 +325,10 @@ const LABEL_MIN_ZOOM = 12.5;
 const LABEL_WIDTH_PX = 64;
 const EARTH_CIRCUMFERENCE_M = 40_075_016.686;
 const LABEL_MARKER_STYLE = { pointerEvents: "none" } as const;
-const LABEL_HALO = { textShadow: "0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff" } as const;
+const labelStyle = (colors: BasemapColors) => {
+  const h = colors.labelHalo;
+  return { color: colors.label, textShadow: `0 0 2px ${h}, 0 0 2px ${h}, 0 0 3px ${h}, 0 0 4px ${h}` } as const;
+};
 
 interface BarangayLabel {
   key: string;
@@ -298,7 +342,7 @@ interface BarangayLabel {
  * Barangay names as HTML markers (the offline style has no glyphs, so no
  * symbol text layers). Decorative and aria-hidden: lists in the UI carry the names.
  */
-function BarangayLabels({ data }: { data: BarangayCollection }) {
+function BarangayLabels({ data, colors }: { data: BarangayCollection; colors: BasemapColors }) {
   const labels = useMemo(
     () =>
       data.features.map((feature, i): BarangayLabel => {
@@ -317,6 +361,7 @@ function BarangayLabels({ data }: { data: BarangayCollection }) {
     [data],
   );
   const zoom = useZoom();
+  const style = useMemo(() => labelStyle(colors), [colors]);
 
   return labels
     .filter((label) => zoom >= label.minZoom)
@@ -324,8 +369,8 @@ function BarangayLabels({ data }: { data: BarangayCollection }) {
       <Marker key={label.key} longitude={label.longitude} latitude={label.latitude} style={LABEL_MARKER_STYLE}>
         <span
           aria-hidden="true"
-          className="block text-[11px] leading-none font-medium whitespace-nowrap text-slate-700 select-none"
-          style={LABEL_HALO}
+          className="block text-[11px] leading-none font-medium whitespace-nowrap select-none"
+          style={style}
         >
           {label.name}
         </span>

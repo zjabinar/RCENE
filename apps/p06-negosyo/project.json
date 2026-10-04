@@ -15,6 +15,10 @@
     "/registry",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
   "kind": "platform",
   "modules": [
     "09-negosyo",

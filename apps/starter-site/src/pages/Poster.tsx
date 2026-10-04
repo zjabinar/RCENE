@@ -27,7 +27,7 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
     <SixPanelPoster
       title={t("app.title")}
       subtitle={t("poster.subtitle")}
-      qr={<QrToApp url={siteUrl} label={t("about.qr.label")} size="34mm" />}
+      qr={<QrToApp url={siteUrl} label={t("about.qr.label")} size="28mm" />}
       footer={
         <>
           <span>{t("poster.footer.event")}</span>
@@ -52,22 +52,25 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
                 ? t("poster.picture.caption", { share: share(flood.share), n: flood.facilities.inZone.length, total: stats.facilities })
                 : t("data.layerMissing", { hazard: t("hazard.flood") })
             }
-            source={t("poster.picture.source")}
             downloadSvg="catbalogan-flood-zones"
           >
-            <CityMapSvg
-              layers={layers}
-              hazard={flood ? "flood" : undefined}
-              facilities={flood ? "split" : "all"}
-              split={flood?.facilities}
-              label={
-                flood
-                  ? t("map.floodLabel", { inZone: flood.facilities.inZone.length, f: stats.facilities })
-                  : t("map.cityLabel", { n: stats.barangays, f: stats.facilities })
-              }
-              width={720}
-            />
-            <MapKey hazard={flood ? "flood" : undefined} facilities={flood ? "split" : "all"} className="mt-[3mm]" />
+            {/* A fixed height in mm: the sheet has a fixed size, so the map always fits its panel. */}
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[4mm]">
+              <CityMapSvg
+                layers={layers}
+                hazard={flood ? "flood" : undefined}
+                facilities={flood ? "split" : "all"}
+                split={flood?.facilities}
+                label={
+                  flood
+                    ? t("map.floodLabel", { inZone: flood.facilities.inZone.length, f: stats.facilities })
+                    : t("map.cityLabel", { n: stats.barangays, f: stats.facilities })
+                }
+                width={720}
+                className="h-[68mm] w-full"
+              />
+              <MapKey hazard={flood ? "flood" : undefined} facilities={flood ? "split" : "all"} stacked />
+            </div>
           </PosterFigure>
         ),
         different: (
@@ -83,24 +86,17 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
               { name: "Claude Code", role: t("about.ai.tool.claude") },
               { name: "Playwright", role: t("about.ai.tool.playwright") },
             ]}
-            steps={[t("about.ai.step.brief"), t("about.ai.step.domain"), t("about.ai.step.kit"), t("about.ai.step.review")]}
+            steps={[t("about.ai.step.brief"), t("about.ai.step.domain"), t("about.ai.step.kit"), t("about.ai.step.check"), t("about.ai.step.review")]}
             disclosure={t("about.ai.disclosure")}
           />
         ),
         data: (
-          <div className="flex flex-col gap-[3mm]">
-            <PosterFigure title={t("poster.data.chart")} caption={t("poster.data.chartCaption")} downloadSvg="catbalogan-hazard-shares">
-              <HazardShareSvg shares={stats.byHazard} />
-            </PosterFigure>
-            <ul className="flex list-disc flex-col gap-1 ps-6 text-[0.9em]">
-              <li>{t("poster.data.1")}</li>
-              <li>{t("poster.data.2")}</li>
-              <li>{t("poster.data.3")}</li>
-            </ul>
-          </div>
+          <PosterFigure title={t("poster.data.chart")} caption={t("poster.data.chartCaption")} source={t("poster.data.source")}>
+            <HazardShareSvg shares={stats.byHazard} />
+          </PosterFigure>
         ),
         impact: (
-          <ul className="grid list-disc grid-cols-3 gap-x-[10mm] gap-y-2 ps-6">
+          <ul className="flex list-disc flex-col gap-1.5 ps-6">
             <li>{t("poster.impact.1")}</li>
             <li>{t("poster.impact.2")}</li>
             <li>{t("poster.impact.3")}</li>

@@ -144,7 +144,7 @@ Real FDP data, real budgets or real project lists; elections, identity checks or
 
 ## Stretch (only after the definition of done is met)
 
-- S1 `/story/poster`: #13's `Poster` (R13.5 as specified there) plus one P7 figure, the projects by schedule status drawn with `SvgMap`. "The story doubles as the poster."
+- S1 `/story/poster`: #13's `Poster` (R13.5 as specified there, on `PosterPage`, `PosterFigure` and `PrintButton` from `@rcene/kit/poster`) plus one P7 figure, the projects by schedule status drawn with `SvgMap`. "The story doubles as the poster."
 - S2 Flags: #12's R12.3–R12.4. "Flag an issue" on `/projects/:id`, the office queue as a "Flags" tab in `/planning`, the trail growing live in W1 (spine slices `flags` and `reviews`, each with one writer).
 - S3 A live `vote` chapter at the end of the story: the top 3 proposals from `tally` and the funding line, updating while the story is open.
 - S4 #11's results map on `/planning`: proposal pins scaled by pesos pledged.

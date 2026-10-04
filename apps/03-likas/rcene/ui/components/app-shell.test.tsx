@@ -35,6 +35,34 @@ async function renderAt(path: string, element: ReactNode) {
   await act(async () => root.render(<RouterProvider router={router} />));
 }
 
+describe("AppShell theme props", () => {
+  it("shows the theme menu, a brand mark and a woven band, and forces a palette for the view", async () => {
+    await renderAt(
+      "/",
+      <AppShell title="Board" brand={<span data-testid="mark">R</span>} weave palette="malinaw" mode="dark">
+        <p>Body</p>
+      </AppShell>,
+    );
+    expect(host.querySelector("[data-slot='theme-menu']")).not.toBeNull();
+    expect(host.querySelector("[data-testid='mark']")).not.toBeNull();
+    expect(host.querySelector("[data-slot='weave-band']")?.getAttribute("aria-hidden")).toBe("true");
+    expect(document.documentElement.dataset.palette).toBe("malinaw");
+    expect(document.documentElement.dataset.mode).toBe("dark");
+  });
+
+  it("can hide the theme menu", async () => {
+    await renderAt(
+      "/",
+      <AppShell title="Plain" themeMenu={false} weave={false}>
+        <p>Body</p>
+      </AppShell>,
+    );
+    expect(host.querySelector("[data-slot='theme-menu']")).toBeNull();
+    expect(host.querySelector("[data-slot='weave-band']")).toBeNull();
+    expect(document.documentElement.dataset.palette).toBe("habi");
+  });
+});
+
 describe("AppShell", () => {
   it("renders skip link, header, nav with aria-current, main and footer", async () => {
     await renderAt(

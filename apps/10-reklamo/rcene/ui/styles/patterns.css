@@ -1,0 +1,74 @@
+/*
+ * Woven (banig) textures in the palette's weave colours. Decorative only:
+ * never carry meaning in a pattern, and keep text on a solid surface.
+ *
+ *   <div class="weave-band" />            a woven strip (dividers, under the header)
+ *   <section class="weave-bg">…</section> a faint woven background
+ *   <div class="weave-check">…</div>      a bolder checker, for heroes and posters
+ *
+ * Under prefers-reduced-motion nothing here animates; under forced-colors the
+ * patterns disappear (Windows high contrast keeps text readable).
+ */
+@utility weave-band {
+  height: 0.5rem;
+  background-image:
+    repeating-linear-gradient(90deg, var(--weave-1) 0 12px, transparent 12px 24px),
+    repeating-linear-gradient(90deg, transparent 0 12px, var(--weave-2) 12px 24px),
+    linear-gradient(var(--weave-3), var(--weave-3));
+  background-size:
+    24px 50%,
+    24px 50%,
+    100% 100%;
+  background-position:
+    0 0,
+    12px 100%,
+    0 0;
+  background-repeat: repeat-x, repeat-x, no-repeat;
+  opacity: 0.9;
+}
+
+@utility weave-bg {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--weave-1) 7%, transparent) 0 10px,
+      transparent 10px 20px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--weave-2) 7%, transparent) 0 10px,
+      transparent 10px 20px
+    );
+}
+
+@utility weave-check {
+  background-color: color-mix(in oklab, var(--weave-3) 12%, var(--background));
+  background-image:
+    linear-gradient(90deg, color-mix(in oklab, var(--weave-1) 35%, transparent) 50%, transparent 50%),
+    linear-gradient(color-mix(in oklab, var(--weave-2) 35%, transparent) 50%, transparent 50%);
+  background-size: 28px 28px;
+}
+
+@utility glow-text {
+  text-shadow:
+    0 0 18px var(--glow),
+    0 0 2px var(--glow);
+}
+
+@media (forced-colors: active) {
+  .weave-band,
+  .weave-bg,
+  .weave-check {
+    background-image: none;
+  }
+}
+
+/* Print: keep woven colours and token backgrounds on posters. */
+@media print {
+  .weave-band,
+  .weave-bg,
+  .weave-check {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

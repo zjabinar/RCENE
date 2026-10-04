@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { FilePlusIcon, KanbanIcon, LayoutDashboardIcon } from "lucide-react";
+import { FilePlusIcon, LayoutDashboardIcon, SquareKanbanIcon } from "lucide-react";
 import { useFormat, useT } from "@rcene/i18n";
 import { ConsoleLayout } from "@rcene/kit/app";
 import { strings } from "@/i18n/strings.ts";
@@ -27,15 +27,15 @@ export function ConsoleFrame({ children, aside, asideLabel }: ConsoleFrameProps)
       title={t("console.title")}
       aside={aside}
       asideLabel={asideLabel}
-      // The AppShell header (title row, nav row, weave band) is taller than the kit's 4.5rem default.
-      className="[--kit-console-top:7.5rem]"
+      // The AppShell header (title row, nav row, weave band) is about 7.25rem, taller than the kit's 4.5rem default.
+      className="[--kit-console-top:7.25rem]"
       nav={[
         { to: "/console", end: true, label: t("console.nav.overview"), icon: <LayoutDashboardIcon aria-hidden="true" /> },
         { to: "/console/new", label: t("console.nav.new"), icon: <FilePlusIcon aria-hidden="true" /> },
         {
           to: "/console/records",
           label: t("console.nav.records"),
-          icon: <KanbanIcon aria-hidden="true" />,
+          icon: <SquareKanbanIcon aria-hidden="true" />,
           badge: (
             <>
               <span aria-hidden="true">{fmt.number(open)}</span>

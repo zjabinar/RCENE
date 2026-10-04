@@ -24,6 +24,7 @@ import { CATEGORIES, CHANNELS, PRIORITIES, nextCode } from "@/domain/records.ts"
 import { demoNow } from "@/domain/time.ts";
 import { ConsoleFrame } from "@/features/console/ConsoleFrame.tsx";
 import { CategoryLabel, PriorityBadge } from "@/features/requests/badges.tsx";
+import { fill } from "@/i18n/fill.tsx";
 import { strings } from "@/i18n/strings.ts";
 import { useRecords } from "@/store.ts";
 
@@ -223,7 +224,11 @@ function Summary({ values, code }: { values: Partial<Values>; code: string }) {
 /** The console's right-hand panel on this page: what happens after filing. */
 function AfterFiling({ code }: { code: string }) {
   const t = useT(strings);
-  const steps = [t("new.aside.1", { code }), t("new.aside.2"), t("new.aside.3")];
+  const steps = [
+    fill(t("new.aside.1"), { code: <strong className="font-semibold whitespace-nowrap text-foreground">{code}</strong> }),
+    t("new.aside.2"),
+    t("new.aside.3"),
+  ];
   return (
     <>
       <h2 className="font-display text-lg font-semibold">{t("new.aside.title")}</h2>

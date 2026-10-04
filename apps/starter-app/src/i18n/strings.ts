@@ -77,7 +77,7 @@ export const strings = extendStrings(common, {
     "col.due": "Due",
     "col.landmark": "Landmark",
     "table.caption": "All requests",
-    "table.search": "Search code, barangay, category…",
+    "table.search": "Search requests…",
     "table.file": "service-requests",
 
     // /console/records
@@ -273,7 +273,7 @@ export const strings = extendStrings(common, {
     "col.due": "Takna",
     "col.landmark": "Palatandaan",
     "table.caption": "An tanan nga hangyo",
-    "table.search": "Bilnga an code, barangay, klase…",
+    "table.search": "Bilnga an mga hangyo…",
     "table.file": "mga-hangyo",
 
     "records.title": "Mga rekord sumala ha kahimtang",
@@ -461,7 +461,7 @@ export const strings = extendStrings(common, {
     "col.due": "Takda",
     "col.landmark": "Palatandaan",
     "table.caption": "Lahat ng kahilingan",
-    "table.search": "Hanapin ang code, barangay, kategorya…",
+    "table.search": "Hanapin ang mga kahilingan…",
     "table.file": "mga-kahilingan",
 
     "records.title": "Mga rekord ayon sa katayuan",

@@ -70,12 +70,6 @@ export function RequestsTable({ records, now, pageSize = 8, className }: Request
         </span>
       ),
     },
-    {
-      accessorKey: "households",
-      header: t("col.households"),
-      meta: { align: "end" },
-      cell: ({ row }) => fmt.number(row.original.households),
-    },
   ];
 
   // CSV: translated headers and labels, numbers as numbers, dates as ISO 8601.

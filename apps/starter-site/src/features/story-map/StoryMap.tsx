@@ -29,7 +29,10 @@ function StepCamera({ bounds }: { bounds: Bounds }) {
   const first = useRef(true);
   useEffect(() => {
     if (!map) return;
-    map.fitBounds(bounds, { padding: 40, duration: first.current || reduced ? 0 : DURATION.story * 1000 });
+    // Leave room for the legend: beside the city on a wide panel, below it on a phone.
+    const wide = map.getContainer().clientWidth >= 640;
+    const padding = wide ? { top: 40, bottom: 40, left: 40, right: 260 } : { top: 72, bottom: 220, left: 24, right: 24 };
+    map.fitBounds(bounds, { padding, duration: first.current || reduced ? 0 : DURATION.story * 1000 });
     first.current = false;
   }, [map, bounds, reduced]);
   return null;
@@ -67,7 +70,8 @@ export function StoryMap({ layers, stats, view, className }: StoryMapProps) {
   const showSplit = view === "exposed" || view === "surge";
 
   return (
-    <div className={cn("relative size-full", className)}>
+    // The zoom buttons are hidden: this map is a figure that the steps drive, not a tool.
+    <div className={cn("relative size-full [&_.maplibregl-ctrl-top-right]:hidden", className)}>
       <BaseMap tone="auto" interactive={false} allowOnlineBasemap={false}>
         {hazard && <ZoneLayer key={hazard} hazard={hazard} zones={layers.zones[hazard]} casing={dark} />}
         {view === "facilities" && <PointLayer id="story-facilities" data={layers.facilities} color={primary} strokeColor={ring} />}

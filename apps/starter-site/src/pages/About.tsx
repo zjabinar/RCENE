@@ -7,7 +7,7 @@ import { Link } from "react-router";
 import { CalendarDaysIcon, CodeIcon, DatabaseIcon, MonitorPlayIcon, SmartphoneIcon, TypeIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useT } from "@rcene/i18n";
-import { AppMark, WeavePattern, Wordmark } from "@rcene/kit/brand";
+import { WeavePattern, Wordmark } from "@rcene/kit/brand";
 import { AiBuiltPanel, QrToApp } from "@rcene/kit/poster";
 import { Hero, Section } from "@rcene/kit/site";
 import { Button } from "@rcene/ui/components/button";
@@ -21,7 +21,6 @@ function BrandPanel() {
     <div className="relative isolate grid min-h-72 place-items-center overflow-hidden p-8 sm:p-12">
       <WeavePattern name="diamond" opacity={0.24} />
       <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card px-8 py-7 text-card-foreground shadow-raised">
-        <AppMark size={72} />
         <Wordmark className="text-4xl sm:text-5xl" />
       </div>
     </div>
@@ -73,7 +72,10 @@ export function About() {
           <Card icon={<SmartphoneIcon />} title={t("about.qr.title")}>
             <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
               <QrToApp url={siteUrl} label={t("about.qr.label")} size={168} className="shrink-0" />
-              <p>{t("about.qr.body")}</p>
+              <div className="flex flex-col gap-3">
+                <p>{t("about.qr.body")}</p>
+                <code className="w-fit rounded-md bg-muted px-2 py-1 font-mono text-sm text-foreground">npm run preview -- --host</code>
+              </div>
             </div>
           </Card>
           <Card icon={<MonitorPlayIcon />} title={t("about.present.title")}>
