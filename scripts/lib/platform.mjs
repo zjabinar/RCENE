@@ -169,6 +169,7 @@ describe("roles", () => {
 function startTsx(row) {
   return `import { RoleLauncher } from "@rcene/ui";
 import { useT } from "@rcene/i18n";
+import { PageHeader } from "@rcene/kit/app";
 import { strings } from "../i18n/strings.ts";
 import { ROLES } from "../roles.ts";
 
@@ -176,13 +177,8 @@ import { ROLES } from "../roles.ts";
 export function Start() {
   const t = useT(strings);
   return (
-    <section aria-labelledby="start-heading" className="flex flex-col gap-6">
-      <header>
-        <h1 id="start-heading" className="text-2xl font-semibold tracking-tight">
-          {t("start.heading")}
-        </h1>
-        <p className="mt-1 text-muted-foreground">{t("start.hint")}</p>
-      </header>
+    <section className="flex flex-col gap-2">
+      <PageHeader title={t("start.heading")} description={t("start.hint")} />
       <RoleLauncher
         windowPrefix=${str(row.slug)}
         roles={ROLES.map((role) => ({
@@ -200,8 +196,8 @@ export function Start() {
 }
 
 function rolePageTsx() {
-  return `import { ConstructionIcon } from "lucide-react";
-import { useT } from "@rcene/i18n";
+  return `import { useT } from "@rcene/i18n";
+import { IllustratedState, PageHeader } from "@rcene/kit/app";
 import { cn } from "@rcene/ui";
 import { strings } from "../i18n/strings.ts";
 import { ROLES, type RoleDef, type RoleId } from "../roles.ts";
@@ -215,15 +211,9 @@ export function RolePage({ role }: { role: RoleId }) {
   const roles: readonly RoleDef[] = ROLES;
   const full = roles.find((r) => r.id === role)?.width === "full";
   return (
-    <section aria-labelledby={\`role-\${role}-heading\`} className={cn("flex flex-col gap-3", full && "p-4 sm:p-6")}>
-      <h1 id={\`role-\${role}-heading\`} className="text-2xl font-semibold tracking-tight">
-        {t(\`role.\${role}.title\`)}
-      </h1>
-      <p className="text-muted-foreground">{t(\`role.\${role}.summary\`)}</p>
-      <p className="flex items-center gap-2 rounded-lg border border-dashed p-4 text-sm">
-        <ConstructionIcon aria-hidden="true" className="size-4 shrink-0" />
-        {t("role.placeholder")}
-      </p>
+    <section className={cn("flex flex-col gap-2", full && "p-4 sm:p-6")}>
+      <PageHeader title={t(\`role.\${role}.title\`)} description={t(\`role.\${role}.summary\`)} />
+      <IllustratedState spot="empty" size="sm" title={t("role.placeholder")} />
     </section>
   );
 }
@@ -262,6 +252,7 @@ function appLayoutTsx() {
   return `import { Outlet, useLocation } from "react-router";
 import { AppShell } from "@rcene/ui";
 import { useT } from "@rcene/i18n";
+import { AppMark } from "@rcene/kit/brand";
 import { strings } from "./i18n/strings.ts";
 import { ROLES, roleForPath } from "./roles.ts";
 
@@ -279,6 +270,7 @@ export function AppLayout() {
       title={t("app.title")}
       tagline={t("app.tagline")}
       width={role?.width ?? "wide"}
+      brand={<AppMark size={32} />}
       showReset
       nav={[
         { to: "/", label: t("nav.start"), end: true },

@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router";
 import { AppShell } from "@rcene/ui";
 import { useT } from "@rcene/i18n";
+import { AppMark } from "@rcene/kit/brand";
 import { strings } from "./i18n/strings.ts";
 import { ROLES, roleForPath } from "./roles.ts";
 
@@ -18,6 +19,7 @@ export function AppLayout() {
       title={t("app.title")}
       tagline={t("app.tagline")}
       width={role?.width ?? "wide"}
+      brand={<AppMark size={32} />}
       showReset
       nav={[
         { to: "/", label: t("nav.start"), end: true },

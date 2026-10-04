@@ -1,0 +1,27 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "S1",
+  "slug": "starter-app",
+  "title": "Application starter",
+  "tagline": "Role console, dashboard, forms and board built from the kit",
+  "port": 5301,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "main",
+  "smokeRoutes": [
+    "/",
+    "/console",
+    "/console/new",
+    "/console/REC-0001",
+    "/resident",
+    "/board",
+    "/console/records",
+    "/resident?code=REC-0001",
+    "/sources"
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "kind": "starter"
+}

@@ -49,9 +49,46 @@ The `--level-*` and `--status-*` hex values equal `LEVEL_HEX` / `STATUS_HEX` in 
 
 ## Theme tokens (Tailwind color names)
 
-`background`, `foreground`, `card(-foreground)`, `popover(-foreground)`, `primary(-foreground)` (teal), `secondary(-foreground)`, `muted(-foreground)`, `accent(-foreground)`, `destructive(-foreground)`, `warning(-foreground)` (amber, for cautions, not hazards), `border`, `input`, `ring`, `chart-1`…`chart-5`.
+`background`, `foreground`, `card(-foreground)`, `popover(-foreground)`, `primary(-foreground)`, `secondary(-foreground)`, `muted(-foreground)`, `accent(-foreground)`, `destructive(-foreground)`, `warning(-foreground)` (amber, for cautions, not hazards), `brand(-foreground)`, `highlight(-foreground)`, `border`, `input`, `ring`, `chart-1`…`chart-5`, `seq-1`…`seq-5`, `weave-1`…`weave-3`, `glow`. Their values depend on the palette and mode (next section).
 
-Hazard colors are the same in light and dark mode: `level-low`, `level-moderate`, `level-high`, `level-veryHigh`, `status-not-in-zone`, `status-outside`. Each also has a `-foreground` color that meets WCAG AA on that fill, e.g. `bg-level-high text-level-high-foreground`. The radius scale is `rounded-sm|md|lg|xl`, and the font is `font-sans` (Inter Variable).
+Hazard colors are the same in every palette and mode: `level-low`, `level-moderate`, `level-high`, `level-veryHigh`, `status-not-in-zone`, `status-outside`. Each also has a `-foreground` color that meets WCAG AA on that fill, e.g. `bg-level-high text-level-high-foreground`. The radius scale is `rounded-sm|md|lg|xl`, and the fonts are `font-sans` (Inter Variable), `font-display` and `font-showcase`.
+
+## Theme (`@rcene/ui/theme`)
+
+Five palettes, each in light and dark. The values are in `styles/themes.css`, and `themes.test.ts` checks every pair: text at 4.5:1 or more (7:1 in `malinaw`), controls and chart colours at 3:1, no hazard tokens, and no UI colour in the yellow-to-red hazard band.
+
+| Palette | Use it for | Display font |
+|---|---|---|
+| `habi` (default, "Living Tapestry") | every app view: abaca cream, Samar sea teal, banig violet; dark = night indigo | Fraunces |
+| `dagat` | coastal and storm-surge apps (02, 15, P4, P9 default to it) | Fraunces |
+| `fiesta` | heritage, tourism and participation (11, 16, 17, P7, P8) | Fraunces |
+| `gabi` | the bold "showcase" look of the event poster: neon cyan and magenta on navy. Its light mode prints | Exo 2 |
+| `malinaw` | public boards, kiosks, low vision: black and white | Inter |
+
+- **How it is chosen.**
+  - `<html data-palette data-mode>` (plus the `.dark` class) is set before first paint by a boot script that `rceneApp()` injects into `index.html`.
+  - The order is the user's choice (the **Theme** menu in the AppShell header, persisted as `rcene:theme` and synced across windows), then the app's default (`project.json` `"theme": { "palette": "dagat", "mode": "system" }`), then habi + the device setting.
+  - **Reset demo** keeps the theme.
+- **A view forces its own colours** with AppShell `palette` / `mode` / `surface` props, or `useThemeOverride({ palette: "malinaw", mode: "dark" })`. The override is not persisted, is removed on unmount, and the menu then says "This view sets its own colours". Overrides merge field by field and the deeper one wins (a page inside AppShell beats the shell's own props; AppShell wraps its content in `ThemeOverrideScope`), whatever order they mounted in. They apply in layout effects, so a forced view never paints a frame in the wrong theme. Public boards use `palette="malinaw"`.
+- **Showcase surface.**
+  - `surface="showcase"` on AppShell paints the whole view in gabi dark (landing pages, the demo).
+  - `<Surface variant="showcase">` from `@rcene/kit` paints one region.
+  - Keep one showcase surface per page.
+- **Hooks:**
+  - `useTheme()` returns `{ effective, choice, defaults, overridden, setPalette, setMode }`.
+  - `useThemeSync()` applies the theme to `<html>`; AppShell calls it once.
+  - `useTokenColor("--primary", fallback?)` returns a token's current value and follows theme changes, for things that can't read CSS variables (MapLibre paint, canvas, library options). `readTokenColor()` is the non-hook read.
+  - `resolveTheme()` and `applyTheme()` are the pure and DOM halves.
+- **Components:** `ThemeMenu` (also exported from `@rcene/ui`) and `PaletteSwatch`.
+- **Tokens added for the design system** (Tailwind names):
+  - colours: `brand(-foreground)`, `highlight(-foreground)`, `weave-1..3` (decorative), `glow`, `seq-1..5` (an ordered scale for non-hazard choropleths);
+  - fonts: `font-display` (the palette's display face, also applied to h1 and h2), `font-showcase` (Exo 2; add `italic` for the poster look);
+  - type: `text-display-1|2|3` and `text-board-1|2|3`;
+  - shadows: `shadow-raised`, `shadow-overlay`, `shadow-glow`;
+  - easing: `ease-weave`;
+  - utilities: `weave-band`, `weave-bg`, `weave-check`, `glow-text` (`styles/patterns.css`).
+  - Colour comes only from tokens. Never use `dark:` to pick a colour; the tokens already change with the mode.
+- **Maps** stay on their light basemap by default (`BaseMap tone`; see `rcene/map/README.md`). Map layers can't read CSS variables: pass `useTokenColor("--primary")` as a non-hazard point or line colour.
 
 ## Custom components (`@rcene/ui`)
 
@@ -59,11 +96,12 @@ All built-in text is translated and follows the language picker. Shared componen
 
 ### Chrome
 
-**`AppShell`**: `{ title: string; tagline?: string; nav?: NavItem[]; actions?: ReactNode; layers?: LayerName[]; width?: "phone" | "wide" | "full"; showReset?: boolean; strings?: AppStrings; disclaimer?: string; toaster?: boolean; children: ReactNode }`
+**`AppShell`**: `{ title: string; tagline?: string; nav?: NavItem[]; actions?: ReactNode; layers?: LayerName[]; width?: "phone" | "wide" | "full"; showReset?: boolean; strings?: AppStrings; disclaimer?: string; toaster?: boolean; brand?: ReactNode; themeMenu?: boolean; palette?: Palette; mode?: ModeSetting; surface?: "showcase"; weave?: boolean; children: ReactNode }`
+- `brand`: a mark before the title, e.g. `<AppMark />` from `@rcene/kit/brand`. `themeMenu` (default `true`): the Theme menu (light/dark/device + palettes). `palette`/`mode`/`surface`: force this view's colours (see Theme). `weave` (default `true`): the woven band under the header, the Living Tapestry signature; `weave={false}` removes it. The sticky header's height is published on the shell as the CSS variable `--app-header-h`, for sticky content below it (`top-[var(--app-header-h)]`).
 - `NavItem = { to: string; label: string; end?: boolean }`. It renders a react-router `NavLink`, which sets `aria-current="page"`. Use `end: true` for `"/"`.
 - Layout: a skip link (`app.skipToContent`) that moves focus to `<main id="main" tabIndex={-1}>`, then a sticky header. The header holds the title (links to `/`) and tagline, then `SampleDataBadge layers={layers}`, your `actions`, the optional **Reset demo** button and `LangToggle`. Below that comes a horizontally scrolling nav row, then main, then `DisclaimerFooter`, then the toast region.
 - `width`: `"phone"` = `max-w-md` centered (resident views, designed at 390 px). `"wide"` (default) = `max-w-7xl`. `"full"` = full-bleed with no padding: `<main>` is `flex flex-col`, so a `flex-1` child fills it (boards, full-screen maps).
-- `showReset`: calls `resetDemo({ keep: ["lang"] })` from `@rcene/store`, which clears every persisted store except the language and reloads every open window.
+- `showReset`: calls `resetDemo({ keep: ["lang", "theme"] })` from `@rcene/store`, which clears every persisted store except the language and theme and reloads every open window.
 - `strings`: the app's table (`extendStrings(common, …)`, from `src/i18n/strings.ts`). AppShell wraps everything inside it in `<StringsProvider value={strings}>`. The template's `AppLayout` already passes it.
 - `disclaimer`: an explicit, already-translated disclaimer (e.g. `t("app.myDisclaimer")`) for the footer and `/sources`. It wins over `strings`.
 - `toaster` (default `true`): mounts the themed `Toaster` once. Don't mount a second one; pass `toaster={false}` if the app needs its own (e.g. `position="top-center"`).
@@ -78,6 +116,8 @@ const t = useT(strings);
 ```
 
 Components rendered outside the shell (e.g. `RouteError` as a route `errorElement`) see `common` unless you also wrap the router in `<StringsProvider value={strings}>` in `main.tsx`.
+
+**`SkipLink`**: `{ label: string; targetId?: string /* "main" */ }`. The "Skip to content" link AppShell uses; for custom layouts (the kit's `SiteShell` uses it too).
 
 **`LangToggle`**: `{ className? }`. A compact select for en / war / fil, labelled with `LANG_LABELS`, with the accessible name `app.language`. The choice persists and syncs across windows.
 
@@ -194,6 +234,8 @@ These are hand-written in the shadcn **new-york v4** style: function components,
 
 | `<name>` | Exports |
 |---|---|
+| `form` | `Form` (react-hook-form `FormProvider`), `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage` (role="alert" on errors), `useFormField`. Ready-made fields are in `@rcene/kit/app` |
+| `chart` | `ChartContainer` (`config: ChartConfig` → `--color-<key>` per series), `ChartTooltip` + `ChartTooltipContent`, `ChartLegend` + `ChartLegendContent`. Recharts follows the theme with `fill="var(--color-x)"`. Wrap in `ChartCard` (kit) to offer the data as a table |
 | `button` | `Button` (`variant`: default, destructive, outline, secondary, ghost, link; `size`: default, sm, lg, icon, icon-sm, icon-lg; `asChild`), `buttonVariants` |
 | `badge` | `Badge` (`variant`: default, secondary, destructive, outline, **warning**; `asChild`), `badgeVariants` |
 | `card` | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter` |
@@ -247,6 +289,7 @@ Follow the `gsap-motion` skill. **Import GSAP from here, never from `"gsap"`**, 
 - `gsap`, `ScrollTrigger`, `SplitText`, `DrawSVGPlugin`, `useGSAP`: registered once.
 - **`CountUp`**: `{ value: number; duration?: number /* 1.2 s */; format?: (n: number) => string; className? }`. Tweens from the number currently shown to `value` and writes `textContent` through a ref, with no per-frame React state. Screen readers get the final value only. With reduced motion it shows the final value at once.
 - **`SmoothScroll`**: `{ children }`. Lenis on GSAP's ticker, synced with ScrollTrigger. Use it on story and landing pages only (not dashboards or map screens), and add `data-lenis-prevent` to a map container on a Lenis page. With reduced motion it renders the children with native scrolling.
+- **`DURATION`**, **`EASE`**, **`STAGGER`**, **`WEAVE_BEZIER`**: the motion tokens (seconds and GSAP eases; `WEAVE_BEZIER` matches `ease-weave`).
 - **`useReducedMotion()`** returns a `boolean` that updates live. **`prefersReducedMotion()`** is the non-hook version.
 
 **Tests (jsdom):** jsdom has no `window.matchMedia`, which ScrollTrigger needs. When it is missing, `@rcene/ui/motion` installs a stub that reports `prefers-reduced-motion: reduce`. In vitest, GSAP animations are therefore skipped, `CountUp` shows its final value and items are never left hidden mid-tween. Stub `matchMedia` yourself if a test needs motion. cmdk and floating-ui also need a `ResizeObserver` stub and `Element.prototype.scrollIntoView` in jsdom (see `components/ui/primitives.test.tsx`).

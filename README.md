@@ -8,7 +8,7 @@ Twenty single-feature civic apps for Catbalogan are pre-built here before the ev
 
 | Path | What |
 |---|---|
-| `apps/` | `_template` (the reference app, port 5100), the 20 apps `NN-slug` (ports 5101–5120) and the 10 platforms `pNN-slug` (ports 5201–5210; a role launcher, one route per role, and their module apps' briefs in `docs/modules/`). **Each app folder is a self-contained project**: its own `package.json` and `package-lock.json`, its own copy of the shared code in `rcene/` (data contracts, geometry, store, i18n, UI, map, Vite config), its own `data/`, `CLAUDE.md`, Claude Code skills and hooks, Playwright MCP and smoke test. Each keeps `AI-LOG.md`, `STATUS.md`, `NOTES.md` and `DEMO.md`. |
+| `apps/` | `_template` (the reference app, port 5100), the 20 apps `NN-slug` (ports 5101–5120) the 10 platforms `pNN-slug` (ports 5201–5210; a role launcher, one route per role, and their module apps' briefs in `docs/modules/`), and three reference projects for the design kit: `kit-gallery` (5300, every theme and block live), `starter-app` (5301) and `starter-site` (5302). **Each app folder is a self-contained project**: its own `package.json` and `package-lock.json`, its own copy of the shared code in `rcene/` (data contracts, geometry, store, i18n, UI and themes, map, the design kit, Vite config), its own `data/`, `CLAUDE.md`, Claude Code skills and hooks, Playwright MCP and smoke test. Each keeps `AI-LOG.md`, `STATUS.md`, `NOTES.md` and `DEMO.md`. |
 | `data/` | The canonical data: real layers in `files/`, fake fixtures in `fixtures/` (a per-file fallback), the catalogue in `README.md`. Copied into every app's `data/` with `pnpm sync-data`; apps fetch `/data/<file>`. |
 | `docs/` | PRD, proposals, disclosure, parallel-build how-to, skills; `projects/` (manifest `projects.json` + one brief per app, copied into the app as `docs/brief.md`); `event/` (challenge text) |
 | `scripts/` | Monorepo tooling: `new-app.mjs`, `sync-shared.mjs`, `sync-data.mjs`, `lockfiles.mjs`, `check-standalone.mjs`, `stack.mjs`, `smoke.mjs` and `fetch-models.mjs` (wrappers over each app's own), `launch-worktrees.ps1`, `data/` (conversion and fixtures), `hooks/` |
@@ -29,6 +29,7 @@ node --version                            # v22.18 or newer
 npm i -g pnpm@10                          # or: corepack enable
 pnpm install                              # one install for every app
 pnpm --filter @rcene/01-ligtas dev        # http://localhost:5101 (or: cd apps\01-ligtas; pnpm dev)
+pnpm --filter @rcene/kit-gallery dev      # http://localhost:5300: the design kit, every theme and block
 ```
 
 **One app on its own** (a copied folder, npm):

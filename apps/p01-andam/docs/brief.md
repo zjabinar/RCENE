@@ -24,7 +24,7 @@ Hazard knowledge sits in shapefiles and printed maps. A lookup that can't tell "
 | CDRRMO operator | `/console` | laptop, left, 1080 × 1080 | Pick a preset, raise or lower it; affected barangays, exposed facilities, centers now |
 | Resident | `/resident` (+ `/resident/b/:barangay`) | phone, 420 × 860 | "Is this place in a mapped zone? Where do I go, and is there room?" |
 | Center staff | `/center` → `/center/:id` | phone, 420 × 640 | Log arrivals and departures; open or close the center |
-| Public display | `/board` | projector, 1920 × 1080 | Readable from 5 m: the warning, affected barangays, centers by space, totals |
+| Public display | `/board` | projector, 1920 × 1080 | Readable from 5 m: the warning, affected barangays, centers by space, totals. Built on `BoardShell` (`@rcene/kit/app`) in the `malinaw` palette (`AppShell palette="malinaw"`) |
 | Anyone | `/sources` | — | Attribution and disclaimer |
 
 **Routes differ from the PRD in one place:** `/` is the role launcher, and the PRD's resident view `/` is `/resident` here (#1's `/b/:barangay` becomes `/resident/b/:barangay`). `/console`, `/center` (+ `/center/:id`) and `/board` keep the PRD paths.

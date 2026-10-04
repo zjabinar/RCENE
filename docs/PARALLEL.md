@@ -61,7 +61,8 @@ Useful flags:
 Apps own their copy of the shared code, so a fix is made **once in the template** and pushed out:
 
 1. Apply what the apps asked for in `apps/_template/`: `rcene/**` (carry back the good items from each app's "Shared-code changes (for the template)"), skills, scripts, docs. Check it with `pnpm --filter @rcene/template test`, `… typecheck` and `node scripts/smoke.mjs --app template`.
-2. `pnpm sync-shared --all --dry-run`, then `pnpm sync-shared --all`. It is a three-way update: files an app has changed are skipped and reported (review them; `--force` overwrites). Started apps are only updated when named or with `--include-started`.
+2. `pnpm sync-shared --all --dry-run`, then `pnpm sync-shared --all`. It is a three-way update: files an app has changed are skipped and reported (review them; `--force` overwrites). Started apps are only updated when named or with `--include-started`; the reference projects (below) are always updated.
+   - Design-kit changes (`rcene/kit`, `rcene/ui/theme`, the `rcene-design` skill) can reach apps already in progress: `pnpm sync-shared --all --include-started --only rcene,claude --dry-run`, then without `--dry-run`. The kit mostly adds files, and a file the session changed is skipped and reported, never overwritten.
 3. Data changed? `pnpm sync-data` mirrors root `data/` into every app, started ones included.
 4. Versions changed? Edit `stack.json`, `node scripts/stack.mjs --write`, then `pnpm lockfiles`. `pnpm stack:check` must pass.
 5. `pnpm check-standalone --all` (no app reaches outside its folder), then `pnpm typecheck; pnpm test; pnpm build`, and commit. Later batches start from the updated main.
@@ -87,6 +88,21 @@ A platform is one workflow across several roles (for example CDRRMO console → 
 The session **lifts** each finished module (`../NN-slug`, `STATUS.md` at `Phase: done`) into `src/modules/<name>/` by copying, never by importing across folders, and records it in `NOTES.md` under "Lifted modules". So: merge a platform's module apps first, then launch it from the updated main. Its first requirement is its first module on its own, so a platform that runs out of time is still a finished single-feature entry.
 
 Port 5201–5210 (preview +1000). The ★AI platforms are P2 (06's photo suggestion) and P5 (20's semantic search): fill their `models/` as for the AI apps.
+
+## Reference projects (kit gallery and starters)
+
+Three rows of `projects.json` are not built by sessions: they live on `main` with a hand-written `src/` and show the design kit (`rcene/kit`, skill `rcene-design`) in use.
+
+| Row | Folder | Port | Shows |
+|---|---|---|---|
+| G1 | `apps/kit-gallery` | 5300 | every theme and kit block live, with its source and preview controls (palette, mode, width, language) |
+| S1 | `apps/starter-app` | 5301 | an application system: role launcher, console with KPIs, chart and table, form wizard, record page, phone view, public board |
+| S2 | `apps/starter-site` | 5302 | a website: showcase landing page, data story with the map, about page with the AI disclosure, A3 poster, presenter mode |
+
+- They have `"launch": false` and no batch, so the launcher and the session hook skip them.
+- `pnpm new-app --all` skips them; `pnpm new-app G1` generates one only when its folder is missing (its `STATUS.md` says "Maintained").
+- `pnpm sync-shared --all` always updates their `rcene/`, scripts, Claude setup and config, so they show the current kit. After a kit change, run their checks: `node scripts/smoke.mjs --app kit-gallery --app starter-app --app starter-site`.
+- App sessions read them as `../kit-gallery`, `../starter-app`, `../starter-site` and copy pages into their own `src/`, never import from them (the same rule as lifting modules).
 
 ## In-browser AI models (06, 10, 20, P2, P5)
 

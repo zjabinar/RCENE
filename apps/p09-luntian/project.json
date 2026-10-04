@@ -15,6 +15,13 @@
     "/planner",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "theme": {
+    "palette": "dagat"
+  },
   "kind": "platform",
   "modules": [
     "14-basura",

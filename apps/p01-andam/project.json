@@ -16,6 +16,10 @@
     "/board",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
   "kind": "platform",
   "modules": [
     "01-ligtas",

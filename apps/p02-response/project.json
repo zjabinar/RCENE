@@ -16,6 +16,10 @@
     "/public",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
   "kind": "platform",
   "modules": [
     "06-snap",

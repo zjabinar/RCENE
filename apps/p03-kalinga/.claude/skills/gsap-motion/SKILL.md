@@ -32,6 +32,15 @@ import { gsap, ScrollTrigger, SplitText, useGSAP } from "@rcene/ui/motion";
 
 `@rcene/ui/motion` also exports `CountUp` (an animated number), `SmoothScroll` (Lenis on GSAP's ticker, synced with ScrollTrigger) and `useReducedMotion()`. Use them before writing your own.
 
+Use the shared motion tokens instead of picking numbers, so every screen moves alike:
+
+```ts
+import { DURATION, EASE, STAGGER, WEAVE_BEZIER } from "@rcene/ui/motion";
+gsap.from(".card", { y: 24, autoAlpha: 0, duration: DURATION.base, ease: EASE.standard, stagger: STAGGER.base });
+```
+
+`DURATION` is `instant` 0.12, `fast` 0.2, `base` 0.35, `slow` 0.6, `story` 1.1 seconds. In CSS the same curve is the Tailwind class `ease-weave` (`WEAVE_BEZIER`). The kit's site blocks (`Hero`, `StatBand`, `StoryTimeline`, `ScrollyChapter` in `@rcene/kit/site`) already animate this way and respect reduced motion; reach for them before writing a new hero or stat reveal (skill `rcene-design`).
+
 SplitText, DrawSVG, and the other plugins ship in the public `gsap` npm package. No account or token is needed.
 
 ## The core pattern: `useGSAP` with a scope

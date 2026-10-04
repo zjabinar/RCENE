@@ -249,12 +249,14 @@ beforeAll(() => {
           brief: "docs/projects/p01-plat.md", ai: false, modules: ["01", "02"], smokeRoutes: ["/", "/desk", "/sources"],
           roles: [{ id: "desk", path: "/desk", width: "full", title: { en: "Desk", war: "Desk", fil: "Desk" }, summary: { en: "Work", war: "Trabaho", fil: "Trabaho" } }],
         },
+        { id: "S1", slug: "starter-one", title: "Starter", tagline: "Copy from me", kind: "starter", batch: null, launch: false, port: 5301, branch: "main", app: "apps/starter-one", brief: "docs/projects/starter-one.md", ai: false, theme: { palette: "dagat" } },
       ],
     }),
   );
   write("docs/projects/01-one.md", "# Brief one\n");
   write("docs/projects/02-two.md", "# Brief two\n");
   write("docs/projects/p01-plat.md", "# Platform brief\n");
+  write("docs/projects/starter-one.md", "# Starter brief\n");
   write("docs/DISCLOSURE.md", "# Disclosure\n");
   write("docs/PRD.md", "# PRD\n");
   write("docs/PROPOSALS.md", "### 1. One — first\n- p1\n\n### 2. Two — second\n- p2\n\n### P1. Plat — both\n- platform\n");
@@ -338,6 +340,21 @@ describe("new-app", () => {
     expect(JSON.parse(read("apps/01-one/project.json")).kind).toBeUndefined();
   });
 
+  it("leaves reference projects out of --all and generates one once, when named", () => {
+    expect(existsSync(path.join(repo, "apps/starter-one"))).toBe(false);
+    const named = run("new-app.mjs", ["S1", "--root", repo]);
+    expect(named.status, named.out).toBe(0);
+    expect(read("apps/starter-one/STATUS.md")).toContain("Maintained");
+    const project = JSON.parse(read("apps/starter-one/project.json"));
+    expect(project).toMatchObject({ kind: "starter", theme: { palette: "dagat" }, smokeSchemes: ["light", "dark"] });
+    expect(existsSync(path.join(repo, "apps/starter-one/docs/proposal.md"))).toBe(false);
+    write("apps/starter-one/src/main.ts", "export const mine = 1;\n");
+    const again = run("new-app.mjs", ["S1", "--root", repo]);
+    expect(again.out).toContain("reference project");
+    expect(read("apps/starter-one/src/main.ts")).toBe("export const mine = 1;\n");
+    expect(run("new-app.mjs", ["--all", "--dry-run", "--root", repo]).out).not.toContain("starter-one");
+  });
+
   it("refuses to overwrite a started app without --force", () => {
     // The template's STATUS.md comment mentions "Not started"; only a line that is exactly that counts.
     const started = 'Phase: features\n\n<!-- Keep the "Not started" line until work begins -->\n';
@@ -352,7 +369,7 @@ describe("check-standalone, lockfiles --check, stack", () => {
   it("passes the generated apps and the template", () => {
     const r = run("check-standalone.mjs", ["--all", "--root", repo]);
     expect(r.status, r.out).toBe(0);
-    expect(r.out).toContain("4 of 4 folder(s) pass");
+    expect(r.out).toContain("5 of 5 folder(s) pass");
     expect(run("lockfiles.mjs", ["--check", "--root", repo]).status).toBe(0);
     expect(run("stack.mjs", ["--check", "--root", repo]).status).toBe(0);
   });

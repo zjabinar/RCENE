@@ -6,3 +6,4 @@ export { gsap, ScrollTrigger, SplitText, DrawSVGPlugin, useGSAP } from "./gsap.t
 export { CountUp, type CountUpProps } from "./count-up.tsx";
 export { SmoothScroll } from "./smooth-scroll.tsx";
 export { useReducedMotion, prefersReducedMotion } from "./use-reduced-motion.ts";
+export { DURATION, EASE, STAGGER, WEAVE_BEZIER } from "./tokens.ts";

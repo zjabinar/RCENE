@@ -11,6 +11,7 @@
 | `apps/_template/` | The reference app: generator source, and the reference copy of the shared code (`rcene/`), app skills (`.claude/skills/`), hooks, scripts and app docs. Port 5100 |
 | `apps/NN-slug/` | One app per proposal (ports 5101–5120; preview = port + 1000), generated from the template |
 | `apps/pNN-slug/` | One platform per P1–P10 (ports 5201–5210), generated from the template plus a role scaffold (`scripts/lib/platform.mjs`); its module apps' briefs are in its `docs/modules/` |
+| `apps/kit-gallery`, `apps/starter-app`, `apps/starter-site` | Reference projects (rows G1, S1, S2; ports 5300–5302): the design kit (`rcene/kit`, skill `rcene-design`) live, and two starters apps copy pages from. Hand-written `src/` on main, `launch: false`; `new-app --all` skips them, `sync-shared --all` keeps them current |
 | `data/` | Canonical data: `files/` (real, from the 00-data session), `fixtures/` (fake), `README.md` (catalogue). Apps get a copy via `pnpm sync-data` |
 | `docs/projects/` | `projects.json` (manifest) and one brief per project; each brief is copied into its app as `docs/brief.md` |
 | `docs/` | `PRD.md`, `PROPOSALS.md`, `PARALLEL.md` (the build how-to), `SKILLS.md`, `DISCLOSURE.md` |
@@ -25,7 +26,7 @@
 | `pnpm install` | Once per checkout or worktree: one install for every app |
 | `pnpm --filter @rcene/<slug> dev` | Run one app (or `pnpm dev` inside its folder); the template is `@rcene/template` |
 | `pnpm test` · `pnpm typecheck` · `pnpm build` | Whole repo |
-| `pnpm new-app <slug>` | Generate `apps/<slug>` from the template and its `projects.json` row, apps and platforms alike (`--all`, `--dry-run`; started apps only with `--force`) |
+| `pnpm new-app <slug>` | Generate `apps/<slug>` from the template and its `projects.json` row, apps and platforms alike (`--all`, `--dry-run`; started apps only with `--force`; a reference project only when named and its folder is missing) |
 | `pnpm sync-shared --all` | Three-way push of the template's shared code, scripts, skills, config and docs (briefs included) into the apps. Files an app changed are skipped and reported unless `--force`; started apps only when named or with `--include-started`; `--dry-run`, `--only rcene,docs,…` |
 | `pnpm sync-data` | Mirror root `data/` into every app's `data/` (started apps included) |
 | `pnpm lockfiles` | Regenerate each app's `package-lock.json` (for standalone `npm ci`) |
@@ -59,7 +60,7 @@ Batches 1–4 are the single-feature apps; batches 5–6 are the platforms (B5: 
 ## Package window (on main, between batches)
 
 1. Apply what the apps asked for **in the template**: `apps/_template/rcene/**`, its skills, scripts or docs. Carry back good shared-code changes from merged apps.
-2. Check the template: `pnpm --filter @rcene/template test`, `typecheck`, `smoke`.
+2. Check the template: `pnpm --filter @rcene/template test`, `typecheck`, `smoke`. After a design-kit change, also smoke `kit-gallery`, `starter-app` and `starter-site`.
 3. `pnpm sync-shared --all --dry-run`, then without `--dry-run` (name apps or add `--include-started` for apps already in progress; review the conflicts it reports).
 4. `pnpm sync-data` if `data/` changed; `pnpm lockfiles` and `pnpm stack:check` if versions changed (edit `stack.json` first).
    If a platform's `modules` or `roles` changed in `projects.json`: an unstarted platform is regenerated with `pnpm new-app <slug>`; for a started one, edit its `project.json` (`modules`, `roles`) and `src/roles.ts` by hand. `sync-shared` only refreshes `docs/modules/`.

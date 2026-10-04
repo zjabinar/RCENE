@@ -16,6 +16,13 @@
     "/planning",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "theme": {
+    "palette": "fiesta"
+  },
   "kind": "platform",
   "modules": [
     "13-datos",

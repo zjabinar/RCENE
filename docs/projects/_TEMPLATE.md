@@ -42,6 +42,7 @@ Pure functions with signatures and the cases each test must cover.
 ## Experience
 
 - Tone, layout (phone-first?), the **wow moment** and which skill/recipe makes it.
+- **Design:** the palette (`habi` unless the row sets `theme`) and the kit blocks each route is built from (skill `rcene-design`), e.g. "`/` = `PageHeader` + map; `/board` = `BoardShell` in `malinaw`". Name the one showcase surface, if any.
 - Accessibility specifics.
 
 ## Golden-path demo (≤ 2 minutes)

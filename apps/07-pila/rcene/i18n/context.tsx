@@ -11,6 +11,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 import { common } from "./common.ts";
+import type { Lang } from "./index.ts";
 import type { Strings } from "./strings.ts";
 
 /** The keys every app table has: the ones in `common`. */
@@ -36,4 +37,33 @@ export function StringsProvider<T extends CommonTable>({ value, children }: Stri
 /** The nearest provided app table, or `common`. Use as `useT(useAppStrings())`. */
 export function useAppStrings(): AppStrings {
   return useContext(StringsContext);
+}
+
+const LangOverrideContext = createContext<Lang | null>(null);
+
+export interface LangOverrideProps {
+  lang: Lang;
+  children?: ReactNode;
+}
+
+/**
+ * Renders `children` in `lang` whatever the chosen language is: `useT` and
+ * `useFormat` inside it use `lang`, and a layout-neutral wrapper
+ * (`display: contents`) carries `lang` so screen readers pronounce it right.
+ * For side-by-side previews (the gallery shows one block in en, war and fil at
+ * once) and print layouts. Not persisted.
+ */
+export function LangOverride({ lang, children }: LangOverrideProps) {
+  return (
+    <LangOverrideContext value={lang}>
+      <div lang={lang} data-slot="lang-override" style={{ display: "contents" }}>
+        {children}
+      </div>
+    </LangOverrideContext>
+  );
+}
+
+/** The language forced by the nearest `LangOverride`, or null. */
+export function useLangOverride(): Lang | null {
+  return useContext(LangOverrideContext);
 }

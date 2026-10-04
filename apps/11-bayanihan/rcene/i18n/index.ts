@@ -22,15 +22,19 @@
 import { useEffect } from "react";
 import { createSyncedStore } from "@rcene/store";
 
+import { useLangOverride } from "./context.tsx";
 import type { StringTable, Strings } from "./strings.ts";
 
 export { common, FORBIDDEN_ANSWER_WORDS } from "./common.ts";
 export * from "./strings.ts";
 export {
+  LangOverride,
   StringsProvider,
   useAppStrings,
+  useLangOverride,
   type AppStrings,
   type CommonTable,
+  type LangOverrideProps,
   type StringsProviderProps,
 } from "./context.tsx";
 
@@ -84,8 +88,14 @@ export function useLang(): [Lang, (lang: Lang) => void] {
   return [lang, setLang];
 }
 
+/** The language to render in: a surrounding `LangOverride`, else the chosen one. */
+function useActiveLang(): Lang {
+  const chosen = useLangStore((s) => s.lang);
+  return useLangOverride() ?? chosen;
+}
+
 export function useT<T extends StringTable>(strings: Strings<T>) {
-  const lang = useLangStore((s) => s.lang);
+  const lang = useActiveLang();
   return (key: keyof T & string, vars?: Vars) => translate(strings, lang, key, vars);
 }
 
@@ -104,7 +114,7 @@ export function formatCurrency(n: number, lang: Lang, digits = 2): string {
 
 /** Locale-aware formatters for the active language. */
 export function useFormat() {
-  const lang = useLangStore((s) => s.lang);
+  const lang = useActiveLang();
   const locale = LOCALES[lang];
   return {
     number: (n: number, digits = 0) =>

@@ -25,7 +25,7 @@ The SessionStart hook prints which one you are in (mode `project`, `monorepo` or
 | `docs/brief.md` | The spec. Also `docs/proposal.md` (the proposal), `docs/PRD.md` (01, 03, 05 and P1 only), `docs/DISCLOSURE.md`, and for a platform `docs/modules/` (its module apps' briefs) |
 | `docs/plan.md` | Your plan (you write it) · `docs/screenshots/` is written by the smoke test |
 | `src/` | App code: `domain/` (pure functions + tests), `features/`, `pages/`, `i18n/strings.ts`, `routes.tsx`, `store.ts`, `components/ui/` (app-only shadcn) |
-| `rcene/` | **This app's own copy of the shared code**: `data`, `geo`, `i18n`, `store`, `ui`, `map`, `config`, imported as `@rcene/<pkg>`. Read the `README.md` in each (the map API is in the `maplibre-gis` skill), not the source |
+| `rcene/` | **This app's own copy of the shared code**: `data`, `geo`, `i18n`, `store`, `ui` (+ `ui/theme`), `map`, `kit` (design blocks: `kit/app`, `kit/site`, `kit/poster`, `kit/brand`), `config`, imported as `@rcene/<pkg>`. Read the `README.md` in each (the map API is in the `maplibre-gis` skill, the design system in the `rcene-design` skill), not the source |
 | `data/files`, `data/fixtures` | Layers served at `/data/` (real files first, fake fixtures as a per-file fallback). `data/README.md` is the catalogue |
 | `models/` | In-browser AI models (gitignored, never committed), filled by `npm run fetch-models` |
 | `scripts/` | `smoke.mjs`, `fetch-models.mjs`, `hooks/` (guard and session context) |
@@ -58,6 +58,7 @@ npm run fetch-models -- --model e5|clip|all  # ★AI apps only: once, while onli
 
 - **Write only inside this folder.** Plans and notes go in `docs/` and `NOTES.md` here.
 - **Shared code:** this app owns its copy in `rcene/`. Prefer using it as-is. If you change it, keep the change minimal and list each change in `NOTES.md` under "Shared-code changes (for the template)", so it can be carried back to the template.
+- **Design: use the kit before writing your own UI** (skill `rcene-design`): page headers, consoles, boards, tables, charts, forms, wizards, timelines, meters, QR, empty states (`@rcene/kit/app`); hero, sections, scrollytelling, compare, timelines (`@rcene/kit/site`); the A3 poster and the demo presenter mode (`@rcene/kit/poster`); the RCENE mark and weave patterns (`@rcene/kit/brand`). Colours only from theme tokens (5 palettes x light/dark; `project.json` `theme` sets the app's default); never hard-code a colour, never use colour alone. The gallery (`../kit-gallery`, port 5300) shows every block live, and `../starter-app` / `../starter-site` are complete pages to copy from (read only; note what you copied in `NOTES.md`).
 - **Use the shared APIs before writing your own:** `toast` from `@rcene/ui` (`AppShell` mounts the Toaster); `AppShell strings={strings}` so the footer, `/sources` and other shared components use your string overrides (e.g. `app.disclaimer`); `SourcesPage({ extra, children })` + `SourceCard`; `useFormat().currency(n)` / `formatCurrency` for ₱; `toCsv(rows, columns)` from `@rcene/data` with `downloadCsv` / `downloadText` from `@rcene/ui`; `useOptionalLayer(file, schema)` for layers that may not exist.
 - **Data:** read layers through `@rcene/data` (`useLayer`, `useZones`, `useOptionalLayer`), never with a bare `fetch` that can 404. On a project branch `data/` is read-only: put requests in `NOTES.md` under "Requests for the data session" and work around them meanwhile. Never read `D:\monica` or `C:\lgu_portal`. Synthetic records use codes (`HH-0001`, `T-042`), **never personal names**. Seed all randomness (`createRng(seed)`) so demos repeat.
 - **Hazard answers have three states:** in a mapped zone (with level), not in a mapped zone, outside data coverage. **Never display "safe"**, in any language. Distances are straight-line and labelled so. OSM-derived evacuation sites are "Candidate — not verified by CDRRMO".
@@ -110,8 +111,9 @@ A platform (P1–P10) is one workflow across several roles, built from single-fe
 | Motion, count-ups, scroll stories | skill `gsap-motion` (imports from `@rcene/ui/motion`) |
 | 3D (02, 17 only) | skill `r3f-scenes` |
 | In-browser AI (06, 10, 20) | skill `offline-ai` |
-| Charts and dashboards | built-in skill `dataviz` |
+| Theme, layout, blocks, poster, demo, brand | skill `rcene-design` (+ the kit gallery at port 5300) |
+| Charts and dashboards | built-in skill `dataviz` (colours from `--chart-*` / `--seq-*`, via `ChartContainer`) |
 | UI direction, critique, copy, accessibility | plugins `frontend-design` and Design (`design-critique`, `ux-copy`, `accessibility-review`) |
 | TDD, debugging, verification | plugin Superpowers (skip its brainstorming, worktree and branch-finishing steps) |
 
-The four app skills live in `.claude/skills/`. The plugins are enabled in `.claude/settings.json`; if one is missing, it was never installed on this machine (see `docs/SKILLS.md` in the monorepo) — carry on without it.
+The five app skills live in `.claude/skills/`. The plugins are enabled in `.claude/settings.json`; if one is missing, it was never installed on this machine (see `docs/SKILLS.md` in the monorepo) — carry on without it.

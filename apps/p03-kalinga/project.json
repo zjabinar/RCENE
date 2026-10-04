@@ -14,6 +14,10 @@
     "/field",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
   "kind": "platform",
   "modules": [
     "18-kalinga"

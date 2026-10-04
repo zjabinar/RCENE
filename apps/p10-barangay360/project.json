@@ -14,6 +14,10 @@
     "/resident",
     "/sources"
   ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
   "kind": "platform",
   "modules": [
     "04-bantay",

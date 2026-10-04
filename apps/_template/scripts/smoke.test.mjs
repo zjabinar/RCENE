@@ -54,6 +54,8 @@ describe("smoke helpers", () => {
     });
     expect(() => smoke.parseArgs(["--route"])).toThrow(/needs a value/);
     expect(() => smoke.parseArgs(["--bogus"])).toThrow(/Unknown argument/);
+    expect(smoke.parseArgs(["--scheme", "dark", "--scheme=light", "--scheme", "dark"]).schemes).toEqual(["dark", "light"]);
+    expect(() => smoke.parseArgs(["--scheme", "dusk"])).toThrow(/light or dark/);
   });
 
   it("names screenshots after routes", () => {
@@ -68,7 +70,10 @@ describe("smoke helpers", () => {
     expect(project.routes.length).toBeGreaterThan(0);
     writeFileSync(path.join(tmp, "project.json"), JSON.stringify({ slug: "01-x", id: "01", port: 5101 }));
     const other = smoke.readProject(tmp);
-    expect(other).toMatchObject({ previewPort: 6101, routes: ["/", "/sources"] });
+    expect(other).toMatchObject({ previewPort: 6101, routes: ["/", "/sources"], schemes: ["light"] });
+    writeFileSync(path.join(tmp, "project.json"), JSON.stringify({ slug: "01-x", id: "01", port: 5101, smokeSchemes: ["light", "dark", "dusk"] }));
+    expect(smoke.readProject(tmp).schemes).toEqual(["light", "dark"]);
+    writeFileSync(path.join(tmp, "project.json"), JSON.stringify({ slug: "01-x", id: "01", port: 5101 }));
     expect(smoke.isThisApp("01", other)).toBe(true);
     expect(smoke.isThisApp("01-x", other)).toBe(true);
     expect(smoke.isThisApp("02-y", other)).toBe(false);

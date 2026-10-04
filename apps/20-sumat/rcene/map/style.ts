@@ -24,6 +24,47 @@ export const PIN_COLOR = "#111827";
 export const POINT_COLOR = "#0f766e";
 
 /**
+ * Basemap tone. "light" (default) is what the hazard fills were tuned on; "dark"
+ * is for dark or showcase screens (very-high zones then get a light casing line
+ * from ZoneLayer `casing`). The hazard colours themselves never change.
+ */
+export type MapTone = "light" | "dark";
+
+export interface BasemapColors {
+  sea: string;
+  /** Land outside the city boundary (outside data coverage). */
+  land: string;
+  /** Land inside the city boundary (inside data coverage). */
+  coverage: string;
+  boundary: string;
+  barangayLine: string;
+  /** Barangay labels and text drawn straight on the map (loading, no-WebGL notice). */
+  label: string;
+  labelHalo: string;
+}
+
+export const BASEMAP: Record<MapTone, BasemapColors> = {
+  light: {
+    sea: SEA_COLOR,
+    land: LAND_COLOR,
+    coverage: COVERAGE_COLOR,
+    boundary: BOUNDARY_COLOR,
+    barangayLine: BARANGAY_LINE_COLOR,
+    label: "#334155",
+    labelHalo: "#ffffff",
+  },
+  dark: {
+    sea: "#0b1a2a",
+    land: "#1b2130",
+    coverage: "#273042",
+    boundary: "#cbd5e1",
+    barangayLine: "#7c8799",
+    label: "#e2e8f0",
+    labelHalo: "#0b1220",
+  },
+};
+
+/**
  * Layer slots, bottom to top. Each slot is a hidden layer in the offline style;
  * a layer added with `beforeId={SLOT.x}` renders just below that slot, so the
  * order is stable no matter which GeoJSON file finishes loading first.

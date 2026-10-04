@@ -1,0 +1,459 @@
+/*
+ * Colour themes: 5 palettes x light/dark (rcene/ui/theme/palettes.ts lists them).
+ *
+ * <html data-palette="habi|dagat|fiesta|gabi|malinaw" data-mode="light|dark">
+ * is set before first paint by the boot script (rcene/ui/theme/boot.ts) and
+ * kept in step by AppShell (useThemeSync). Any element may carry its own
+ * data-palette / data-mode (gallery previews), and data-surface="showcase"
+ * paints one region in the bold dark "gabi" look without changing the user's
+ * choice.
+ *
+ * Rules (rcene/ui/themes.test.ts checks every block):
+ * - never set --level-* or --status-*: hazard colours are the same everywhere;
+ * - text pairs >= 4.5:1 (malinaw >= 7:1); ring, input and chart colours >= 3:1;
+ * - primary, accent, brand, ring and chart-* stay out of the yellow-to-red
+ *   hazard hue band, so no UI colour reads as a hazard level.
+ * Generated once from a palette table; edit values here and keep the tests green.
+ */
+
+:root,
+[data-palette="habi"] {
+  color-scheme: light;
+  --display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  --background: #f7f2e8;
+  --foreground: #2b2118;
+  --card: #fffdf8;
+  --card-foreground: #2b2118;
+  --popover: #fffdf8;
+  --popover-foreground: #2b2118;
+  --primary: #0f6b66;
+  --primary-foreground: #ffffff;
+  --secondary: #efe6d6;
+  --secondary-foreground: #2b2118;
+  --muted: #efe7da;
+  --muted-foreground: #5f4f3e;
+  --accent: #ebe3f4;
+  --accent-foreground: #2b2118;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --warning: #fdf0c4;
+  --warning-foreground: #7a3e00;
+  --border: #e2d6c2;
+  --input: #8c7a64;
+  --ring: #0f6b66;
+  --chart-1: #0f7c75;
+  --chart-2: #6d4bb3;
+  --chart-3: #1f6fb2;
+  --chart-4: #3d7d3a;
+  --chart-5: #7a6a58;
+  --brand: #5b3a8c;
+  --brand-foreground: #ffffff;
+  --highlight: #dcefeb;
+  --highlight-foreground: #0b4f4b;
+  --weave-1: #0f6b66;
+  --weave-2: #a0703f;
+  --weave-3: #6d4bb3;
+  --glow: rgb(15 107 102 / 0.28);
+  --seq-1: #d4ece8;
+  --seq-2: #9fd3cb;
+  --seq-3: #5fb3a8;
+  --seq-4: #2f8a80;
+  --seq-5: #0f5f59;
+}
+
+[data-palette="habi"][data-mode="dark"] {
+  color-scheme: dark;
+  --display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  --background: #14121f;
+  --foreground: #f3ede2;
+  --card: #1d1a2b;
+  --card-foreground: #f3ede2;
+  --popover: #1d1a2b;
+  --popover-foreground: #f3ede2;
+  --primary: #4fd1c5;
+  --primary-foreground: #0b2b29;
+  --secondary: #2a2638;
+  --secondary-foreground: #f3ede2;
+  --muted: #262233;
+  --muted-foreground: #bcb1a1;
+  --accent: #2e2547;
+  --accent-foreground: #f3ede2;
+  --destructive: #f87171;
+  --destructive-foreground: #2b0a0a;
+  --warning: #3d2a06;
+  --warning-foreground: #fde68a;
+  --border: #34304a;
+  --input: #8c84a8;
+  --ring: #4fd1c5;
+  --chart-1: #4fd1c5;
+  --chart-2: #b79cf2;
+  --chart-3: #6cb6ff;
+  --chart-4: #8bd17c;
+  --chart-5: #c9bba6;
+  --brand: #b79cf2;
+  --brand-foreground: #1b1230;
+  --highlight: #1f3b3a;
+  --highlight-foreground: #a7f0e6;
+  --weave-1: #4fd1c5;
+  --weave-2: #c9a26b;
+  --weave-3: #b79cf2;
+  --glow: rgb(79 209 197 / 0.35);
+  --seq-1: #173a37;
+  --seq-2: #1f5a54;
+  --seq-3: #2f8a80;
+  --seq-4: #5fb3a8;
+  --seq-5: #a7e3da;
+}
+
+[data-palette="dagat"] {
+  color-scheme: light;
+  --display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  --background: #f2f8fa;
+  --foreground: #0d2433;
+  --card: #ffffff;
+  --card-foreground: #0d2433;
+  --popover: #ffffff;
+  --popover-foreground: #0d2433;
+  --primary: #0b5c8a;
+  --primary-foreground: #ffffff;
+  --secondary: #e3eff4;
+  --secondary-foreground: #0d2433;
+  --muted: #e6f0f4;
+  --muted-foreground: #45606f;
+  --accent: #d7f0ee;
+  --accent-foreground: #0d2433;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --warning: #fdf0c4;
+  --warning-foreground: #7a3e00;
+  --border: #cfe0e8;
+  --input: #6e8a99;
+  --ring: #0b5c8a;
+  --chart-1: #0b6e99;
+  --chart-2: #0f8a7e;
+  --chart-3: #3b5bdb;
+  --chart-4: #6b4fbb;
+  --chart-5: #5c7080;
+  --brand: #0b3d5c;
+  --brand-foreground: #ffffff;
+  --highlight: #d7f0ee;
+  --highlight-foreground: #0b4f63;
+  --weave-1: #0b5c8a;
+  --weave-2: #2a9d8f;
+  --weave-3: #a78a5a;
+  --glow: rgb(11 92 138 / 0.25);
+  --seq-1: #d6eaf5;
+  --seq-2: #a3cde6;
+  --seq-3: #5fa7cf;
+  --seq-4: #2b7bb0;
+  --seq-5: #0b4f7a;
+}
+
+[data-palette="dagat"][data-mode="dark"] {
+  color-scheme: dark;
+  --display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  --background: #0a1824;
+  --foreground: #e6f2f7;
+  --card: #102230;
+  --card-foreground: #e6f2f7;
+  --popover: #102230;
+  --popover-foreground: #e6f2f7;
+  --primary: #5ec4e8;
+  --primary-foreground: #062030;
+  --secondary: #16303f;
+  --secondary-foreground: #e6f2f7;
+  --muted: #132a38;
+  --muted-foreground: #a3bccb;
+  --accent: #12343a;
+  --accent-foreground: #e6f2f7;
+  --destructive: #f87171;
+  --destructive-foreground: #2b0a0a;
+  --warning: #3d2a06;
+  --warning-foreground: #fde68a;
+  --border: #23404f;
+  --input: #7f9aa8;
+  --ring: #5ec4e8;
+  --chart-1: #5ec4e8;
+  --chart-2: #4fd1b8;
+  --chart-3: #8da2ff;
+  --chart-4: #c4a1ff;
+  --chart-5: #a3b4bf;
+  --brand: #8fd3f0;
+  --brand-foreground: #062030;
+  --highlight: #12343a;
+  --highlight-foreground: #9eeaf0;
+  --weave-1: #5ec4e8;
+  --weave-2: #4fd1b8;
+  --weave-3: #c9b08a;
+  --glow: rgb(94 196 232 / 0.35);
+  --seq-1: #113247;
+  --seq-2: #1a4f6e;
+  --seq-3: #2b7bb0;
+  --seq-4: #5fa7cf;
+  --seq-5: #a3d4f0;
+}
+
+[data-palette="fiesta"] {
+  color-scheme: light;
+  --display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  --background: #fbf6f8;
+  --foreground: #2a1324;
+  --card: #ffffff;
+  --card-foreground: #2a1324;
+  --popover: #ffffff;
+  --popover-foreground: #2a1324;
+  --primary: #a3166a;
+  --primary-foreground: #ffffff;
+  --secondary: #f3e6ee;
+  --secondary-foreground: #2a1324;
+  --muted: #f2e8ee;
+  --muted-foreground: #684a5c;
+  --accent: #e3f1e0;
+  --accent-foreground: #1d3a1a;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --warning: #fdf0c4;
+  --warning-foreground: #7a3e00;
+  --border: #ead8e2;
+  --input: #8a6a7d;
+  --ring: #a3166a;
+  --chart-1: #a3166a;
+  --chart-2: #2e7d32;
+  --chart-3: #6a3fb5;
+  --chart-4: #0b6e99;
+  --chart-5: #7a6a58;
+  --brand: #2e7d32;
+  --brand-foreground: #ffffff;
+  --highlight: #fbe3f0;
+  --highlight-foreground: #7a0f4f;
+  --weave-1: #a3166a;
+  --weave-2: #2e7d32;
+  --weave-3: #6a3fb5;
+  --glow: rgb(163 22 106 / 0.25);
+  --seq-1: #f7dbe9;
+  --seq-2: #eeaecd;
+  --seq-3: #db6fa6;
+  --seq-4: #b8327c;
+  --seq-5: #7d0f50;
+}
+
+[data-palette="fiesta"][data-mode="dark"] {
+  color-scheme: dark;
+  --display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  --background: #1a0f18;
+  --foreground: #f7e9f1;
+  --card: #261623;
+  --card-foreground: #f7e9f1;
+  --popover: #261623;
+  --popover-foreground: #f7e9f1;
+  --primary: #f472b6;
+  --primary-foreground: #3b0a24;
+  --secondary: #33202e;
+  --secondary-foreground: #f7e9f1;
+  --muted: #2c1b28;
+  --muted-foreground: #ccaec0;
+  --accent: #1f3a22;
+  --accent-foreground: #e7f6e4;
+  --destructive: #f87171;
+  --destructive-foreground: #2b0a0a;
+  --warning: #3d2a06;
+  --warning-foreground: #fde68a;
+  --border: #3f2a39;
+  --input: #a38497;
+  --ring: #f472b6;
+  --chart-1: #f472b6;
+  --chart-2: #7bd389;
+  --chart-3: #b39dff;
+  --chart-4: #6cb6ff;
+  --chart-5: #cbb8a6;
+  --brand: #7bd389;
+  --brand-foreground: #0e2a12;
+  --highlight: #3b1830;
+  --highlight-foreground: #ffc2e2;
+  --weave-1: #f472b6;
+  --weave-2: #7bd389;
+  --weave-3: #b39dff;
+  --glow: rgb(244 114 182 / 0.35);
+  --seq-1: #3b1530;
+  --seq-2: #6e1f55;
+  --seq-3: #b8327c;
+  --seq-4: #e46aa9;
+  --seq-5: #f9b8d8;
+}
+
+[data-palette="gabi"] {
+  color-scheme: light;
+  --display-family: "Exo 2 Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --background: #ffffff;
+  --foreground: #0b1026;
+  --card: #f6f8ff;
+  --card-foreground: #0b1026;
+  --popover: #ffffff;
+  --popover-foreground: #0b1026;
+  --primary: #0e7490;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #0b1026;
+  --muted: #eef1fb;
+  --muted-foreground: #4a5578;
+  --accent: #fae8ff;
+  --accent-foreground: #4a044e;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --warning: #fdf0c4;
+  --warning-foreground: #7a3e00;
+  --border: #dde3f5;
+  --input: #7480a8;
+  --ring: #a21caf;
+  --chart-1: #0e7490;
+  --chart-2: #a21caf;
+  --chart-3: #4f46e5;
+  --chart-4: #047857;
+  --chart-5: #64748b;
+  --brand: #a21caf;
+  --brand-foreground: #ffffff;
+  --highlight: #ecfeff;
+  --highlight-foreground: #155e75;
+  --weave-1: #0e7490;
+  --weave-2: #a21caf;
+  --weave-3: #4f46e5;
+  --glow: rgb(162 28 175 / 0.25);
+  --seq-1: #cffafe;
+  --seq-2: #67e8f9;
+  --seq-3: #06b6d4;
+  --seq-4: #0e7490;
+  --seq-5: #164e63;
+}
+
+[data-palette="gabi"][data-mode="dark"],
+[data-surface="showcase"] {
+  color-scheme: dark;
+  --display-family: "Exo 2 Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --background: #070a1a;
+  --foreground: #e8f1ff;
+  --card: #0e1330;
+  --card-foreground: #e8f1ff;
+  --popover: #0e1330;
+  --popover-foreground: #e8f1ff;
+  --primary: #22d3ee;
+  --primary-foreground: #04131a;
+  --secondary: #151b3d;
+  --secondary-foreground: #e8f1ff;
+  --muted: #121733;
+  --muted-foreground: #a5b4d4;
+  --accent: #2a0f3d;
+  --accent-foreground: #f5d0fe;
+  --destructive: #fb7185;
+  --destructive-foreground: #2b0610;
+  --warning: #3b2a05;
+  --warning-foreground: #fde68a;
+  --border: #1f2a55;
+  --input: #6b7bb0;
+  --ring: #e879f9;
+  --chart-1: #22d3ee;
+  --chart-2: #e879f9;
+  --chart-3: #818cf8;
+  --chart-4: #34d399;
+  --chart-5: #94a3b8;
+  --brand: #e879f9;
+  --brand-foreground: #2a0430;
+  --highlight: #0b2e3a;
+  --highlight-foreground: #67e8f9;
+  --weave-1: #22d3ee;
+  --weave-2: #e879f9;
+  --weave-3: #818cf8;
+  --glow: rgb(34 211 238 / 0.55);
+  --seq-1: #0b2540;
+  --seq-2: #0e4a6e;
+  --seq-3: #0e7490;
+  --seq-4: #22d3ee;
+  --seq-5: #a5f3fc;
+}
+
+[data-palette="malinaw"] {
+  color-scheme: light;
+  --display-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #0b3d91;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f0;
+  --secondary-foreground: #000000;
+  --muted: #f2f2f2;
+  --muted-foreground: #333333;
+  --accent: #e6eefc;
+  --accent-foreground: #000000;
+  --destructive: #a3120a;
+  --destructive-foreground: #ffffff;
+  --warning: #fff1b8;
+  --warning-foreground: #4a2600;
+  --border: #6b6b6b;
+  --input: #333333;
+  --ring: #0b3d91;
+  --chart-1: #0b3d91;
+  --chart-2: #6b21a8;
+  --chart-3: #0f766e;
+  --chart-4: #1e293b;
+  --chart-5: #4b5563;
+  --brand: #000000;
+  --brand-foreground: #ffffff;
+  --highlight: #e6eefc;
+  --highlight-foreground: #0b3d91;
+  --weave-1: #000000;
+  --weave-2: #0b3d91;
+  --weave-3: #6b6b6b;
+  --glow: rgb(11 61 145 / 0.3);
+  --seq-1: #dbe7fb;
+  --seq-2: #9dbcf0;
+  --seq-3: #4f7fd8;
+  --seq-4: #1e4fa8;
+  --seq-5: #0b2a63;
+}
+
+[data-palette="malinaw"][data-mode="dark"] {
+  color-scheme: dark;
+  --display-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --primary: #8ab4ff;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ffffff;
+  --muted: #141414;
+  --muted-foreground: #d4d4d4;
+  --accent: #10213f;
+  --accent-foreground: #ffffff;
+  --destructive: #ff8a80;
+  --destructive-foreground: #000000;
+  --warning: #2e2300;
+  --warning-foreground: #ffe58a;
+  --border: #8a8a8a;
+  --input: #bdbdbd;
+  --ring: #8ab4ff;
+  --chart-1: #8ab4ff;
+  --chart-2: #d8b4fe;
+  --chart-3: #5eead4;
+  --chart-4: #e5e7eb;
+  --chart-5: #9ca3af;
+  --brand: #ffffff;
+  --brand-foreground: #000000;
+  --highlight: #10213f;
+  --highlight-foreground: #bcd4ff;
+  --weave-1: #ffffff;
+  --weave-2: #8ab4ff;
+  --weave-3: #8a8a8a;
+  --glow: rgb(138 180 255 / 0.4);
+  --seq-1: #0b1e3f;
+  --seq-2: #173a7a;
+  --seq-3: #2f63c4;
+  --seq-4: #6f9bea;
+  --seq-5: #bcd4ff;
+}

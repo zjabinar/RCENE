@@ -11,5 +11,12 @@
   "smokeRoutes": [
     "/",
     "/sources"
-  ]
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "theme": {
+    "palette": "dagat"
+  }
 }

@@ -55,6 +55,7 @@ import {
   desiredManagedFiles,
   findApp,
   isMain,
+  isReference,
   isStarted,
   json,
   managedGroup,
@@ -344,7 +345,7 @@ function main() {
       console.log(`${row.slug.padEnd(16)} missing (node scripts/new-app.mjs ${row.slug})`);
       continue;
     }
-    if (isStarted(dir) && !named.has(row.slug) && !values["include-started"]) {
+    if (isStarted(dir) && !isReference(row) && !named.has(row.slug) && !values["include-started"]) {
       totals.skipped++;
       console.log(`${row.slug.padEnd(16)} skipped (started; name it or pass --include-started)`);
       continue;

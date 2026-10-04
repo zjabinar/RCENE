@@ -7,7 +7,7 @@
  *   </BaseMap>
  *   <Legend hazard="flood" />
  */
-export { BaseMap, type BaseMapProps } from "./BaseMap.tsx";
+export { BaseMap, useMapTone, type BaseMapProps } from "./BaseMap.tsx";
 export { ZoneLayer, type ZoneLayerProps } from "./ZoneLayer.tsx";
 export { PointLayer, type PointLayerProps } from "./PointLayer.tsx";
 export { SelectedPoint, type SelectedPointProps } from "./SelectedPoint.tsx";
