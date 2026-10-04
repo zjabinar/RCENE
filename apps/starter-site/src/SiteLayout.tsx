@@ -1,11 +1,12 @@
 /**
  * The website frame for every page: SiteShell (skip link, sticky header with
  * nav, theme and language menus, footer) instead of the app's AppShell, the
- * brand mark, Lenis smooth scrolling, and the presenter bar for the live demo
- * (press P on any page; it opens by itself with ?present in the address).
+ * brand mark, Lenis smooth scrolling, scroll restoration, and the presenter
+ * bar for the live demo (press P on any page; it opens by itself with
+ * ?present in the address).
  */
 import { useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { useT } from "@rcene/i18n";
 import { AppMark } from "@rcene/kit/brand";
 import { PresenterMode } from "@rcene/kit/poster";
@@ -64,6 +65,8 @@ export function SiteLayout() {
       }
     >
       <Outlet />
+      {/* A new page starts at the top (and Back returns to where you were). */}
+      <ScrollRestoration />
       <PresenterMode steps={steps} open={presenting} onOpenChange={setPresenting} />
     </SiteShell>
   );

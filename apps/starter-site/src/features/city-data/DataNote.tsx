@@ -14,20 +14,29 @@ import { CITY_LAYERS } from "./use-city-data.ts";
 export interface DataNoteProps {
   /** Extra caveats, one per line (already translated). */
   caveats?: ReactNode[];
+  /** "center" under a centred section, "start" (default) elsewhere. */
+  align?: "start" | "center";
   className?: string;
 }
 
-export function DataNote({ caveats = [], className }: DataNoteProps) {
+export function DataNote({ caveats = [], align = "start", className }: DataNoteProps) {
   const t = useT(strings);
   return (
-    <div className={cn("flex flex-col gap-2 text-sm leading-relaxed text-muted-foreground", className)}>
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <InfoIcon aria-hidden="true" className="size-4 shrink-0" />
-        <span>{t("data.computedHere")}</span>
-        <SampleDataBadge layers={CITY_LAYERS} />
+    <div
+      className={cn(
+        "flex flex-col gap-2 text-sm leading-relaxed text-pretty text-muted-foreground",
+        align === "center" && "items-center text-center",
+        className,
+      )}
+    >
+      <p className="flex items-start gap-2">
+        <InfoIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+        <span>
+          {t("data.computedHere")} <SampleDataBadge layers={CITY_LAYERS} className="ms-1 align-middle" />
+        </span>
       </p>
       {caveats.map((caveat, i) => (
-        <p key={i} className="text-pretty">
+        <p key={i}>
           {caveat}
         </p>
       ))}

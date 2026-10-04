@@ -113,7 +113,8 @@ export function Home() {
           {({ stats }) => <CityStatBand stats={stats} />}
         </LoadGate>
         <DataNote
-          className="mx-auto mt-8 max-w-3xl items-center text-center"
+          align="center"
+          className="mx-auto mt-8 max-w-3xl"
           caveats={[
             floodMissing ? t("data.layerMissing", { hazard: t("hazard.flood") }) : t("data.landNotPeople"),
             t("data.notInZoneMeans"),

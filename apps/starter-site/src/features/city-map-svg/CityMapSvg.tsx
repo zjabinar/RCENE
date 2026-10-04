@@ -5,7 +5,7 @@
  * slider. Colours are theme tokens (hazard levels use the level-* tokens),
  * so it follows the palette, light/dark and the showcase surface.
  */
-import { useMemo, useRef } from "react";
+import { useId, useMemo, useRef } from "react";
 import { LEVELS, type Hazard, type Level } from "@rcene/data";
 import { featureBounds } from "@rcene/geo";
 import { cn } from "@rcene/ui/lib/utils";
@@ -57,6 +57,7 @@ export function CityMapSvg({
   className,
 }: CityMapSvgProps) {
   const root = useRef<SVGSVGElement>(null);
+  const weaveId = useId();
   const reduced = useReducedMotion();
   const tapestry = variant === "tapestry";
 
@@ -119,8 +120,25 @@ export function CityMapSvg({
         ))}
       </g>
 
+      {tapestry && (
+        <>
+          {/* An over-under checker on the diagonal, the banig weave, laid over the barangays. */}
+          <defs>
+            <pattern id={weaveId} width={10} height={10} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width={5} height={5} className="fill-background" fillOpacity={0.14} />
+              <rect x={5} y={5} width={5} height={5} className="fill-background" fillOpacity={0.14} />
+            </pattern>
+          </defs>
+          <path d={drawing.boundary} fillRule="evenodd" fill={`url(#${weaveId})`} data-map-patch="" />
+        </>
+      )}
+
       {drawing.zones.map((z) => (
-        <path key={z.level} d={z.d} fillRule="evenodd" className={LEVEL_FILL[z.level]} fillOpacity={0.55} strokeOpacity={0.9} strokeWidth={1} />
+        <g key={z.level}>
+          {/* A soft casing keeps the darkest levels visible on a dark card (like ZoneLayer casing). */}
+          <path d={z.d} fill="none" className="stroke-foreground/35" strokeWidth={3} strokeLinejoin="round" />
+          <path d={z.d} fillRule="evenodd" className={LEVEL_FILL[z.level]} fillOpacity={0.55} strokeOpacity={0.95} strokeWidth={1.25} />
+        </g>
       ))}
 
       <path

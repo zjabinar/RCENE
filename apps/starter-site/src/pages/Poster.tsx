@@ -6,7 +6,7 @@
  */
 import { useT } from "@rcene/i18n";
 import { Wordmark } from "@rcene/kit/brand";
-import { AiBuiltPanel, PosterFigure, PosterPage, QrToApp, SixPanelPoster } from "@rcene/kit/poster";
+import { AiBuiltPanel, PosterFigure, PosterPage, QrToApp, SixPanelPoster, usePosterSheet } from "@rcene/kit/poster";
 import { SITE_CONTAINER } from "@rcene/kit/site";
 import { LoadGate } from "@rcene/ui";
 import { cn } from "@rcene/ui/lib/utils";
@@ -22,6 +22,11 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
   const share = useShareFormat();
   const { layers, stats } = data;
   const flood = stats.flood;
+  // Landscape panels are shorter: keep the process to three steps there.
+  const portrait = usePosterSheet().orientation === "portrait";
+  const steps = (portrait ? (["brief", "domain", "kit", "check", "review"] as const) : (["brief", "check", "review"] as const)).map((s) =>
+    t(`about.ai.step.${s}`),
+  );
 
   return (
     <SixPanelPoster
@@ -86,13 +91,13 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
               { name: "Claude Code", role: t("about.ai.tool.claude") },
               { name: "Playwright", role: t("about.ai.tool.playwright") },
             ]}
-            steps={[t("about.ai.step.brief"), t("about.ai.step.domain"), t("about.ai.step.kit"), t("about.ai.step.check"), t("about.ai.step.review")]}
+            steps={steps}
             disclosure={t("about.ai.disclosure")}
           />
         ),
         data: (
           <PosterFigure title={t("poster.data.chart")} caption={t("poster.data.chartCaption")} source={t("poster.data.source")}>
-            <HazardShareSvg shares={stats.byHazard} />
+            <HazardShareSvg shares={stats.byHazard} className="h-auto max-h-[44mm] w-full" />
           </PosterFigure>
         ),
         impact: (
