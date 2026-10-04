@@ -27,8 +27,6 @@ export function ConsoleFrame({ children, aside, asideLabel }: ConsoleFrameProps)
       title={t("console.title")}
       aside={aside}
       asideLabel={asideLabel}
-      // The AppShell header (title row, nav row, weave band) is about 7.25rem, taller than the kit's 4.5rem default.
-      className="[--kit-console-top:7.25rem]"
       nav={[
         { to: "/console", end: true, label: t("console.nav.overview"), icon: <LayoutDashboardIcon aria-hidden="true" /> },
         { to: "/console/new", label: t("console.nav.new"), icon: <FilePlusIcon aria-hidden="true" /> },

@@ -1585,6 +1585,8 @@
         "/console/REC-0001",
         "/resident",
         "/board",
+        "/console/records",
+        "/resident?code=REC-0001",
         "/sources"
       ],
       "smokeSchemes": [

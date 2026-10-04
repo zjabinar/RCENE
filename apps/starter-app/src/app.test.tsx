@@ -36,6 +36,7 @@ beforeEach(() => {
     },
   );
   Element.prototype.scrollIntoView = vi.fn();
+  vi.stubGlobal("scrollTo", vi.fn()); // <ScrollRestoration /> scrolls on navigation
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
@@ -62,7 +63,8 @@ function renderAt(path: string) {
   return router;
 }
 
-describe("the starter app", () => {
+// Whole pages with user-event: allow more than the 5 s default when the suite runs in parallel.
+describe("the starter app", { timeout: 20_000 }, () => {
   it("offers the three roles on /", async () => {
     renderAt("/");
     expect(await screen.findByRole("heading", { level: 1, name: "Choose a role" })).toBeTruthy();

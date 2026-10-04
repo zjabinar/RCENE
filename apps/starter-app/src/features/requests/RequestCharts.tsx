@@ -22,7 +22,7 @@ const BAR_SIZE = 24;
  * but Recharts 3 wraps tick labels in `.recharts-cartesian-axis-tick-label`, so they kept Recharts'
  * #666 (too faint on dark). Reported in NOTES.md for the template; harmless once the kit is fixed.
  */
-const CHART_CLASS = "aspect-auto h-60 w-full [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground";
+const CHART_CLASS = "aspect-auto h-60 w-full";
 
 interface ChartProps {
   records: readonly RequestRecord[];

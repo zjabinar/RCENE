@@ -70,8 +70,9 @@ export function StoryMap({ layers, stats, view, className }: StoryMapProps) {
   const showSplit = view === "exposed" || view === "surge";
 
   return (
-    // The zoom buttons are hidden: this map is a figure that the steps drive, not a tool.
-    <div className={cn("relative size-full [&_.maplibregl-ctrl-top-right]:hidden", className)}>
+    // No zoom buttons (a figure the steps drive, not a tool) and no empty attribution button
+    // (the map draws only local layers; every source is credited on /sources).
+    <div className={cn("relative size-full [&_.maplibregl-ctrl-bottom-right]:hidden [&_.maplibregl-ctrl-top-right]:hidden", className)}>
       <BaseMap tone="auto" interactive={false} allowOnlineBasemap={false}>
         {hazard && <ZoneLayer key={hazard} hazard={hazard} zones={layers.zones[hazard]} casing={dark} />}
         {view === "facilities" && <PointLayer id="story-facilities" data={layers.facilities} color={primary} strokeColor={ring} />}

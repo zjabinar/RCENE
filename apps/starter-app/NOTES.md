@@ -8,7 +8,7 @@ A generic "barangay service requests" app: 24 seeded records (`REC-0001`…`REC-
 |---|---|
 | `src/roles.ts` + `src/AppLayout.tsx` | A role table (path, AppShell `width`, forced `palette`) and one `AppShell` whose width and palette follow the route: `full` console, `phone` resident, `full` + `malinaw` board. `brand={<AppMark size={32} />}`, `showReset`, `layers`, `strings`, `<ScrollRestoration />` |
 | `src/pages/Start.tsx` | `/`: `PageHeader` + `RoleLauncher` (icons, three columns from `lg`) + a numbered "how the demo flows" card |
-| `src/features/console/ConsoleFrame.tsx` | `ConsoleLayout` with icon nav, a live count badge (with screen-reader text), a per-page `aside`, and `--kit-console-top` set for the AppShell header |
+| `src/features/console/ConsoleFrame.tsx` | `ConsoleLayout` with icon nav, a live count badge (with screen-reader text) and a per-page `aside` |
 | `src/pages/console/Overview.tsx` | `/console`: `PageHeader` with an action, `KpiRow` (count-up, warning tone, hints), two `ChartCard`s, the `DataTable` |
 | `src/features/requests/RequestCharts.tsx` | Recharts in `ChartContainer` inside `ChartCard` (table view, caveat), `var(--color-…)`, thin bars with value labels, no gridlines, animation off under reduced motion |
 | `src/features/requests/RequestsTable.tsx` | `DataTable` columns: translated `accessorFn`s so search and sort use what people read, a step-order `sortingFn`, badges in cells, rows that open the record, CSV export with translated headers |
@@ -29,14 +29,14 @@ Multi-window demo: open `/console`, `/resident?code=REC-0022` and `/board` from 
 
 ## Shared-code changes (for the template)
 
-No file in `rcene/` was changed. Kit issues found, worked around in `src/`:
+No file in `rcene/` was changed. Kit issues found while building it; the first five are now fixed in the template (2026-10-04) and synced here:
 
-- **`rcene/ui/components/ui/chart.tsx` (ChartContainer)**: the axis selector `[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground` no longer matches Recharts 3.10 (tick labels sit in `.recharts-cartesian-axis-tick-label`, text class `.recharts-cartesian-axis-tick-value`), so axis labels keep Recharts' `#666`, about 3:1 on the dark palettes. Fix: target `.recharts-cartesian-axis-tick-value`. Workaround: `CHART_CLASS` in `src/features/requests/RequestCharts.tsx`.
-- **`rcene/kit/app/console-layout.tsx`**: the default `--kit-console-top` (4.5rem) is the AppShell header without its nav row; with a nav row and the weave band the header is about 7.25rem (116 px), so the sticky sidebar and aside slide under it. Suggest a 7.25rem default, or AppShell publishing its height as a CSS variable. Workaround: `className="[--kit-console-top:7.25rem]"` in `ConsoleFrame.tsx`.
-- **`rcene/i18n` `useFormat().date/time`**: they use the device's time zone. Every app's data is Philippine time, and the smoke test's Chromium runs in the container's zone (UTC), so its screenshots show 08:30 PHT as "12:30 AM". Suggest `timeZone: "Asia/Manila"` in `useFormat` (StatusTimeline and the BoardShell clock use it). The screenshots in `docs/screenshots/` were made with `TZ=Asia/Manila npm run smoke`.
-- **`rcene/ui/components/ui/badge.tsx`**: the `destructive` variant uses `text-white` and `dark:bg-destructive/60`, against the tokens-only rule; suggest `text-destructive-foreground`. Not used here (the overdue chip is in `badges.tsx`).
+- **`rcene/ui/components/ui/chart.tsx` (ChartContainer)**: the axis selector `[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground` no longer matches Recharts 3.10 (tick labels sit in `.recharts-cartesian-axis-tick-label`, text class `.recharts-cartesian-axis-tick-value`), so axis labels keep Recharts' `#666`, about 3:1 on the dark palettes. **Fixed:** ChartContainer targets `.recharts-cartesian-axis-tick-value`, axis lines and labels.
+- **`rcene/kit/app/console-layout.tsx`**: the default `--kit-console-top` (4.5rem) is the AppShell header without its nav row; with a nav row and the weave band the header is about 7.25rem (116 px), so the sticky sidebar and aside slide under it. **Fixed:** AppShell publishes its header height as `--app-header-h`, which ConsoleLayout uses by default.
+- **`rcene/i18n` `useFormat().date/time`**: they use the device's time zone. Every app's data is Philippine time, and the smoke test's Chromium runs in the container's zone (UTC), so its screenshots show 08:30 PHT as "12:30 AM". Suggest `timeZone: "Asia/Manila"` in `useFormat` (StatusTimeline and the BoardShell clock use it). **Fixed for the smoke test:** its browser now runs in `Asia/Manila` (`en-PH`); the app itself still follows the device, which on the demo laptop is Philippine time.
+- **`rcene/ui/components/ui/badge.tsx`**: the `destructive` variant uses `text-white` and `dark:bg-destructive/60`, against the tokens-only rule; **Fixed:** Badge and Button `destructive` use `text-destructive-foreground` and the solid token.
 - **`rcene/kit/app/form-fields.tsx`**: `RadioField` has no column option (used `sm:[&_[role=radiogroup]]:grid-cols-2` for five category cards); a radio group's label sits about 4 px lower than a `SelectField` label beside it in the same row.
-- **`rcene/kit/app/data-table.tsx`**: on phones the search box shares a row with "Download CSV" and is only about 130 px wide; suggest a full-width search row below `sm`.
+- **`rcene/kit/app/data-table.tsx`**: on phones the search box shares a row with "Download CSV" and is only about 130 px wide; **Fixed:** the search takes its own full-width row below `sm`.
 - **`rcene/kit/app/zod-errors.ts`**: no message for a required confirmation (`z.literal(true)` / `refine`); the wizard gates Finish with `canNext` instead. A `kit.form.error.confirm` key would help.
 
 ## Requests for the data session

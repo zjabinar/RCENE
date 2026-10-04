@@ -22,17 +22,15 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
   const share = useShareFormat();
   const { layers, stats } = data;
   const flood = stats.flood;
-  // Landscape panels are shorter: keep the process to three steps there.
+  // The layout is designed for A3 portrait. Landscape panels are shorter, so they drop the process steps and a caption.
   const portrait = usePosterSheet().orientation === "portrait";
-  const steps = (portrait ? (["brief", "domain", "kit", "check", "review"] as const) : (["brief", "check", "review"] as const)).map((s) =>
-    t(`about.ai.step.${s}`),
-  );
+  const steps = portrait ? (["brief", "domain", "kit", "check", "review"] as const).map((s) => t(`about.ai.step.${s}`)) : undefined;
 
   return (
     <SixPanelPoster
       title={t("app.title")}
       subtitle={t("poster.subtitle")}
-      qr={<QrToApp url={siteUrl} label={t("about.qr.label")} size="28mm" />}
+      qr={<QrToApp url={siteUrl} label={t("about.qr.label")} size={portrait ? "28mm" : "20mm"} />}
       footer={
         <>
           <span>{t("poster.footer.event")}</span>
@@ -96,8 +94,8 @@ function SixPanels({ data, siteUrl }: { data: CityData; siteUrl: string }) {
           />
         ),
         data: (
-          <PosterFigure title={t("poster.data.chart")} caption={t("poster.data.chartCaption")} source={t("poster.data.source")}>
-            <HazardShareSvg shares={stats.byHazard} className="h-auto max-h-[44mm] w-full" />
+          <PosterFigure title={t("poster.data.chart")} caption={portrait ? t("poster.data.chartCaption") : undefined} source={t("poster.data.source")}>
+            <HazardShareSvg shares={stats.byHazard} className={portrait ? "h-auto max-h-[44mm] w-full" : "h-auto max-h-[30mm] w-full"} />
           </PosterFigure>
         ),
         impact: (

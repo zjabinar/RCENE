@@ -93,7 +93,8 @@ function ConsoleNavList({ nav, onNavigate }: { nav: ConsoleNavItem[]; onNavigate
  * at lg and up, a "Menu" button that opens the same nav in a sheet below lg,
  * the content, and an optional right panel. Put it inside
  * `<AppShell width="full">`; it brings its own padding. The sidebar sticks
- * below the shell header; set `--kit-console-top` if the header is taller.
+ * below the shell header (AppShell publishes its height as `--app-header-h`); set
+ * `--kit-console-top` to override.
  */
 export function ConsoleLayout({ nav, aside, asideLabel, title, children, className }: ConsoleLayoutProps) {
   const t = useT(useKitStrings());
@@ -106,7 +107,7 @@ export function ConsoleLayout({ nav, aside, asideLabel, title, children, classNa
       className={cn("grid min-h-0 w-full flex-1 lg:grid-cols-[15.5rem_minmax(0,1fr)]", className)}
     >
       <div data-slot="console-sidebar" className="hidden border-r bg-card/60 lg:block">
-        <div className="sticky top-[var(--kit-console-top,4.5rem)] flex max-h-[calc(100svh-var(--kit-console-top,4.5rem))] flex-col gap-3 overflow-y-auto px-3 py-5">
+        <div className="sticky top-[var(--kit-console-top,var(--app-header-h,4.5rem))] flex max-h-[calc(100svh-var(--kit-console-top,var(--app-header-h,4.5rem)))] flex-col gap-3 overflow-y-auto px-3 py-5">
           {title && (
             <p className="px-3 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">{title}</p>
           )}
@@ -150,7 +151,7 @@ export function ConsoleLayout({ nav, aside, asideLabel, title, children, classNa
             <aside
               aria-label={asideLabel ?? t("kit.console.aside")}
               data-slot="console-aside"
-              className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-raised xl:sticky xl:top-[calc(var(--kit-console-top,4.5rem)+1.5rem)]"
+              className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-raised xl:sticky xl:top-[calc(var(--kit-console-top,var(--app-header-h,4.5rem))+1.5rem)]"
             >
               {aside}
             </aside>

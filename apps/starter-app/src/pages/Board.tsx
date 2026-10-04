@@ -37,7 +37,7 @@ export function Board() {
         newest && (
           <>
             <BellRingIcon aria-hidden="true" className="size-8 shrink-0 text-primary" />
-            <span>{fill(t("board.status", { n: fmt.number(kpis.open) }), { code: <span className="whitespace-nowrap">{newest.code}</span> })}</span>
+            <span className="min-w-0 flex-1 basis-0">{fill(t("board.status", { n: fmt.number(kpis.open) }), { code: <span className="whitespace-nowrap">{newest.code}</span> })}</span>
           </>
         )
       }

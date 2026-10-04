@@ -20,7 +20,7 @@ Every block takes `className?`. Reword any chrome string by overriding its key i
 ```
 
 ### ConsoleLayout
-`{ nav: { to?; label; icon?; badge?; end?; onSelect?; active? }[]; aside?: ReactNode; asideLabel?: string; title?: string; children }` — the operator console: a sticky sidebar of `NavLink`s (active row `aria-current="page"`, count badges) from `lg` — or, for a console that switches sections in state, items with `onSelect` + `active` (buttons, same look); below `lg` a **Menu** button opens the same nav in a left sheet (closes on navigation). `aside` is a right panel from `xl`, stacked under the content below. Put it in `<AppShell width="full">`; set `--kit-console-top` if your header is taller than 4.5rem.
+`{ nav: { to?; label; icon?; badge?; end?; onSelect?; active? }[]; aside?: ReactNode; asideLabel?: string; title?: string; children }` — the operator console: a sticky sidebar of `NavLink`s (active row `aria-current="page"`, count badges) from `lg` — or, for a console that switches sections in state, items with `onSelect` + `active` (buttons, same look); below `lg` a **Menu** button opens the same nav in a left sheet (closes on navigation). `aside` is a right panel from `xl`, stacked under the content below. Put it in `<AppShell width="full">`; the sidebar sticks just under the AppShell header (which publishes its height as `--app-header-h`); set `--kit-console-top` to override.
 
 ```tsx
 <AppShell width="full" …>

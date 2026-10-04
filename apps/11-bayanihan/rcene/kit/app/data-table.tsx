@@ -205,7 +205,7 @@ export function DataTable<T>({
         {(search || exportCsv || toolbar) && (
           <div className="flex flex-wrap items-center gap-2">
             {search && (
-              <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+              <div className="relative w-full sm:w-64 sm:flex-none">
                 <SearchIcon
                   aria-hidden="true"
                   className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"

@@ -271,7 +271,15 @@ export function isOsmTile(url) {
 /** A browser context that aborts every request leaving the machine and records it. */
 export async function offlineContext(browser, viewport, aborted, colorScheme = "light") {
   // Service workers are blocked: Playwright cannot route their requests, so the offline check would miss them.
-  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block", colorScheme });
+  // Catbalogan time and locale, whatever the machine running the smoke test uses, so times on screenshots are right.
+  const context = await browser.newContext({
+    viewport,
+    deviceScaleFactor: 1,
+    serviceWorkers: "block",
+    colorScheme,
+    timezoneId: "Asia/Manila",
+    locale: "en-PH",
+  });
   await context.route("**/*", (route) => {
     const url = route.request().url();
     if (isLocalUrl(url)) return route.continue();

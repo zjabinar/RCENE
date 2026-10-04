@@ -55,7 +55,7 @@ function ChartContainer({ config, className, style, children, ...props }: ChartC
         data-slot="chart"
         data-chart={id}
         className={cn(
-          "aspect-video w-full text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line]:stroke-border/70 [&_.recharts-reference-line_line]:stroke-border [&_.recharts-surface]:outline-none",
+          "aspect-video w-full text-xs [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground [&_.recharts-cartesian-axis-line]:stroke-border [&_.recharts-cartesian-axis-tick-line]:stroke-border [&_.recharts-polar-angle-axis-tick-value]:fill-muted-foreground [&_.recharts-label]:fill-muted-foreground [&_.recharts-cartesian-grid_line]:stroke-border/70 [&_.recharts-reference-line_line]:stroke-border [&_.recharts-surface]:outline-none",
           className,
         )}
         style={{ ...vars, ...style }}

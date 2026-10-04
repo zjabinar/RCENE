@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Link, NavLink } from "react-router";
 import { RotateCcwIcon } from "lucide-react";
 import type { LayerName } from "@rcene/data";
@@ -122,12 +122,27 @@ export function AppShell({
     document.title = title;
   }, [title]);
 
+  // Publish the sticky header's height as --app-header-h, so sticky content below it
+  // (ConsoleLayout's sidebar, a map legend) can sit just under it at any width.
+  const shellRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const shell = shellRef.current;
+    const header = headerRef.current;
+    if (!shell || !header || typeof ResizeObserver === "undefined") return;
+    const update = () => shell.style.setProperty("--app-header-h", `${header.offsetHeight}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <StringsProvider value={table}>
-      <div data-slot="app-shell" data-width={width} className="flex min-h-svh flex-col bg-background text-foreground">
+      <div ref={shellRef} data-slot="app-shell" data-width={width} className="flex min-h-svh flex-col bg-background text-foreground">
         <SkipLink label={t("app.skipToContent")} />
 
-        <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <header ref={headerRef} className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className={cn("mx-auto flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2", FRAME[width])}>
             {brand && <div className="shrink-0">{brand}</div>}
             <div className="min-w-0 flex-1 basis-40">
