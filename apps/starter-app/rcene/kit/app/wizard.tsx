@@ -120,7 +120,8 @@ export function Wizard({
                 aria-hidden="true"
                 className={cn(
                   "relative z-10 flex size-9 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors",
-                  state === "done" && "bg-primary text-primary-foreground group-hover:ring-4 group-hover:ring-primary/25",
+                  state === "done" &&
+                    "bg-primary text-primary-foreground group-hover:ring-4 group-hover:ring-primary/25",
                   state === "current" && "bg-primary text-primary-foreground ring-4 ring-primary/20",
                   state === "upcoming" && "border-2 border-border bg-card text-muted-foreground",
                 )}

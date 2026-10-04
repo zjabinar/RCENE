@@ -96,7 +96,7 @@ const REQUESTS: Request[] = Array.from({ length: 24 }, (_, i) => ({
   barangay: `BRGY-${String(((i * 7) % 12) + 1).padStart(2, "0")}`,
   type: TYPES[(i * 3) % TYPES.length]!,
   filed: new Date(START + i * 5.5 * 3_600_000),
-  status: STATUSES[i < 8 ? 2 : i < 16 ? (i % 2 === 0 ? 1 : 2) : i % 3 === 0 ? 1 : 0]!,
+  status: STATUSES[(i * 2 + Math.floor(i / 5)) % 3]!,
 }));
 
 const STATUS_ICON = { open: CircleIcon, progress: CircleDotIcon, done: CircleCheckIcon } as const;
@@ -107,43 +107,43 @@ export function Example() {
   const [picked, setPicked] = useState<Request | null>(null);
 
   const columns: DataTableProps<Request>["columns"] = [
-      { accessorKey: "code", header: t("code"), cell: (c) => <span className="font-mono font-semibold">{c.getValue<string>()}</span> },
-      { accessorKey: "barangay", header: t("barangay") },
-      { id: "type", accessorFn: (r) => t(r.type), header: t("type") },
-      {
-        accessorKey: "filed",
-        header: t("filed"),
-        cell: (c) => {
-          const d = c.getValue<Date>();
-          return (
-            <time dateTime={d.toISOString()} className="text-muted-foreground">
-              {fmt.date(d)} · {fmt.time(d)}
-            </time>
-          );
-        },
+    { accessorKey: "code", header: t("code"), cell: (c) => <span className="font-semibold">{c.getValue<string>()}</span> },
+    { accessorKey: "barangay", header: t("barangay") },
+    { id: "type", accessorFn: (r) => t(r.type), header: t("type") },
+    {
+      accessorKey: "filed",
+      header: t("filed"),
+      cell: (c) => {
+        const d = c.getValue<Date>();
+        return (
+          <time dateTime={d.toISOString()} className="text-muted-foreground">
+            {fmt.date(d)} · {fmt.time(d)}
+          </time>
+        );
       },
-      {
-        id: "status",
-        accessorFn: (r) => t(r.status),
-        header: t("status"),
-        cell: (c) => {
-          const status = c.row.original.status;
-          const Icon = STATUS_ICON[status];
-          return (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold",
-                status === "open" && "bg-secondary text-secondary-foreground",
-                status === "progress" && "bg-primary/10 text-primary",
-                status === "done" && "bg-muted text-muted-foreground",
-              )}
-            >
-              <Icon aria-hidden="true" className="size-3.5" />
-              {c.getValue<string>()}
-            </span>
-          );
-        },
+    },
+    {
+      id: "status",
+      accessorFn: (r) => t(r.status),
+      header: t("status"),
+      cell: (c) => {
+        const status = c.row.original.status;
+        const Icon = STATUS_ICON[status];
+        return (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold",
+              status === "open" && "bg-secondary text-secondary-foreground",
+              status === "progress" && "bg-primary/10 text-primary",
+              status === "done" && "bg-muted text-muted-foreground",
+            )}
+          >
+            <Icon aria-hidden="true" className="size-3.5" />
+            {c.getValue<string>()}
+          </span>
+        );
       },
+    },
   ];
 
   return (
@@ -167,9 +167,7 @@ export function Example() {
         }}
       />
       <p aria-live="polite" className="text-sm text-muted-foreground">
-        {picked
-          ? t("picked", { code: picked.code, type: t(picked.type), status: t(picked.status) })
-          : t("pickHint")}
+        {picked ? t("picked", { code: picked.code, type: t(picked.type), status: t(picked.status) }) : t("pickHint")}
       </p>
     </div>
   );

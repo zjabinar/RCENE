@@ -31,7 +31,11 @@ export interface CapacityMeterProps {
 const DEFAULT_THRESHOLDS: CapacityThresholds = { warn: 0.75, full: 1 };
 
 /** The state for a count, with `thresholds` as shares of `max`. */
-export function capacityState(value: number, max: number, thresholds: CapacityThresholds = DEFAULT_THRESHOLDS): CapacityState {
+export function capacityState(
+  value: number,
+  max: number,
+  thresholds: CapacityThresholds = DEFAULT_THRESHOLDS,
+): CapacityState {
   const share = max > 0 ? value / max : value > 0 ? Number.POSITIVE_INFINITY : 0;
   if (share > thresholds.full) return "over";
   if (share >= thresholds.full) return "full";
@@ -94,13 +98,20 @@ export function CapacityMeter({
   const diff = max - value;
 
   return (
-    <div data-slot="capacity-meter" data-state={state} className={cn("flex flex-col gap-2", large && "gap-3", className)}>
+    <div
+      data-slot="capacity-meter"
+      data-state={state}
+      className={cn("flex flex-col gap-2", large && "gap-3", className)}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span id={labelId} className={cn("min-w-0 font-medium", large ? "text-board-3" : "text-sm")}>
           {label}
         </span>
         {showNumbers && (
-          <span aria-hidden="true" className={cn("text-muted-foreground tabular-nums", large ? "text-board-3" : "text-sm")}>
+          <span
+            aria-hidden="true"
+            className={cn("text-muted-foreground tabular-nums", large ? "text-board-3" : "text-sm")}
+          >
             <span className={cn("font-semibold text-foreground", large ? "" : "text-base")}>{fmt.number(value)}</span>
             {" / "}
             {fmt.number(max)}
@@ -114,7 +125,11 @@ export function CapacityMeter({
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={Math.max(0, Math.min(value, max))}
-        aria-valuetext={t("kit.capacity.valueText", { value: fmt.number(value), max: fmt.number(max), state: stateText })}
+        aria-valuetext={t("kit.capacity.valueText", {
+          value: fmt.number(value),
+          max: fmt.number(max),
+          state: stateText,
+        })}
         className={cn("relative w-full overflow-hidden rounded-full bg-muted", large ? "h-5" : "h-3")}
       >
         <div

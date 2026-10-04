@@ -124,7 +124,7 @@ export function Example() {
 
   return (
     // A fixed-height box for the gallery; in an app it fills <AppShell width="full">.
-    <div className="h-[38rem] overflow-y-auto [--kit-console-top:0px]">
+    <div className="flex h-[38rem] flex-col overflow-y-auto [--kit-console-top:0px]">
       <ConsoleLayout
         title={t("console")}
         nav={[
@@ -158,6 +158,7 @@ export function Example() {
           </div>
           <KpiRow
             label={t("today")}
+            columns={2}
             items={[
               { id: "filed", label: t("filed"), value: 7, hint: t("sampleData") },
               { id: "open", label: t("open"), value: 12 },
@@ -172,7 +173,7 @@ export function Example() {
             <ul className="mt-3 divide-y">
               {WAITING.map((r) => (
                 <li key={r.code} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                  <span className="font-mono font-semibold">{r.code}</span>
+                  <span className="font-semibold">{r.code}</span>
                   <span className="min-w-0 flex-1 truncate text-muted-foreground">{t(r.type)}</span>
                   <span className="tabular-nums">{t("days", { n: r.days })}</span>
                 </li>

@@ -66,10 +66,21 @@ const COLUMNS: ColumnDef<Row>[] = [
   { accessorKey: "capacity", header: "Capacity", meta: { align: "end" } },
 ];
 
-const ROWS: Row[] = Array.from({ length: 12 }, (_, i) => ({ code: `EC-${String(i + 1).padStart(4, "0")}`, capacity: i * 25 }));
+const ROWS: Row[] = Array.from({ length: 12 }, (_, i) => ({
+  code: `EC-${String(i + 1).padStart(4, "0")}`,
+  capacity: i * 25,
+}));
 
 function Fields() {
-  const form = useForm<{ code: string; people?: number; kind: string; shelter: string; ok: boolean; notes: string; brgy: string }>({
+  const form = useForm<{
+    code: string;
+    people?: number;
+    kind: string;
+    shelter: string;
+    ok: boolean;
+    notes: string;
+    brgy: string;
+  }>({
     defaultValues: { code: "", kind: "", shelter: "", ok: false, notes: "", brgy: "" },
   });
   return (

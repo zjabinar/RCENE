@@ -27,7 +27,15 @@ import { useFormat, useT } from "@rcene/i18n";
 import { downloadCsv } from "@rcene/ui";
 import { Button } from "@rcene/ui/components/button";
 import { Input } from "@rcene/ui/components/input";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@rcene/ui/components/table";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@rcene/ui/components/table";
 import { cn } from "@rcene/ui/lib/utils";
 
 import { useKitStrings } from "../i18n.ts";
@@ -80,7 +88,10 @@ const ALIGN = { start: "text-left", center: "text-center", end: "text-right" } a
 
 /** Lower case without accents, so "Cañaveral" matches "canaveral". */
 function fold(value: string): string {
-  return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 }
 
 const INTERACTIVE = "a,button,input,select,textarea,label,[role=button],[role=checkbox],[role=link]";
@@ -126,11 +137,14 @@ export function DataTable<T>({
     columns,
     state: { sorting, globalFilter: query, pagination },
     onSortingChange: setSorting,
-    onGlobalFilterChange: (updater) => setQuery((q) => (typeof updater === "function" ? updater(q) : String(updater ?? ""))),
+    onGlobalFilterChange: (updater) =>
+      setQuery((q) => (typeof updater === "function" ? updater(q) : String(updater ?? ""))),
     onPaginationChange: setPagination,
     globalFilterFn,
     // Without `search.columns`, TanStack's default applies: columns whose values are text or numbers.
-    ...(searchColumns ? { getColumnCanGlobalFilter: (column: { id: string }) => searchColumns.includes(column.id) } : {}),
+    ...(searchColumns
+      ? { getColumnCanGlobalFilter: (column: { id: string }) => searchColumns.includes(column.id) }
+      : {}),
     sortDescFirst: false,
     getRowId,
     getCoreRowModel: getCoreRowModel(),
@@ -173,7 +187,10 @@ export function DataTable<T>({
   return (
     <div
       data-slot="data-table"
-      className={cn("flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-raised", className)}
+      className={cn(
+        "flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-raised",
+        className,
+      )}
     >
       <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
         <div className="min-w-0">
@@ -239,8 +256,11 @@ export function DataTable<T>({
               {group.headers.map((header) => {
                 const align = header.column.columnDef.meta?.align ?? "start";
                 const sorted = header.column.getIsSorted();
-                const content = header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext());
-                const SortIcon = sorted === "asc" ? ArrowUpIcon : sorted === "desc" ? ArrowDownIcon : ChevronsUpDownIcon;
+                const content = header.isPlaceholder
+                  ? null
+                  : flexRender(header.column.columnDef.header, header.getContext());
+                const SortIcon =
+                  sorted === "asc" ? ArrowUpIcon : sorted === "desc" ? ArrowDownIcon : ChevronsUpDownIcon;
                 return (
                   <TableHead
                     key={header.id}
@@ -310,7 +330,10 @@ export function DataTable<T>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn("px-4 py-3 first:pl-5 last:pr-5", ALIGN[cell.column.columnDef.meta?.align ?? "start"])}
+                    className={cn(
+                      "px-4 py-3 first:pl-5 last:pr-5",
+                      ALIGN[cell.column.columnDef.meta?.align ?? "start"],
+                    )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

@@ -26,7 +26,14 @@ const SPOT_WIDTH = { sm: 104, md: 148 } as const;
  * woven spot illustration (SpotIllustration from @rcene/kit/brand) drawn in the
  * palette's colours. Calm and centred.
  */
-export function IllustratedState({ spot = "empty", title, description, actions, size = "md", className }: IllustratedStateProps) {
+export function IllustratedState({
+  spot = "empty",
+  title,
+  description,
+  actions,
+  size = "md",
+  className,
+}: IllustratedStateProps) {
   return (
     <div
       role={spot === "error" ? "alert" : "status"}

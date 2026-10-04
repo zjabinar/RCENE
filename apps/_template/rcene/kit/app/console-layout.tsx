@@ -105,10 +105,7 @@ export function ConsoleLayout({ nav, aside, asideLabel, title, children, classNa
       data-slot="console-layout"
       className={cn("grid min-h-0 w-full flex-1 lg:grid-cols-[15.5rem_minmax(0,1fr)]", className)}
     >
-      <div
-        data-slot="console-sidebar"
-        className="hidden border-r bg-card/60 lg:block"
-      >
+      <div data-slot="console-sidebar" className="hidden border-r bg-card/60 lg:block">
         <div className="sticky top-[var(--kit-console-top,4.5rem)] flex max-h-[calc(100svh-var(--kit-console-top,4.5rem))] flex-col gap-3 overflow-y-auto px-3 py-5">
           {title && (
             <p className="px-3 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">{title}</p>

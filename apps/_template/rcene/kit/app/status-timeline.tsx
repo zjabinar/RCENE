@@ -81,7 +81,10 @@ export function StatusTimeline({ items, orientation = "vertical", label, classNa
             key={item.id}
             data-state={item.state}
             aria-current={item.state === "current" ? "step" : undefined}
-            className={cn("relative flex gap-4 pb-7 last:pb-0", row && "sm:flex-1 sm:flex-col sm:gap-3 sm:pr-4 sm:pb-0")}
+            className={cn(
+              "relative flex gap-4 pb-7 last:pb-0",
+              row && "sm:flex-1 sm:flex-col sm:gap-3 sm:pr-4 sm:pb-0",
+            )}
           >
             {!last && (
               <span
@@ -95,7 +98,10 @@ export function StatusTimeline({ items, orientation = "vertical", label, classNa
             )}
             <span
               aria-hidden="true"
-              className={cn("relative flex size-9 shrink-0 items-center justify-center rounded-full", MARKER[item.state])}
+              className={cn(
+                "relative flex size-9 shrink-0 items-center justify-center rounded-full",
+                MARKER[item.state],
+              )}
             >
               {item.state === "current" && (
                 <span className="absolute inset-0 rounded-full bg-primary/25 motion-safe:animate-ping" />

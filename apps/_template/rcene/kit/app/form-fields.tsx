@@ -10,7 +10,14 @@ import { CheckIcon, ChevronsUpDownIcon, MapPinIcon } from "lucide-react";
 import { useFormat, useT } from "@rcene/i18n";
 import { Button } from "@rcene/ui/components/button";
 import { Checkbox } from "@rcene/ui/components/checkbox";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@rcene/ui/components/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@rcene/ui/components/command";
 import {
   FormControl,
   FormDescription,
@@ -90,7 +97,9 @@ interface FieldControlProps extends ComponentProps<typeof FormControl> {
 /** FormControl that only points aria-describedby at elements that exist. */
 function FieldControl({ hasDescription, group, describedBy, ...props }: FieldControlProps) {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
-  const ids = [hasDescription ? formDescriptionId : null, describedBy, error ? formMessageId : null].filter(Boolean).join(" ");
+  const ids = [hasDescription ? formDescriptionId : null, describedBy, error ? formMessageId : null]
+    .filter(Boolean)
+    .join(" ");
   return (
     <FormControl
       {...props}
@@ -146,7 +155,10 @@ export function TextField<T extends FieldValues, N extends FieldPath<T> = FieldP
 
 // -------------------------------------------------------------- NumberField
 
-export interface NumberFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<T, N> {
+export interface NumberFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<
+  T,
+  N
+> {
   min?: number;
   max?: number;
   step?: number | "any";
@@ -214,7 +226,10 @@ export function NumberField<T extends FieldValues, N extends FieldPath<T> = Fiel
 
 // -------------------------------------------------------------- SelectField
 
-export interface SelectFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<T, N> {
+export interface SelectFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<
+  T,
+  N
+> {
   options: FieldOption[];
   /** Shown before a choice is made (default "Choose…"). */
   placeholder?: string;
@@ -264,7 +279,10 @@ export function SelectField<T extends FieldValues, N extends FieldPath<T> = Fiel
 
 // --------------------------------------------------------------- RadioField
 
-export interface RadioFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<T, N> {
+export interface RadioFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<
+  T,
+  N
+> {
   options: FieldOption[];
   /** "cards" (default): bordered rows, easy to tap; "inline": a compact row. */
   variant?: "cards" | "inline";
@@ -382,7 +400,10 @@ export function CheckboxField<T extends FieldValues, N extends FieldPath<T> = Fi
 
 // ------------------------------------------------------------ TextareaField
 
-export interface TextareaFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<T, N> {
+export interface TextareaFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<
+  T,
+  N
+> {
   placeholder?: string;
   rows?: number;
   /** Also shows a "n of max characters" counter. */
@@ -420,7 +441,13 @@ export function TextareaField<T extends FieldValues, N extends FieldPath<T> = Fi
               describedBy={maxLength ? counterId : undefined}
               aria-required={required || undefined}
             >
-              <Textarea {...field} value={field.value ?? ""} placeholder={placeholder} rows={rows} maxLength={maxLength} />
+              <Textarea
+                {...field}
+                value={field.value ?? ""}
+                placeholder={placeholder}
+                rows={rows}
+                maxLength={maxLength}
+              />
             </FieldControl>
             <div className="flex items-start justify-between gap-3">
               <FormMessage />
@@ -439,7 +466,10 @@ export function TextareaField<T extends FieldValues, N extends FieldPath<T> = Fi
 
 // ------------------------------------------------------------ BarangayField
 
-export interface BarangayFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<T, N> {
+export interface BarangayFieldProps<T extends FieldValues, N extends FieldPath<T> = FieldPath<T>> extends FieldProps<
+  T,
+  N
+> {
   /** Barangay names (e.g. from the barangays layer); the value stored is the name. */
   barangays: string[];
   /** Shown before a choice is made (default "Choose a barangay"). */
@@ -492,11 +522,7 @@ export function BarangayField<T extends FieldValues, N extends FieldPath<T> = Fi
                 </Button>
               </FieldControl>
             </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              aria-label={label}
-              className="w-(--radix-popover-trigger-width) min-w-56 p-0"
-            >
+            <PopoverContent align="start" aria-label={label} className="w-(--radix-popover-trigger-width) min-w-56 p-0">
               <Command label={t("kit.form.barangaySearch")}>
                 <CommandInput placeholder={t("kit.form.barangaySearch")} />
                 <CommandList>

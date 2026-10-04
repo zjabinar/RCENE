@@ -1,7 +1,14 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useFormat, useT } from "@rcene/i18n";
 import { ChartCard } from "@rcene/kit/app";
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@rcene/ui/components/chart";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@rcene/ui/components/chart";
 import { useReducedMotion } from "@rcene/ui/motion";
 import type { ExampleMeta } from "../../gallery/registry.ts";
 

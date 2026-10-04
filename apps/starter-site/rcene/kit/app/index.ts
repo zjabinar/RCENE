@@ -8,12 +8,7 @@ export { PageHeader, type PageHeaderProps, type Breadcrumb } from "./page-header
 export { ConsoleLayout, type ConsoleLayoutProps, type ConsoleNavItem } from "./console-layout.tsx";
 export { BoardShell, BoardRotator, type BoardShellProps, type BoardRotatorProps } from "./board.tsx";
 export { KpiRow, type KpiRowProps, type KpiItem } from "./kpi-row.tsx";
-export {
-  DataTable,
-  type DataTableProps,
-  type DataTableSearch,
-  type DataTableExport,
-} from "./data-table.tsx";
+export { DataTable, type DataTableProps, type DataTableSearch, type DataTableExport } from "./data-table.tsx";
 export { ChartCard, type ChartCardProps, type ChartTableData, type ChartView } from "./chart-card.tsx";
 export { Wizard, useWizard, type WizardProps, type WizardStep, type WizardState } from "./wizard.tsx";
 export {

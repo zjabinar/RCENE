@@ -9,6 +9,9 @@ import { strings } from "./strings.ts";
  */
 const ANSWER_KEY = /^(status|level|answer|result)\./;
 
+/** Placeholders such as {n} or {share}, sorted, for comparing translations. */
+const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+
 describe("app strings", () => {
   it("never invents keys: every Waray and Filipino key exists in English", () => {
     for (const lang of ["war", "fil"] as const) {
@@ -21,6 +24,25 @@ describe("app strings", () => {
       for (const [key, text] of Object.entries(strings[lang])) {
         if (!ANSWER_KEY.test(key)) continue;
         for (const word of FORBIDDEN_ANSWER_WORDS) expect(String(text).toLowerCase(), `${lang} ${key}`).not.toContain(word);
+      }
+    }
+  });
+
+  it("never says 'safe' anywhere on this site either: it talks about hazards on every page", () => {
+    for (const lang of LANGS) {
+      for (const [key, text] of Object.entries(strings[lang])) {
+        for (const word of FORBIDDEN_ANSWER_WORDS) {
+          expect(new RegExp(`\\b${word}\\b`).test(String(text).toLowerCase()), `${lang} ${key}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("keeps the same placeholders in every translation", () => {
+    for (const lang of ["war", "fil"] as const) {
+      for (const [key, text] of Object.entries(strings[lang])) {
+        const english = (strings.en as Record<string, string>)[key] ?? "";
+        expect(placeholders(String(text)), `${lang} ${key}`).toEqual(placeholders(english));
       }
     }
   });

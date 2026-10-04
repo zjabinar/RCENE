@@ -107,7 +107,10 @@ export function Example() {
   const t = useT(strings);
   const errors = useKitZodErrors();
   const schema = z.object({
-    household: z.string().min(1).regex(/^HH-\d{4}$/, t("householdFormat")),
+    household: z
+      .string()
+      .min(1)
+      .regex(/^HH-\d{4}$/, t("householdFormat")),
     people: z.int().min(1).max(30),
     need: z.enum(["water", "food", "medical"]),
     barangay: z.string().min(1),
@@ -148,7 +151,14 @@ export function Example() {
             { value: "medical", label: t("medical") },
           ]}
         />
-        <BarangayField control={form.control} name="barangay" label={t("barangay")} barangays={BARANGAYS} required className="sm:col-span-2" />
+        <BarangayField
+          control={form.control}
+          name="barangay"
+          label={t("barangay")}
+          barangays={BARANGAYS}
+          required
+          className="sm:col-span-2"
+        />
         <RadioField
           control={form.control}
           name="stay"
@@ -160,7 +170,15 @@ export function Example() {
             { value: "centre", label: t("centre"), hint: t("centreHint") },
           ]}
         />
-        <TextareaField control={form.control} name="notes" label={t("notes")} description={t("notesHint")} maxLength={200} rows={3} className="sm:col-span-2" />
+        <TextareaField
+          control={form.control}
+          name="notes"
+          label={t("notes")}
+          description={t("notesHint")}
+          maxLength={200}
+          rows={3}
+          className="sm:col-span-2"
+        />
         <CheckboxField control={form.control} name="confirm" label={t("confirm")} required className="sm:col-span-2" />
         <div className="sm:col-span-2">
           <Button type="submit" size="lg">

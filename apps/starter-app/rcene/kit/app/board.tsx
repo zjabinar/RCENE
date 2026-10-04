@@ -60,18 +60,18 @@ export function BoardShell({ title, subtitle, status, clock = true, children, fo
     <section
       data-slot="board-shell"
       aria-labelledby={titleId}
-      className={cn("flex min-h-0 flex-1 flex-col gap-6 bg-background p-4 text-foreground sm:p-8 lg:gap-8 lg:p-12", className)}
+      className={cn("flex flex-1 flex-col gap-6 bg-background p-4 text-foreground sm:p-8 lg:gap-8 lg:p-12", className)}
     >
       <header className="flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-64">
             <h1 id={titleId} className="font-display text-board-1 font-bold tracking-tight text-balance">
               {title}
             </h1>
             {subtitle && <p className="mt-2 text-board-3 font-medium text-muted-foreground">{subtitle}</p>}
           </div>
           {clock && (
-            <p className="flex flex-col items-end text-right">
+            <p className="ml-auto flex flex-col items-end text-right">
               <span className="text-sm font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                 {t("kit.board.timeNow")}
               </span>
@@ -92,7 +92,7 @@ export function BoardShell({ title, subtitle, status, clock = true, children, fo
         </div>
       </header>
 
-      <div data-slot="board-content" className="flex min-h-0 flex-1 flex-col text-xl leading-snug lg:text-2xl">
+      <div data-slot="board-content" className="flex flex-1 flex-col text-xl leading-snug lg:text-2xl">
         {children}
       </div>
 
@@ -171,7 +171,7 @@ export function BoardRotator({
     <section
       data-slot="board-rotator"
       aria-label={label ?? t("kit.board.pages")}
-      className={cn("flex min-h-0 flex-1 flex-col gap-4", className)}
+      className={cn("flex flex-1 flex-col gap-4", className)}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
@@ -184,9 +184,12 @@ export function BoardRotator({
         aria-label={t("kit.board.page", { n: current + 1, total })}
         aria-live={holding ? "polite" : "off"}
         data-slot="board-page"
-        className="flex min-h-0 flex-1 flex-col"
+        className="flex flex-1 flex-col"
       >
-        <div key={current} className="flex min-h-0 flex-1 flex-col motion-safe:animate-in motion-safe:duration-500 motion-safe:fade-in-0">
+        <div
+          key={current}
+          className="flex flex-1 flex-col motion-safe:animate-in motion-safe:duration-500 motion-safe:fade-in-0"
+        >
           {items[current]}
         </div>
       </div>
@@ -209,15 +212,19 @@ export function BoardRotator({
               </span>
             ))}
           </div>
-          {userPaused && (
-            <span className="text-sm font-medium text-muted-foreground">{t("kit.board.paused")}</span>
-          )}
+          {userPaused && <span className="text-sm font-medium text-muted-foreground">{t("kit.board.paused")}</span>}
           <div className="flex items-center gap-1.5">
             <Button type="button" variant="outline" size="icon" onClick={() => go(-1)}>
               <ChevronLeftIcon aria-hidden="true" />
               <span className="sr-only">{t("kit.board.previous")}</span>
             </Button>
-            <Button type="button" variant="outline" size="sm" className="h-9 min-w-24" onClick={() => setUserPaused((p) => !p)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 min-w-24"
+              onClick={() => setUserPaused((p) => !p)}
+            >
               {userPaused ? <PlayIcon aria-hidden="true" /> : <PauseIcon aria-hidden="true" />}
               {userPaused ? t("kit.board.play") : t("kit.board.pause")}
             </Button>

@@ -53,6 +53,7 @@ export function Example() {
   return (
     <FeatureGrid
       columns={4}
+      headingLevel={2}
       items={[
         { icon: <MapIcon />, title: t("map"), description: t("mapText"), href: "#hazard-map" },
         { icon: <HouseIcon />, title: t("plan"), description: t("planText"), href: "#family-plan" },
