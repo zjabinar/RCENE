@@ -1,6 +1,6 @@
 # @rcene/kit/app — the app system
 
-Ready-made screens parts for every RCENE app: page header, operator console, public board, KPI row, data table, chart card, wizard, status timeline, capacity meter, form fields, QR code and illustrated states. They follow the theme (5 palettes × light/dark), translate their own chrome (`kit.*` keys in `strings.ts`, en / fil / war drafts), work by keyboard, never use colour alone, and respect reduced motion. Titles, labels and data come in through props, **already translated by the app**.
+Ready-made screen parts for every RCENE app: page header, operator console, public board, KPI row, data table, chart card, wizard, status timeline, capacity meter, form fields, QR code and illustrated states. They follow the theme (5 palettes × light/dark), translate their own chrome (`kit.*` keys in `strings.ts`, en / fil / war drafts), work by keyboard, never use colour alone, and respect reduced motion. Titles, labels and data come in through props, **already translated by the app**.
 
 ```tsx
 import { PageHeader, DataTable, ChartCard, CapacityMeter } from "@rcene/kit/app";
