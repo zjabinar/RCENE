@@ -13,6 +13,7 @@ export {
   markSvg,
   patternSvg,
   patternTile,
+  patternTransform,
   TOKEN_COLORS,
   WEAVE_NAMES,
   type BrandColors,

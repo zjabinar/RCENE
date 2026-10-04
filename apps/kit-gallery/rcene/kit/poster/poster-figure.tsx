@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Download } from "lucide-react";
 import { useT } from "@rcene/i18n";
 import { downloadText } from "@rcene/ui";
@@ -76,6 +76,7 @@ export function serializeSvg(svg: SVGSVGElement): string {
  */
 export function PosterFigure({ title, caption, source, downloadSvg, className, children }: PosterFigureProps) {
   const t = useT(useKitStrings());
+  const titleId = useId();
   const bodyRef = useRef<HTMLDivElement>(null);
   const [hasSvg, setHasSvg] = useState(false);
 
@@ -100,9 +101,11 @@ export function PosterFigure({ title, caption, source, downloadSvg, className, c
   const plainTitle = typeof title === "string" ? title : "";
 
   return (
-    <figure data-slot="poster-figure" className={cn("flex min-w-0 flex-col gap-[0.75em]", className)}>
+    <figure data-slot="poster-figure" aria-labelledby={titleId} className={cn("flex min-w-0 flex-col gap-[0.75em]", className)}>
       <figcaption className="flex flex-col gap-[0.25em]">
-        <span className="font-display text-[1.15em] leading-tight font-semibold">{title}</span>
+        <span id={titleId} className="font-display text-[1.15em] leading-tight font-semibold">
+          {title}
+        </span>
         {caption && <span className="leading-snug text-muted-foreground">{caption}</span>}
       </figcaption>
       <div ref={bodyRef} className="min-h-0 min-w-0 [&>svg]:h-auto [&>svg]:max-w-full">

@@ -51,11 +51,11 @@ export function Wordmark({ variant = "full", className }: WordmarkProps) {
         className={cn("w-auto dark:drop-shadow-[0_0_8px_var(--glow)]", full ? "h-[1.9em]" : "h-[1.2em]")}
       />
       <span aria-hidden="true" className="inline-flex flex-col">
-        <span className="font-semibold tracking-[0.08em]">{name}</span>
+        <span className="leading-none font-semibold tracking-[0.08em]">{name}</span>
         {full && (
           <>
             <WovenRule className="mt-[0.16em] h-[0.16em] w-full rounded-[1px]" />
-            <span className="mt-[0.32em] font-sans text-[0.3em] font-semibold tracking-[0.24em] whitespace-nowrap text-brand uppercase">
+            <span className="mt-[0.32em] font-sans text-[0.3em] leading-none font-semibold tracking-[0.24em] whitespace-nowrap text-brand uppercase">
               {t("kit.brand.place")}
             </span>
           </>

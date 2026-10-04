@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { cn } from "@rcene/ui/lib/utils";
-import { patternTile, type WeaveName } from "./geometry.ts";
+import { patternTile, patternTransform, type WeaveName } from "./geometry.ts";
 import { renderShapes, useSvgId } from "./shapes.tsx";
 
 export interface WeavePatternProps {
@@ -40,7 +40,7 @@ export function WeavePattern({ name, className, opacity = 0.16, scale = 1 }: Wea
           width={tile.width}
           height={tile.height}
           patternUnits="userSpaceOnUse"
-          patternTransform={scale === 1 ? undefined : `scale(${scale})`}
+          patternTransform={patternTransform(tile, scale)}
         >
           {renderShapes(tile.shapes)}
         </pattern>

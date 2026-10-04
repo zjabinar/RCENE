@@ -55,9 +55,9 @@ const LAYOUT: Record<PosterOrientation, Layout> = {
       impact: { gridColumn: "1 / -1", gridRow: "5" },
       footer: { gridColumn: "1 / -1", gridRow: "6" },
     },
-    title: "text-8xl",
+    title: "text-7xl",
     band: "p-[8mm]",
-    body: "text-lg",
+    body: "text-base",
     panel: "p-[6mm]",
   },
   landscape: {
@@ -87,7 +87,7 @@ const LAYOUT: Record<PosterOrientation, Layout> = {
  *   <PosterPage title="Andam poster"><SixPanelPoster title="Andam" panels={…} /></PosterPage>
  */
 export function SixPanelPoster({ title, subtitle, panels, footer, qr, className }: SixPanelPosterProps) {
-  const { orientation } = usePosterSheet();
+  const { orientation, inSheet } = usePosterSheet();
   const layout = LAYOUT[orientation];
   return (
     <div
@@ -95,6 +95,9 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
       data-orientation={orientation}
       className={cn("grid h-full min-h-0", className)}
       style={{
+        // On a sheet, fill the canvas exactly: size containment keeps the content
+        // from growing the canvas row, so the panel rows share the sheet's height.
+        contain: inSheet ? "size" : undefined,
         gridColumn: "1 / -1",
         gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
         gridTemplateRows: layout.rows,
@@ -116,7 +119,7 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
               <p
                 className={cn(
                   "mt-[4mm] max-w-[52ch] leading-snug text-pretty",
-                  orientation === "portrait" ? "text-2xl" : "text-xl",
+                  orientation === "portrait" ? "text-xl" : "text-lg",
                 )}
               >
                 {subtitle}

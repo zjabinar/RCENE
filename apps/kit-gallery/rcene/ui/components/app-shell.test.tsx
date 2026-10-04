@@ -53,11 +53,12 @@ describe("AppShell theme props", () => {
   it("can hide the theme menu", async () => {
     await renderAt(
       "/",
-      <AppShell title="Plain" themeMenu={false}>
+      <AppShell title="Plain" themeMenu={false} weave={false}>
         <p>Body</p>
       </AppShell>,
     );
     expect(host.querySelector("[data-slot='theme-menu']")).toBeNull();
+    expect(host.querySelector("[data-slot='weave-band']")).toBeNull();
     expect(document.documentElement.dataset.palette).toBe("habi");
   });
 });

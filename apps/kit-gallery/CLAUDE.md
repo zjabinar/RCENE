@@ -116,4 +116,4 @@ A platform (P1–P10) is one workflow across several roles, built from single-fe
 | UI direction, critique, copy, accessibility | plugins `frontend-design` and Design (`design-critique`, `ux-copy`, `accessibility-review`) |
 | TDD, debugging, verification | plugin Superpowers (skip its brainstorming, worktree and branch-finishing steps) |
 
-The four app skills live in `.claude/skills/`. The plugins are enabled in `.claude/settings.json`; if one is missing, it was never installed on this machine (see `docs/SKILLS.md` in the monorepo) — carry on without it.
+The five app skills live in `.claude/skills/`. The plugins are enabled in `.claude/settings.json`; if one is missing, it was never installed on this machine (see `docs/SKILLS.md` in the monorepo) — carry on without it.

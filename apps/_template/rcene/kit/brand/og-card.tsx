@@ -42,8 +42,8 @@ export function OgCard({ title, tagline, appId, className }: OgCardProps) {
           <div>
             <h2
               className={cn(
-                "font-display leading-[1.04] font-semibold tracking-tight text-balance",
-                long ? "line-clamp-3 text-[60px]" : "line-clamp-2 text-[76px]",
+                "font-display font-semibold tracking-tight text-balance",
+                long ? "line-clamp-3 text-[60px]/[1.04]" : "line-clamp-2 text-[76px]/[1.04]",
               )}
             >
               {title}

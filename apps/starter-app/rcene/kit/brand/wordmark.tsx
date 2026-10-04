@@ -10,18 +10,17 @@ export interface WordmarkProps {
   className?: string;
 }
 
-const RULE_COLORS = ["var(--weave-1)", "var(--weave-2)", "var(--weave-3)"] as const;
-
-/** A woven rule: two rows of three-colour picks, the second row offset by half a pick. */
+/** A woven rule, like the weave-band utility: picks of two colours over a third. */
 function WovenRule({ className }: { className?: string }) {
-  const picks = 10;
+  const periods = 5;
   return (
     <svg viewBox="0 0 60 4" preserveAspectRatio="none" aria-hidden="true" focusable="false" className={cn("block", className)}>
-      {Array.from({ length: picks }, (_, k) => (
-        <rect key={`a${k}`} x={k * 6} y={0} width={5.2} height={1.8} fill={RULE_COLORS[k % 3]} />
-      ))}
-      {Array.from({ length: picks + 1 }, (_, k) => (
-        <rect key={`b${k}`} x={k * 6 - 3} y={2.2} width={5.2} height={1.8} fill={RULE_COLORS[(k + 1) % 3]} />
+      <rect width={60} height={4} fill="var(--weave-3)" />
+      {Array.from({ length: periods }, (_, k) => (
+        <g key={k}>
+          <rect x={k * 12} y={0} width={6} height={2} fill="var(--weave-1)" />
+          <rect x={k * 12 + 6} y={2} width={6} height={2} fill="var(--weave-2)" />
+        </g>
       ))}
     </svg>
   );
@@ -52,11 +51,11 @@ export function Wordmark({ variant = "full", className }: WordmarkProps) {
         className={cn("w-auto dark:drop-shadow-[0_0_8px_var(--glow)]", full ? "h-[1.9em]" : "h-[1.2em]")}
       />
       <span aria-hidden="true" className="inline-flex flex-col">
-        <span className="font-semibold tracking-[0.08em]">{name}</span>
+        <span className="leading-none font-semibold tracking-[0.08em]">{name}</span>
         {full && (
           <>
-            <WovenRule className="mt-[0.16em] h-[0.14em] w-full" />
-            <span className="mt-[0.32em] font-sans text-[0.3em] font-semibold tracking-[0.24em] whitespace-nowrap text-brand uppercase">
+            <WovenRule className="mt-[0.16em] h-[0.16em] w-full rounded-[1px]" />
+            <span className="mt-[0.32em] font-sans text-[0.3em] leading-none font-semibold tracking-[0.24em] whitespace-nowrap text-brand uppercase">
               {t("kit.brand.place")}
             </span>
           </>

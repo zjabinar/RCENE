@@ -22,6 +22,7 @@ export interface OgCardProps {
  */
 export function OgCard({ title, tagline, appId, className }: OgCardProps) {
   const t = useT(useKitStrings());
+  const long = title.length > 30;
   return (
     <div
       data-slot="og-card"
@@ -39,7 +40,14 @@ export function OgCard({ title, tagline, appId, className }: OgCardProps) {
             )}
           </div>
           <div>
-            <h2 className="line-clamp-2 font-display text-[76px] leading-[1.04] font-semibold tracking-tight text-balance">{title}</h2>
+            <h2
+              className={cn(
+                "font-display font-semibold tracking-tight text-balance",
+                long ? "line-clamp-3 text-[60px]/[1.04]" : "line-clamp-2 text-[76px]/[1.04]",
+              )}
+            >
+              {title}
+            </h2>
             {tagline && <p className="mt-6 line-clamp-2 max-w-[30ch] text-[30px] leading-snug text-muted-foreground">{tagline}</p>}
           </div>
           <div className="flex items-center gap-4 font-sans text-[22px] font-semibold tracking-[0.22em] text-brand uppercase">
@@ -48,7 +56,7 @@ export function OgCard({ title, tagline, appId, className }: OgCardProps) {
           </div>
         </div>
         <div className="relative w-[380px] shrink-0 overflow-hidden border-l bg-muted">
-          <WeavePattern name="diamond" opacity={0.4} />
+          <WeavePattern name="diamond" opacity={0.3} scale={1.5} />
           <div className="absolute inset-0 grid place-items-center">
             <AppMark size={232} className="shadow-raised rounded-[50px]" />
           </div>

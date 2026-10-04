@@ -34,6 +34,7 @@ export function MarkGraphic({ detail, tile, className, ...props }: MarkGraphicPr
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={tile ? `0 0 ${MARK_VIEW} ${MARK_VIEW}` : parts.pinBox.join(" ")}
+      data-detail={detail}
       className={cn("block shrink-0 overflow-visible", className)}
       {...props}
     >

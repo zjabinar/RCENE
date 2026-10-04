@@ -39,7 +39,7 @@ export function BeforeAfter({ before, after, beforeLabel, afterLabel, initial = 
       <div
         data-slot="before-after-frame"
         className={cn(
-          "relative isolate overflow-hidden rounded-xl border bg-muted shadow-raised select-none [&_img]:pointer-events-none [&_img]:select-none",
+          "group/ba relative isolate overflow-hidden rounded-xl border bg-muted shadow-raised select-none [&_img]:pointer-events-none [&_img]:select-none",
           className,
         )}
       >
@@ -61,10 +61,15 @@ export function BeforeAfter({ before, after, beforeLabel, afterLabel, initial = 
           {afterLabel}
         </span>
 
-        {/* The divider line and its grip (decorative); the focusable thumb sits on top of the grip. */}
+        {/*
+          The divider line and its grip are drawn here, exactly at the clip edge.
+          The slider's own thumb is a narrow invisible pill inside the grip
+          (so Radix's in-bounds offset stays tiny); its keyboard focus shows as
+          a ring on the grip.
+        */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 z-10 w-0" style={{ left: `${pos}%` }}>
           <div className="absolute inset-y-0 -left-px w-0.5 bg-background shadow-[0_0_0_1px_var(--border)]" />
-          <div className="absolute top-1/2 left-0 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-overlay">
+          <div className="absolute top-1/2 left-0 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-overlay transition-[box-shadow,scale] duration-200 group-has-[[role=slider]:active]/ba:scale-110 group-has-[[role=slider]:focus-visible]/ba:ring-4 group-has-[[role=slider]:focus-visible]/ba:ring-ring motion-reduce:group-has-[[role=slider]:active]/ba:scale-100">
             <MoveHorizontalIcon className="size-5" />
           </div>
         </div>
@@ -83,7 +88,7 @@ export function BeforeAfter({ before, after, beforeLabel, afterLabel, initial = 
           className={cn(
             "absolute inset-x-0 top-1/2 z-20 h-16 -translate-y-1/2 cursor-ew-resize pointer-fine:top-0 pointer-fine:h-full pointer-fine:translate-y-0",
             "[&_[data-slot=slider-track]]:bg-transparent [&_[data-slot=slider-range]]:bg-transparent",
-            "[&_[data-slot=slider-thumb]]:size-11 [&_[data-slot=slider-thumb]]:cursor-grab [&_[data-slot=slider-thumb]]:rounded-full [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-transparent [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-thumb]]:hover:ring-0 [&_[data-slot=slider-thumb]]:focus-visible:ring-4 [&_[data-slot=slider-thumb]]:focus-visible:ring-ring [&_[data-slot=slider-thumb]]:active:cursor-grabbing",
+            "[&_[data-slot=slider-thumb]]:h-11 [&_[data-slot=slider-thumb]]:w-3 [&_[data-slot=slider-thumb]]:cursor-grab [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-transparent [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-thumb]]:outline-none [&_[data-slot=slider-thumb]]:hover:ring-0 [&_[data-slot=slider-thumb]]:focus-visible:ring-0 [&_[data-slot=slider-thumb]]:focus-visible:outline-none [&_[data-slot=slider-thumb]]:active:cursor-grabbing",
           )}
         />
       </div>

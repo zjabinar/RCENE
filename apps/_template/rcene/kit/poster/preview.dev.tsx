@@ -63,7 +63,7 @@ function App() {
                 steps={["Brief and plan", "Domain tests first", "Build requirement by requirement", "Human review of every commit"]}
               />
             ),
-            data: <p>Barangay boundaries (OCHA/HDX), CDRRMO/CPDCO risk maps used with LGU permission, OpenStreetMap facilities.</p>,
+            data: params.has("long") ? <p>{"Long text. ".repeat(200)}</p> : <p>Barangay boundaries (OCHA/HDX), CDRRMO/CPDCO risk maps used with LGU permission, OpenStreetMap facilities.</p>,
             impact: (
               <ul className="list-disc ps-6">
                 <li>Official evacuation-center registry</li>

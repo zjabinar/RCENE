@@ -25,12 +25,24 @@ export interface SixPanelPosterProps {
 
 type Place = Pick<CSSProperties, "gridColumn" | "gridRow">;
 
+interface Layout {
+  rows: string;
+  place: Record<PosterPanelKey | "header" | "footer", Place>;
+  /** Title size and band padding; panel body size and padding. */
+  title: string;
+  band: string;
+  body: string;
+  panel: string;
+}
+
 /**
- * Where each part sits on the 12-column grid. Portrait: problem and
- * "what's different" beside a tall picture, then AI | data, then impact.
- * Landscape: problem / different | picture | a tall AI column, then data | impact.
+ * Where each part sits on the 12-column grid, in reading order. Portrait:
+ * problem and "what's different" beside a tall picture, then AI | data, then
+ * impact. Landscape (thirds): problem / different | picture | AI, then
+ * data | impact, with a compact title band. Text panels never clip: their
+ * rows grow to fit and the picture gives way.
  */
-const LAYOUT: Record<PosterOrientation, { rows: string; place: Record<PosterPanelKey | "header" | "footer", Place> }> = {
+const LAYOUT: Record<PosterOrientation, Layout> = {
   portrait: {
     rows: "auto minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 1.2fr) minmax(auto, 0.7fr) auto",
     place: {
@@ -43,19 +55,27 @@ const LAYOUT: Record<PosterOrientation, { rows: string; place: Record<PosterPane
       impact: { gridColumn: "1 / -1", gridRow: "5" },
       footer: { gridColumn: "1 / -1", gridRow: "6" },
     },
+    title: "text-8xl",
+    band: "p-[8mm]",
+    body: "text-lg",
+    panel: "p-[6mm]",
   },
   landscape: {
     rows: "auto minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 0.8fr) auto",
     place: {
       header: { gridColumn: "1 / -1", gridRow: "1" },
-      problem: { gridColumn: "1 / 4", gridRow: "2" },
-      picture: { gridColumn: "4 / 10", gridRow: "2 / 4" },
-      different: { gridColumn: "1 / 4", gridRow: "3" },
-      ai: { gridColumn: "10 / 13", gridRow: "2 / 4" },
+      problem: { gridColumn: "1 / 5", gridRow: "2" },
+      picture: { gridColumn: "5 / 9", gridRow: "2 / 4" },
+      different: { gridColumn: "1 / 5", gridRow: "3" },
+      ai: { gridColumn: "9 / 13", gridRow: "2 / 4" },
       data: { gridColumn: "1 / 6", gridRow: "4" },
       impact: { gridColumn: "6 / 13", gridRow: "4" },
       footer: { gridColumn: "1 / -1", gridRow: "5" },
     },
+    title: "text-6xl",
+    band: "px-[8mm] py-[6mm]",
+    body: "text-base",
+    panel: "p-[5mm]",
   },
 };
 
@@ -67,7 +87,7 @@ const LAYOUT: Record<PosterOrientation, { rows: string; place: Record<PosterPane
  *   <PosterPage title="Andam poster"><SixPanelPoster title="Andam" panels={…} /></PosterPage>
  */
 export function SixPanelPoster({ title, subtitle, panels, footer, qr, className }: SixPanelPosterProps) {
-  const { orientation } = usePosterSheet();
+  const { orientation, inSheet } = usePosterSheet();
   const layout = LAYOUT[orientation];
   return (
     <div
@@ -75,6 +95,9 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
       data-orientation={orientation}
       className={cn("grid h-full min-h-0", className)}
       style={{
+        // On a sheet, fill the canvas exactly: size containment keeps the content
+        // from growing the canvas row, so the panel rows share the sheet's height.
+        contain: inSheet ? "size" : undefined,
         gridColumn: "1 / -1",
         gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
         gridTemplateRows: layout.rows,
@@ -82,17 +105,26 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
       }}
     >
       <header className="flex flex-col gap-[3mm]" style={layout.place.header}>
-        <div className="flex items-center justify-between gap-[8mm] rounded-xl bg-primary p-[8mm] text-primary-foreground">
+        <div
+          className={cn(
+            "flex items-center justify-between gap-[8mm] rounded-xl bg-primary text-primary-foreground",
+            layout.band,
+          )}
+        >
           <div className="min-w-0">
-            <h1
-              className={cn(
-                "font-display leading-[0.95] font-bold tracking-tight text-balance",
-                orientation === "portrait" ? "text-8xl" : "text-7xl",
-              )}
-            >
+            <h1 className={cn("font-display leading-[0.95] font-bold tracking-tight text-balance", layout.title)}>
               {title}
             </h1>
-            {subtitle && <p className="mt-[4mm] max-w-[52ch] text-2xl leading-snug text-pretty">{subtitle}</p>}
+            {subtitle && (
+              <p
+                className={cn(
+                  "mt-[4mm] max-w-[52ch] leading-snug text-pretty",
+                  orientation === "portrait" ? "text-2xl" : "text-xl",
+                )}
+              >
+                {subtitle}
+              </p>
+            )}
           </div>
           {qr && <div className="shrink-0">{qr}</div>}
         </div>
@@ -100,7 +132,7 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
       </header>
 
       {POSTER_PANELS.map((key, i) => (
-        <PosterPanel key={key} panel={key} number={i + 1} style={layout.place[key]}>
+        <PosterPanel key={key} panel={key} number={i + 1} layout={layout}>
           {panels[key]}
         </PosterPanel>
       ))}
@@ -120,12 +152,12 @@ export function SixPanelPoster({ title, subtitle, panels, footer, qr, className 
 function PosterPanel({
   panel,
   number,
-  style,
+  layout,
   children,
 }: {
   panel: PosterPanelKey;
   number: number;
-  style: Place;
+  layout: Layout;
   children: ReactNode;
 }) {
   const t = useT(useKitStrings());
@@ -135,8 +167,13 @@ function PosterPanel({
     <section
       aria-labelledby={headingId}
       data-panel={panel}
-      className="flex min-h-0 min-w-0 flex-col gap-[4mm] overflow-hidden rounded-xl border bg-card p-[6mm] text-card-foreground"
-      style={style}
+      className={cn(
+        "flex min-w-0 flex-col gap-[4mm] rounded-xl border bg-card text-card-foreground",
+        layout.panel,
+        // The picture may shrink (and crop) to leave room for the text panels.
+        picture && "min-h-0 overflow-hidden",
+      )}
+      style={layout.place[panel]}
     >
       <div className="flex items-center gap-[3mm]">
         <span
@@ -151,7 +188,8 @@ function PosterPanel({
       </div>
       <div
         className={cn(
-          "min-h-0 flex-1 text-lg leading-relaxed text-pretty",
+          "min-h-0 flex-1 leading-relaxed text-pretty",
+          layout.body,
           picture
             ? "grid place-items-center overflow-hidden rounded-lg bg-muted p-[3mm] [&_img]:max-h-full [&_img]:max-w-full [&_img]:object-contain [&>*]:max-h-full"
             : "flex flex-col gap-[3mm]",

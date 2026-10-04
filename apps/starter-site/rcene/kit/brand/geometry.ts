@@ -171,24 +171,42 @@ export interface PatternTile {
   width: number;
   height: number;
   shapes: BrandShape[];
+  /** Degrees to turn the whole pattern (patternTransform). */
+  rotate?: number;
 }
 
-/** Plain over-under weave: two weft colours, one warp colour, shaded crossings. */
+/** The patternTransform for a tile at a scale, or undefined for none. */
+export function patternTransform(tile: PatternTile, scale = 1): string | undefined {
+  const parts = [tile.rotate ? `rotate(${tile.rotate})` : "", scale === 1 ? "" : `scale(${scale})`].filter(Boolean);
+  return parts.length ? parts.join(" ") : undefined;
+}
+
+/**
+ * Plain over-under weave on the diagonal, like the mark: one weft colour, one
+ * warp colour, a shadow in the third where a strip dips under.
+ */
 function banigTile(): PatternTile {
-  const pitch = 14;
-  const gap = 2;
+  const pitch = 12;
+  const gap = 1.6;
   const w = pitch - gap;
   const size = pitch * 2;
   const shapes: BrandShape[] = [];
-  const weft: BrandSlot[] = ["weave1", "weave3"];
-  for (let i = 0; i < 2; i++) shapes.push(rect(0, i * pitch + gap / 2, size, w, weft[i]!));
+  for (let i = 0; i < 2; i++) shapes.push(rect(0, i * pitch + gap / 2, size, w, "weave1"));
   for (let j = 0; j < 2; j++) shapes.push(rect(j * pitch + gap / 2, 0, w, size, "weave2"));
+  const sh = 1.4;
+  const o = { opacity: 0.6 };
   for (let i = 0; i < 2; i++) {
     for (let j = 0; j < 2; j++) {
-      if ((i + j) % 2 === 0) shapes.push(rect(j * pitch + gap / 2, i * pitch + gap / 2, w, w, weft[i]!));
+      const x = j * pitch + gap / 2;
+      const y = i * pitch + gap / 2;
+      if ((i + j) % 2 === 0) {
+        shapes.push(rect(x, y, w, w, "weave1"), rect(x, y - sh, w, sh, "weave3", o), rect(x, y + w, w, sh, "weave3", o));
+      } else {
+        shapes.push(rect(x - sh, y, sh, w, "weave3", o), rect(x + w, y, sh, w, "weave3", o));
+      }
     }
   }
-  return { width: size, height: size, shapes };
+  return { width: size, height: size, shapes, rotate: 45 };
 }
 
 /**
@@ -312,7 +330,8 @@ export function markSvg(colors: BrandColors, options: MarkSvgOptions = {}): stri
 /** A weave pattern tile as a <pattern> element string, in the given colours. */
 export function patternSvg(name: WeaveName, colors: BrandColors, id: string, scale = 1): string {
   const tile = patternTile(name);
-  const transform = scale === 1 ? "" : ` patternTransform="scale(${scale})"`;
+  const t = patternTransform(tile, scale);
+  const transform = t ? ` patternTransform="${t}"` : "";
   return `<pattern id="${id}" width="${tile.width}" height="${tile.height}" patternUnits="userSpaceOnUse"${transform}>${tile.shapes
     .map((s) => shapeToSvg(s, colors))
     .join("")}</pattern>`;

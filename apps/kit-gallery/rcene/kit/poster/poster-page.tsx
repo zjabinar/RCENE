@@ -41,6 +41,8 @@ export interface PosterSheetInfo {
   heightMm: number;
   /** The layout is designed on A3; an A2 sheet shows it at this zoom (420/297). */
   zoom: number;
+  /** False outside a PosterPage (the values are then A3 portrait defaults). */
+  inSheet: boolean;
 }
 
 /** Physical size of a sheet in mm. */
@@ -55,7 +57,7 @@ const PosterSheetContext = createContext<PosterSheetInfo | null>(null);
 export function usePosterSheet(): PosterSheetInfo {
   const info = use(PosterSheetContext);
   if (info) return info;
-  return { size: "A3", orientation: "portrait", ...posterDimensions("A3", "portrait"), zoom: 1 };
+  return { size: "A3", orientation: "portrait", ...posterDimensions("A3", "portrait"), zoom: 1, inSheet: false };
 }
 
 /**
@@ -205,7 +207,7 @@ export function PosterPage({
     gridAutoRows: "auto",
   } as CSSProperties;
 
-  const info: PosterSheetInfo = { size, orientation, widthMm, heightMm, zoom };
+  const info: PosterSheetInfo = { size, orientation, widthMm, heightMm, zoom, inSheet: true };
 
   return (
     <div data-slot="poster-page" className={cn("flex w-full min-w-0 flex-col gap-3", className)}>

@@ -7,8 +7,9 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type RefObject,
 } from "react";
-import { Info, RectangleHorizontal, RectangleVertical } from "lucide-react";
+import { Info, RectangleHorizontal, RectangleVertical, TriangleAlert } from "lucide-react";
 import { useFormat, useT } from "@rcene/i18n";
 import { cn } from "@rcene/ui/lib/utils";
 import { useTheme } from "@rcene/ui/theme";
@@ -41,6 +42,8 @@ export interface PosterSheetInfo {
   heightMm: number;
   /** The layout is designed on A3; an A2 sheet shows it at this zoom (420/297). */
   zoom: number;
+  /** False outside a PosterPage (the values are then A3 portrait defaults). */
+  inSheet: boolean;
 }
 
 /** Physical size of a sheet in mm. */
@@ -55,7 +58,7 @@ const PosterSheetContext = createContext<PosterSheetInfo | null>(null);
 export function usePosterSheet(): PosterSheetInfo {
   const info = use(PosterSheetContext);
   if (info) return info;
-  return { size: "A3", orientation: "portrait", ...posterDimensions("A3", "portrait"), zoom: 1 };
+  return { size: "A3", orientation: "portrait", ...posterDimensions("A3", "portrait"), zoom: 1, inSheet: false };
 }
 
 /**
@@ -73,6 +76,36 @@ export function posterPrintCss(widthMm: number, heightMm: number): string {
   [data-poster-sheet] { position: relative !important; transform: none !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; break-inside: avoid; break-after: avoid; }
   [data-poster-sheet], [data-poster-sheet] * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }`;
+}
+
+/**
+ * True when something on the sheet runs past its edge (and would be cut off in
+ * print). Rechecked when the content changes, an image loads or fonts arrive.
+ */
+function useSheetOverflow(ref: RefObject<HTMLElement | null>, layoutKey: string): boolean {
+  const [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let frame = 0;
+    const check = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() =>
+        setOverflow(el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2),
+      );
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(el, { subtree: true, childList: true, characterData: true });
+    el.addEventListener("load", check, true);
+    void document.fonts?.ready.then(check);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      el.removeEventListener("load", check, true);
+    };
+  }, [ref, layoutKey]);
+  return overflow;
 }
 
 export interface PosterPageProps {
@@ -205,7 +238,10 @@ export function PosterPage({
     gridAutoRows: "auto",
   } as CSSProperties;
 
-  const info: PosterSheetInfo = { size, orientation, widthMm, heightMm, zoom };
+  const sheetRef = useRef<HTMLElement>(null);
+  const overflow = useSheetOverflow(sheetRef, `${size}-${orientation}`);
+
+  const info: PosterSheetInfo = { size, orientation, widthMm, heightMm, zoom, inSheet: true };
 
   return (
     <div data-slot="poster-page" className={cn("flex w-full min-w-0 flex-col gap-3", className)}>
@@ -244,6 +280,14 @@ export function PosterPage({
             <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             {t("kit.poster.printHint")}
           </p>
+          <div role="status">
+            {overflow && (
+              <p className="flex items-start gap-2 rounded-lg bg-warning px-3 py-2 text-sm font-medium text-warning-foreground">
+                <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                {t("kit.poster.overflow")}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -252,6 +296,7 @@ export function PosterPage({
           <div className="relative mx-auto" style={{ width: widthPx * scale, height: heightPx * scale }}>
             <PosterSheetContext value={info}>
               <article
+                ref={sheetRef}
                 data-poster-sheet=""
                 data-size={size}
                 data-orientation={orientation}

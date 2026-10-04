@@ -120,7 +120,7 @@ export function Wizard({
                 aria-hidden="true"
                 className={cn(
                   "relative z-10 flex size-9 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors",
-                  state === "done" && "bg-primary text-primary-foreground",
+                  state === "done" && "bg-primary text-primary-foreground group-hover:ring-4 group-hover:ring-primary/25",
                   state === "current" && "bg-primary text-primary-foreground ring-4 ring-primary/20",
                   state === "upcoming" && "border-2 border-border bg-card text-muted-foreground",
                 )}
@@ -128,14 +128,18 @@ export function Wizard({
                 {state === "done" ? <CheckIcon className="size-4" strokeWidth={3} /> : fmt.number(i + 1)}
               </span>
               <span
+                aria-hidden="true"
                 className={cn(
-                  "sr-only max-w-[12ch] text-xs leading-tight font-medium text-balance sm:not-sr-only md:max-w-[16ch] md:text-sm",
+                  "hidden max-w-[12ch] text-xs leading-tight font-medium text-balance sm:block md:max-w-[16ch] md:text-sm",
                   state === "upcoming" ? "text-muted-foreground" : "text-foreground",
                 )}
               >
-                <span className="sr-only">{t("kit.wizard.step", { n: fmt.number(i + 1), total: fmt.number(total) })}: </span>
                 {s.title}
-                {state === "done" && <span className="sr-only"> {t("kit.wizard.done")}</span>}
+              </span>
+              <span className="sr-only">
+                {`${t("kit.wizard.step", { n: fmt.number(i + 1), total: fmt.number(total) })}: ${s.title}${
+                  state === "done" ? ` ${t("kit.wizard.done")}` : ""
+                }`}
               </span>
             </>
           );

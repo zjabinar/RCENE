@@ -57,7 +57,7 @@ export interface AppShellProps {
   mode?: ModeSetting;
   /** "showcase": the whole view in the bold dark gabi look (landing pages, the demo). */
   surface?: "showcase";
-  /** A woven band under the header (the Living Tapestry signature). */
+  /** A woven band under the header (the Living Tapestry signature). Default true. */
   weave?: boolean;
   children: ReactNode;
 }
@@ -105,7 +105,7 @@ export function AppShell({
   palette,
   mode,
   surface,
-  weave = false,
+  weave = true,
   children,
 }: AppShellProps) {
   useThemeSync();

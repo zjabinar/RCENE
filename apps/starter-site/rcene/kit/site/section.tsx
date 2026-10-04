@@ -79,10 +79,10 @@ export function Section({
             {title && (
               <h2
                 id={titleId}
-                className={cn(
-                  "text-display-3 font-semibold tracking-tight text-balance text-foreground",
-                  tone === "showcase" ? "font-showcase italic" : "font-display",
-                )}
+                // Plain concatenation: tailwind-merge would read text-display-3 as a colour and drop it.
+                className={`text-display-3 font-semibold tracking-tight text-balance text-foreground ${
+                  tone === "showcase" ? "font-showcase italic" : "font-display"
+                }`}
               >
                 {title}
               </h2>
