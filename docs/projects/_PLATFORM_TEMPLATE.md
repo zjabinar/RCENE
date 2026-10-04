@@ -67,6 +67,7 @@ The platform-level functions (the workflow across modules), with signatures and 
 
 - The **signature**: what several windows side by side show that one app can't. Name the skill or recipe.
 - The **wow moment**, and accessibility specifics (keyboard path, live regions, reduced motion).
+- **Design:** the palette (`habi` unless the row sets `theme`) and the kit blocks per role (skill `rcene-design`): consoles on `ConsoleLayout`, boards on `BoardShell` in `malinaw`, the landing or story on the site blocks. Name the one showcase surface, if any.
 
 ## Golden-path demo (≤ 3 minutes)
 

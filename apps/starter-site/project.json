@@ -1,0 +1,26 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "S2",
+  "slug": "starter-site",
+  "title": "Website starter",
+  "tagline": "Landing page, data story, about and poster built from the kit",
+  "port": 5302,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "main",
+  "smokeRoutes": [
+    "/",
+    "/story",
+    "/about",
+    "/poster",
+    "/sources"
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "theme": {
+    "palette": "habi"
+  },
+  "kind": "starter"
+}

@@ -1,0 +1,26 @@
+{
+  "$comment": "This app's own metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it; nothing outside this folder is needed.",
+  "id": "G1",
+  "slug": "kit-gallery",
+  "title": "RCENE kit gallery",
+  "tagline": "Every theme and block of the RCENE design kit, live",
+  "port": 5300,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "main",
+  "smokeRoutes": [
+    "/",
+    "/foundations",
+    "/themes",
+    "/app",
+    "/site",
+    "/poster",
+    "/brand",
+    "/sources"
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "kind": "gallery"
+}

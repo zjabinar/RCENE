@@ -8,5 +8,12 @@
   "ai": false,
   "brief": "docs/brief.md",
   "branch": "main",
-  "smokeRoutes": ["/", "/sources"]
+  "smokeRoutes": [
+    "/",
+    "/sources"
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ]
 }

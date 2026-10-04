@@ -280,6 +280,8 @@ function checkNodeStrings(dir, file, code, fail) {
   for (const m of code.matchAll(/(["'`])(\.\.[\\/][^"'`\n]*)\1/g)) {
     const spec = m[2];
     if (spec.includes("${")) continue;
+    // Import specifiers are resolved from the file and checked by checkJs.
+    if (/(?:\bfrom|\bimport|\brequire)\s*\(?\s*$/.test(code.slice(Math.max(0, m.index - 40), m.index))) continue;
     const fromFile = path.resolve(path.dirname(path.join(dir, file)), globBase(spec));
     const fromRoot = path.resolve(dir, globBase(spec));
     if (!inside(dir, fromFile) || !inside(dir, fromRoot)) fail(`${file}:${lineOf(code, m.index)}`, `path "${spec}" can leave the app folder`);

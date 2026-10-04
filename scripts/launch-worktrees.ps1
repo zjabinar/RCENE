@@ -347,7 +347,8 @@ if (-not (Test-Path -LiteralPath $manifestPath)) {
   exit 1
 }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allRows = @($manifest.projects)
+# Reference projects (the kit gallery and the starters: "launch": false) live on main and are never launched.
+$allRows = @($manifest.projects | Where-Object { $_.launch -ne $false })
 
 if (-not $WorktreeRoot) { $WorktreeRoot = [string]$manifest.worktreeRoot }
 if (-not $WorktreeRoot) { $WorktreeRoot = "C:/RSCENE-wt" }

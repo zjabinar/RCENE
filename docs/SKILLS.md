@@ -15,7 +15,7 @@
 
 | Scope | What | Why | Setup |
 |---|---|---|---|
-| In every app (`.claude/skills/`) | **App skills** `maplibre-gis`, `offline-ai`, `gsap-motion`, `r3f-scenes` | GIS, in-browser AI, motion, 3D, all written for this stack, its pinned versions and the app folder layout (`rcene/`, `data/`, `models/`, `npm run …`) | nothing |
+| In every app (`.claude/skills/`) | **App skills** `rcene-design`, `maplibre-gis`, `offline-ai`, `gsap-motion`, `r3f-scenes` | The design kit and themes, GIS, in-browser AI, motion, 3D, all written for this stack, its pinned versions and the app folder layout (`rcene/`, `data/`, `models/`, `npm run …`) | nothing |
 | Repo root (`.claude/skills/`) | **Root skill** `geo-data-prep` | Data conversion for the 00-data session, which runs at the root | nothing |
 | In every app (`.mcp.json`) | **Playwright MCP** (`@playwright/mcp` from the app's own devDependencies, `--isolated`) | Each session drives its app in a real browser and screenshots it; isolated profiles let 5 sessions run at once; works in a copied folder too | approve the project MCP server when asked |
 | Enabled by every app's `.claude/settings.json` | **Superpowers** (obra, partner) | TDD, systematic debugging, verification-before-completion. The app's `CLAUDE.md` tells unattended sessions to skip brainstorming, worktrees and branch-finishing | one-time install, below |
@@ -93,7 +93,8 @@ The apps call **no runtime AI API** (your decision). AI is scored on how you bui
 
 | Tool | When |
 |---|---|
-| **frontend-design** (Anthropic) | When a session starts a screen: picks a direction within the shared tokens |
+| **`rcene-design`** (app skill) + the kit gallery (`apps/kit-gallery`, port 5300) | First, for every screen: the theme (5 palettes x light/dark), the showcase surface, and the ready-made blocks in `@rcene/kit` (consoles, tables, forms, wizards, boards, hero, scrollytelling, poster, presenter mode, brand). `apps/starter-app` and `apps/starter-site` are complete pages to copy from |
+| **frontend-design** (Anthropic) | When a screen needs something the kit doesn't cover: picks a direction within the shared tokens |
 | **Design → `design-critique`** | Polish phase: critique the screenshots in the app's `docs/screenshots/` |
 | **Design → `accessibility-review`** + `npm run smoke` (axe-core) | Every app must pass axe with no serious or critical issues, at 390 px and 1280 px |
 | **Design → `ux-copy`** | Hazard answers, warnings, empty and error states. Calm and precise, never "safe" |

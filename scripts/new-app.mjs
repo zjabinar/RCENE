@@ -50,6 +50,7 @@ import {
   findApp,
   generatedDocs,
   isPlatform,
+  isReference,
   isStarted,
   isMain,
   isText,
@@ -84,6 +85,15 @@ function clearApp(dir) {
   }
 }
 
+/** STATUS.md of a reference project: never "Not started", so no tool regenerates it by accident. */
+function referenceStatus(row) {
+  return (
+    `# Status — ${row.id} ${row.title}\n\n` +
+    "Maintained: a reference project on main (hand-written src/, not a session).\n" +
+    "sync-shared keeps its rcene/, scripts, Claude setup and config current.\n"
+  );
+}
+
 function writeFile(dir, file, data) {
   const abs = path.join(dir, ...file.split("/"));
   mkdirSync(path.dirname(abs), { recursive: true });
@@ -94,6 +104,10 @@ export function generate(row, { srcRoot, outRoot, force = false, dryRun = false,
   const src = repoPaths(srcRoot);
   const dir = path.join(repoPaths(outRoot).apps, row.slug);
   const existed = existsSync(dir);
+  if (existed && isReference(row) && !force) {
+    log(`skip   ${row.slug}  (reference project: its src/ is maintained by hand; sync-shared keeps rcene/ current; --force regenerates)`);
+    return "skipped";
+  }
   if (existed && isStarted(dir) && !force) {
     log(`skip   ${row.slug}  (started: STATUS.md no longer says "Not started"; --force overwrites)`);
     return "skipped";
@@ -129,6 +143,7 @@ export function generate(row, { srcRoot, outRoot, force = false, dryRun = false,
     const notes = path.join(dir, "NOTES.md");
     if (existsSync(notes)) writeFileSync(notes, readFileSync(notes, "utf8").replace(/\s*$/, "\n") + LIFTED_MODULES_NOTES);
   }
+  if (isReference(row)) writeFile(dir, "STATUS.md", referenceStatus(row));
 
   const data = mirrorData(srcRoot, dir);
 
@@ -172,7 +187,8 @@ function main() {
   const outRoot = path.resolve(values.out ?? srcRoot);
   const manifest = readManifest(srcRoot);
   let rows;
-  if (values.all) rows = appRows(manifest);
+  // --all is for the apps and platforms; a reference project is generated only when named.
+  if (values.all) rows = appRows(manifest).filter((row) => !isReference(row));
   else {
     rows = [];
     for (const key of positionals) {

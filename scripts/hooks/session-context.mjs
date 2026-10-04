@@ -188,6 +188,7 @@ function appAtRootContext(root, branch, row, manifest) {
 function orchestratorContext(root, branch, manifest, note) {
   const batches = new Map();
   for (const p of manifest.projects || []) {
+    if (p.launch === false || p.batch === null || p.batch === undefined) continue; // reference projects are not launched
     if (!batches.has(p.batch)) batches.set(p.batch, []);
     batches.get(p.batch).push(p.slug + (p.localOnly ? " (local only)" : ""));
   }

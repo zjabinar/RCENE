@@ -1,5 +1,5 @@
 {
-  "$comment": "Orchestration manifest (repo root only; apps never read it, each app has its own project.json). Read by scripts/new-app.mjs (generates apps/<slug> from apps/_template), scripts/sync-shared.mjs, sync-data.mjs, lockfiles.mjs, check-standalone.mjs, smoke.mjs, scripts/launch-worktrees.ps1 (worktrees, sessions, -Status) and the root hooks (write scope per proj/<slug> branch). Ports: template 5100, apps 5101-5120, platforms 5201-5210. Preview port = dev port + 1000. `extras` and each row's `extras` are informational only: every app gets the full stack from stack.json. Rows with kind \"platform\" (P1-P10) are generated like apps; `modules` lists the single-feature apps whose briefs are copied into docs/modules/ (and whose finished code the platform lifts), and `roles` drives the generated role launcher, role routes and smoke routes.",
+  "$comment": "Orchestration manifest (repo root only; apps never read it, each app has its own project.json). Read by scripts/new-app.mjs (generates apps/<slug> from apps/_template), scripts/sync-shared.mjs, sync-data.mjs, lockfiles.mjs, check-standalone.mjs, smoke.mjs, scripts/launch-worktrees.ps1 (worktrees, sessions, -Status) and the root hooks (write scope per proj/<slug> branch). Ports: template 5100, apps 5101-5120, platforms 5201-5210. Preview port = dev port + 1000. `extras` and each row's `extras` are informational only: every app gets the full stack from stack.json. Rows with kind \"platform\" (P1-P10) are generated like apps; `modules` lists the single-feature apps whose briefs are copied into docs/modules/ (and whose finished code the platform lifts), and `roles` drives the generated role launcher, role routes and smoke routes. A row may set `theme` ({palette, mode}: the app's default colours; habi/system when absent) and `smokeSchemes` (default [\"light\",\"dark\"]). Reference rows (kind \"gallery\"/\"starter\", G1/S1/S2, ports 5300-5302) have \"launch\": false and no batch: their src/ is hand-written on main; new-app --all skips them, sync-shared --all includes them.",
   "version": 1,
   "worktreeRoot": "C:/RSCENE-wt",
   "base": "main",
@@ -135,7 +135,10 @@
       "feasibility": "Low-Med",
       "writeScope": [
         "apps/02-tubig/**"
-      ]
+      ],
+      "theme": {
+        "palette": "dagat"
+      }
     },
     {
       "id": "03",
@@ -394,7 +397,10 @@
       "feasibility": "High",
       "writeScope": [
         "apps/11-bayanihan/**"
-      ]
+      ],
+      "theme": {
+        "palette": "fiesta"
+      }
     },
     {
       "id": "12",
@@ -507,7 +513,10 @@
       "feasibility": "Medium",
       "writeScope": [
         "apps/15-bakhaw/**"
-      ]
+      ],
+      "theme": {
+        "palette": "dagat"
+      }
     },
     {
       "id": "16",
@@ -535,7 +544,10 @@
       "feasibility": "High",
       "writeScope": [
         "apps/16-libot/**"
-      ]
+      ],
+      "theme": {
+        "palette": "fiesta"
+      }
     },
     {
       "id": "17",
@@ -560,7 +572,10 @@
       "feasibility": "Med-Low",
       "writeScope": [
         "apps/17-banig/**"
-      ]
+      ],
+      "theme": {
+        "palette": "fiesta"
+      }
     },
     {
       "id": "18",
@@ -995,7 +1010,10 @@
       ],
       "writeScope": [
         "apps/p04-isla/**"
-      ]
+      ],
+      "theme": {
+        "palette": "dagat"
+      }
     },
     {
       "id": "P5",
@@ -1261,7 +1279,10 @@
       ],
       "writeScope": [
         "apps/p07-bukas/**"
-      ]
+      ],
+      "theme": {
+        "palette": "fiesta"
+      }
     },
     {
       "id": "P8",
@@ -1344,7 +1365,10 @@
       ],
       "writeScope": [
         "apps/p08-libot/**"
-      ]
+      ],
+      "theme": {
+        "palette": "fiesta"
+      }
     },
     {
       "id": "P9",
@@ -1431,7 +1455,10 @@
       ],
       "writeScope": [
         "apps/p09-luntian/**"
-      ]
+      ],
+      "theme": {
+        "palette": "dagat"
+      }
     },
     {
       "id": "P10",
@@ -1501,6 +1528,104 @@
       ],
       "writeScope": [
         "apps/p10-barangay360/**"
+      ]
+    },
+    {
+      "id": "G1",
+      "slug": "kit-gallery",
+      "title": "RCENE kit gallery",
+      "tagline": "Every theme and block of the RCENE design kit, live",
+      "domain": "Reference",
+      "kind": "gallery",
+      "batch": null,
+      "launch": false,
+      "port": 5300,
+      "branch": "main",
+      "app": "apps/kit-gallery",
+      "brief": "docs/projects/kit-gallery.md",
+      "extras": [],
+      "ai": false,
+      "smokeRoutes": [
+        "/",
+        "/foundations",
+        "/themes",
+        "/app",
+        "/site",
+        "/poster",
+        "/brand",
+        "/sources"
+      ],
+      "smokeSchemes": [
+        "light",
+        "dark"
+      ],
+      "writeScope": [
+        "apps/kit-gallery/**"
+      ]
+    },
+    {
+      "id": "S1",
+      "slug": "starter-app",
+      "title": "Application starter",
+      "tagline": "Role console, dashboard, forms and board built from the kit",
+      "domain": "Reference",
+      "kind": "starter",
+      "batch": null,
+      "launch": false,
+      "port": 5301,
+      "branch": "main",
+      "app": "apps/starter-app",
+      "brief": "docs/projects/starter-app.md",
+      "extras": [],
+      "ai": false,
+      "smokeRoutes": [
+        "/",
+        "/console",
+        "/console/new",
+        "/console/REC-0001",
+        "/resident",
+        "/board",
+        "/sources"
+      ],
+      "smokeSchemes": [
+        "light",
+        "dark"
+      ],
+      "writeScope": [
+        "apps/starter-app/**"
+      ]
+    },
+    {
+      "id": "S2",
+      "slug": "starter-site",
+      "title": "Website starter",
+      "tagline": "Landing page, data story, about and poster built from the kit",
+      "domain": "Reference",
+      "kind": "starter",
+      "batch": null,
+      "launch": false,
+      "port": 5302,
+      "branch": "main",
+      "app": "apps/starter-site",
+      "brief": "docs/projects/starter-site.md",
+      "extras": [],
+      "ai": false,
+      "theme": {
+        "palette": "habi"
+      },
+      "smokeRoutes": [
+        "/",
+        "/story",
+        "/about",
+        "/poster",
+        "/sources"
+      ],
+      "smokeSchemes": [
+        "light",
+        "dark"
+      ],
+      "writeScope": [
+        "apps/starter-site/**"
       ]
     }
   ]
