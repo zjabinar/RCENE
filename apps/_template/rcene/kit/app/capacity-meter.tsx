@@ -121,7 +121,7 @@ export function CapacityMeter({
           className={cn("h-full rounded-full transition-[width] duration-500 ease-weave", BAR[state])}
           style={{ width: `${width}%` }}
         />
-        {warnAt > 0 && warnAt < 100 && (
+        {state === "open" && warnAt > 0 && warnAt < 100 && (
           <span
             aria-hidden="true"
             className="absolute inset-y-0 w-0.5 bg-background/80"

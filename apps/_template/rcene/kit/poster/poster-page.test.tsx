@@ -137,6 +137,14 @@ describe("PosterPage", () => {
     expect(screen.getByRole("group", { name: "Poster tools" }).parentElement?.className).toContain("print:hidden");
   });
 
+  it("warns when content runs past the edge of the sheet", async () => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(2000);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(1587);
+    render(<PosterPage title="Too long">x</PosterPage>);
+    expect(await screen.findByText(/runs past the edge of the sheet/)).toBeTruthy();
+    expect(screen.getByText(/runs past the edge/).closest("[role=status]")).toBeTruthy();
+  });
+
   it("can drop the toolbar", () => {
     render(
       <PosterPage toolbar={false} title="Bare">

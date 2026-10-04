@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -281,18 +281,27 @@ describe("kit/app accessibility (axe)", () => {
     await expectNoViolations(container);
   });
 
+  it("BarangayField with its list open", async () => {
+    const user = userEvent.setup();
+    render(
+      <main>
+        <Fields />
+      </main>,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Barangay" }));
+    await expectNoViolations(await screen.findByRole("dialog"));
+  });
+
   it("form fields with errors", async () => {
     function Invalid() {
       const form = useForm<{ code: string; shelter: string }>({ defaultValues: { code: "", shelter: "" } });
+      useEffect(() => {
+        form.setError("code", { message: "This is required." });
+        form.setError("shelter", { message: "This is required." });
+      }, [form]);
       return (
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(() => {})}
-            ref={() => {
-              form.setError("code", { message: "This is required." });
-              form.setError("shelter", { message: "This is required." });
-            }}
-          >
+          <form onSubmit={form.handleSubmit(() => {})}>
             <TextField control={form.control} name="code" label="Code" required />
             <RadioField
               control={form.control}

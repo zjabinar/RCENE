@@ -251,7 +251,7 @@ export function Hero({ eyebrow, title, lead, actions, media, variant = "calm", c
         data-variant="calm"
         className={cn("relative isolate overflow-hidden bg-background", className)}
       >
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 mask-t-from-80%">
           <div className="absolute -top-40 -right-32 size-[34rem] rounded-full bg-highlight/70 blur-3xl" />
           <div className="absolute -bottom-48 -left-40 size-[30rem] rounded-full bg-accent/70 blur-3xl" />
         </div>

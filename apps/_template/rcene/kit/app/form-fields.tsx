@@ -480,7 +480,7 @@ export function BarangayField<T extends FieldValues, N extends FieldPath<T> = Fi
                   aria-expanded={open}
                   onBlur={field.onBlur}
                   disabled={field.disabled}
-                  className="w-full justify-between px-3 font-normal"
+                  className="h-9 w-full justify-between border-input bg-transparent px-3 font-normal shadow-xs hover:bg-accent/40 dark:bg-input/30"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <MapPinIcon aria-hidden="true" className="text-muted-foreground" />
@@ -492,7 +492,11 @@ export function BarangayField<T extends FieldValues, N extends FieldPath<T> = Fi
                 </Button>
               </FieldControl>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-(--radix-popover-trigger-width) min-w-56 p-0">
+            <PopoverContent
+              align="start"
+              aria-label={label}
+              className="w-(--radix-popover-trigger-width) min-w-56 p-0"
+            >
               <Command label={t("kit.form.barangaySearch")}>
                 <CommandInput placeholder={t("kit.form.barangaySearch")} />
                 <CommandList>
