@@ -69,6 +69,8 @@ export type BaseMapProps = MapPassThrough & {
   showBarangayLabels?: boolean;
   /** Show the "Online basemap" toggle (OSM raster tiles, off by default). Default true. */
   allowOnlineBasemap?: boolean;
+  /** The zoom buttons and MapLibre's attribution button. False for a still figure map (credit the data on /sources). Default true. */
+  controls?: boolean;
   /** Fit to the city boundary once it loads and keep the camera near it (maxBounds). Default true. */
   fitToBoundary?: boolean;
   /** Classes for the wrapper div. It fills its parent; give the parent a height. */
@@ -120,6 +122,7 @@ export function BaseMap({
   showBarangays = true,
   showBarangayLabels = true,
   allowOnlineBasemap = true,
+  controls = true,
   fitToBoundary = true,
   className,
   mapRef,
@@ -186,6 +189,7 @@ export function BaseMap({
       style={{ backgroundColor: colors.sea }}
     >
       <MapGL
+        attributionControl={controls ? undefined : false}
         {...mapProps}
         ref={mapRef}
         mapLib={loadMapLib()}
@@ -222,7 +226,7 @@ export function BaseMap({
           else console.error(e.error);
         }}
       >
-        <NavigationControl position="top-right" visualizePitch={false} />
+        {controls && <NavigationControl position="top-right" visualizePitch={false} />}
         <SeaColor color={colors.sea} />
 
         {land.status === "ready" && (

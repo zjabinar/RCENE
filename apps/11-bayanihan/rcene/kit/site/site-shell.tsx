@@ -179,8 +179,9 @@ function SiteFrame({ brand, title, nav, actions, footer, embedded, className, ch
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {actions && <div className="hidden items-center gap-2 md:flex">{actions}</div>}
+            {/* Below sm both live in the menu sheet, so the site title keeps its room. */}
             <ThemeMenu className="hidden sm:inline-flex" />
-            <LangToggle />
+            <LangToggle className="hidden sm:inline-flex" />
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("kit.site.openMenu")}>

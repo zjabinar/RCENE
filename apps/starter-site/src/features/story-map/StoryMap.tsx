@@ -9,15 +9,15 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Hazard } from "@rcene/data";
 import { featureBounds } from "@rcene/geo";
 import { useT } from "@rcene/i18n";
-import { BaseMap, Legend, PointLayer, ZoneLayer, useMap, useMapTone } from "@rcene/map";
+import { BaseMap, Legend, POINT_COLOR, PointLayer, ZoneLayer, useMap, useMapTone } from "@rcene/map";
 import { cn } from "@rcene/ui/lib/utils";
 import { DURATION, useReducedMotion } from "@rcene/ui/motion";
+import { useTokenColor } from "@rcene/ui/theme";
 import type { CityStats } from "@/domain/city-stats.ts";
 import type { Bounds } from "@/domain/projection.ts";
 import { MapKey } from "@/features/city-map-svg/MapKey.tsx";
 import type { CityData } from "@/features/city-data/use-city-data.ts";
 import { strings } from "@/i18n/strings.ts";
-import { useTokenColor } from "./use-token-color.ts";
 
 /** What the map shows for one step of the story. */
 export type StoryView = "city" | "facilities" | "flood" | "exposed" | "surge";
@@ -54,8 +54,8 @@ function splitFor(stats: CityStats, view: StoryView) {
 export function StoryMap({ data, view, className }: StoryMapProps) {
   const t = useT(strings);
   const dark = useMapTone("auto") === "dark";
-  const primary = useTokenColor("--primary");
-  const brand = useTokenColor("--brand");
+  const primary = useTokenColor("--primary", POINT_COLOR);
+  const brand = useTokenColor("--brand", POINT_COLOR);
   const ring = useTokenColor("--card", "#ffffff");
   const layers = data?.layers;
   const hazard = layers ? VIEW_HAZARD[view] : undefined;
@@ -81,8 +81,8 @@ export function StoryMap({ data, view, className }: StoryMapProps) {
   return (
     // No zoom buttons (a figure the steps drive, not a tool) and no empty attribution button
     // (the map draws only local layers; every source is credited on /sources).
-    <div className={cn("relative size-full [&_.maplibregl-ctrl-bottom-right]:hidden [&_.maplibregl-ctrl-top-right]:hidden", className)}>
-      <BaseMap tone="auto" interactive={false} allowOnlineBasemap={false}>
+    <div className={cn("relative size-full", className)}>
+      <BaseMap tone="auto" interactive={false} allowOnlineBasemap={false} controls={false}>
         {hazard && <ZoneLayer key={hazard} hazard={hazard} zones={layers?.zones[hazard]} casing={dark} />}
         {points && view === "facilities" && <PointLayer id="story-facilities" data={points.all} color={primary} strokeColor={ring} />}
         {points && showSplit && (

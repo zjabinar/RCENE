@@ -1620,7 +1620,8 @@
         "/story",
         "/about",
         "/poster",
-        "/sources"
+        "/sources",
+        "/presenter"
       ],
       "smokeSchemes": [
         "light",

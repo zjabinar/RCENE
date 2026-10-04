@@ -92,7 +92,9 @@ export function StatBand({ items, tone = "default", className }: StatBandProps) 
             <dd className="font-display text-display-2 font-semibold tracking-tight tabular-nums">
               <span className="sr-only">{final}</span>
               <span aria-hidden="true" className="inline-flex items-baseline">
-                <CountUp value={reduced || seen ? item.value : 0} format={format} />
+                {/* Print the final number, even if the band was never scrolled into view. */}
+                <span className="hidden print:inline">{format(item.value)}</span>
+                <CountUp value={reduced || seen ? item.value : 0} format={format} className="print:hidden" />
                 {item.suffix && (
                   <span className={cn("ml-0.5 text-[0.55em] font-medium", brand ? "text-brand-foreground/85" : "text-primary")}>
                     {item.suffix}

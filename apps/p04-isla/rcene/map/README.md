@@ -16,7 +16,7 @@ import { BaseMap, ZoneLayer, PointLayer, SelectedPoint, Legend, useFlyTo } from 
 
 | Export | What |
 |---|---|
-| `BaseMap` | Offline basemap: sea, land, coverage, barangays (HTML labels), city boundary from `/data/`. Props: `onClick(lngLat)`, `onFeatureClick(feature, lngLat)` + `interactiveLayerIds`, `showBarangays`, `showBarangayLabels`, `allowOnlineBasemap` (opt-in OSM toggle), `fitToBoundary`, `initialViewState`, `mapRef`, `cursor`, `tone` (`"light"` default, `"dark"`, or `"auto"` to follow the app's light/dark theme), other `<Map>` props pass through. WebGL2 fallback built in |
+| `BaseMap` | Offline basemap: sea, land, coverage, barangays (HTML labels), city boundary from `/data/`. Props: `onClick(lngLat)`, `onFeatureClick(feature, lngLat)` + `interactiveLayerIds`, `showBarangays`, `showBarangayLabels`, `allowOnlineBasemap` (opt-in OSM toggle), `controls` (default `true`; `false` hides the zoom and attribution buttons for a still figure map), `fitToBoundary`, `initialViewState`, `mapRef`, `cursor`, `tone` (`"light"` default, `"dark"`, or `"auto"` to follow the app's light/dark theme), other `<Map>` props pass through. WebGL2 fallback built in |
 | `ZoneLayer` | Hazard zones coloured by level (`LEVEL_HEX`); `minLevel`, `opacity`, `outline`, `casing` (a light line under the outline so very-high zones stay visible on a dark basemap), `id`, `beforeId` |
 | `PointLayer` | Circle layer for point features; `color`, `radius`, `strokeColor`, `promoteId`, `beforeId` |
 | `SelectedPoint` | Pin marker; `label` makes it accessible |

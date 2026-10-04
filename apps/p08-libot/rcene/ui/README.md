@@ -77,6 +77,7 @@ Five palettes, each in light and dark. The values are in `styles/themes.css`, an
 - **Hooks:**
   - `useTheme()` returns `{ effective, choice, defaults, overridden, setPalette, setMode }`.
   - `useThemeSync()` applies the theme to `<html>`; AppShell calls it once.
+  - `useTokenColor("--primary", fallback?)` returns a token's current value and follows theme changes, for things that can't read CSS variables (MapLibre paint, canvas, library options). `readTokenColor()` is the non-hook read.
   - `resolveTheme()` and `applyTheme()` are the pure and DOM halves.
 - **Components:** `ThemeMenu` (also exported from `@rcene/ui`) and `PaletteSwatch`.
 - **Tokens added for the design system** (Tailwind names):
@@ -87,7 +88,7 @@ Five palettes, each in light and dark. The values are in `styles/themes.css`, an
   - easing: `ease-weave`;
   - utilities: `weave-band`, `weave-bg`, `weave-check`, `glow-text` (`styles/patterns.css`).
   - Colour comes only from tokens. Never use `dark:` to pick a colour; the tokens already change with the mode.
-- **Maps** stay on their light basemap by default (`BaseMap tone`; see `rcene/map/README.md`).
+- **Maps** stay on their light basemap by default (`BaseMap tone`; see `rcene/map/README.md`). Map layers can't read CSS variables: pass `useTokenColor("--primary")` as a non-hazard point or line colour.
 
 ## Custom components (`@rcene/ui`)
 

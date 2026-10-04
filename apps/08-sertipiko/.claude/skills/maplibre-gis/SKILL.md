@@ -17,7 +17,7 @@ import { BaseMap, ZoneLayer, PointLayer, SelectedPoint, Legend, useFlyTo, SLOT }
 
 | Export | What it does |
 |---|---|
-| `<BaseMap>` | Offline map. Props: `onClick(lngLat)`, `onFeatureClick(feature, lngLat)` + `interactiveLayerIds`, `showBarangays`, `showBarangayLabels`, `allowOnlineBasemap`, `fitToBoundary` (all default `true`), `initialViewState` (default `CATBALOGAN_VIEW`), `tone` (`"light"` default, `"dark"`, or `"auto"` to follow the app's theme), `mapRef`, `cursor`, `className`. Any other react-map-gl `<Map>` prop passes through (`onMouseMove`, `minZoom`, `dragRotate`, …). It fills its parent, so **give the parent a height**. |
+| `<BaseMap>` | Offline map. Props: `onClick(lngLat)`, `onFeatureClick(feature, lngLat)` + `interactiveLayerIds`, `showBarangays`, `showBarangayLabels`, `allowOnlineBasemap`, `controls`, `fitToBoundary` (all default `true`), `initialViewState` (default `CATBALOGAN_VIEW`), `tone` (`"light"` default, `"dark"`, or `"auto"` to follow the app's theme), `mapRef`, `cursor`, `className`. Any other react-map-gl `<Map>` prop passes through (`onMouseMove`, `minZoom`, `dragRotate`, …). It fills its parent, so **give the parent a height**. |
 | `<ZoneLayer hazard zones minLevel? opacity? outline? casing? id? beforeId?>` | Hazard zones filled by `level` (`LEVEL_HEX`). `casing` adds a light outline so the fills read on a dark basemap. Renders nothing while `zones` is undefined. Layer id `zone-${hazard}`. |
 | `<PointLayer id data color? radius? strokeColor? promoteId? beforeId?>` | Circles for a point FeatureCollection (facilities, centers, reports). |
 | `<SelectedPoint lngLat label?>` | Pin marker. Pass `label` for an accessible name. |
@@ -81,6 +81,7 @@ A hazard answer is exactly one of `inZone {level}`, `notInZone` or `outsideCover
 - **Outside the boundary is `outsideCoverage`**, not `notInZone`. There is no data there.
 - **A missing layer is not an answer.** `useZones` lists missing hazards in `missing`; show "not available", never a guess.
 - **Distances are straight-line** (`nearest()` uses great-circle km). Always render them with `t("distance.straightLine", { km })`. Never say "walk", "minutes" or "route" unless you actually computed a route.
+- **Theme colours on the map:** MapLibre can't read CSS variables, so for a non-hazard colour that follows the theme use `useTokenColor("--primary")` from `@rcene/ui/theme` (it re-reads on a palette or mode change). Hazard fills keep `LEVEL_HEX`.
 - **Dark maps are opt-in.** The hazard fills were tuned on the light basemap, so maps stay light in a dark theme unless you pass `tone="auto"` or `"dark"`; then pass the same `tone` to `<Legend>` and `casing` to `<ZoneLayer>`. Map controls already use the theme tokens.
 - Color is never the only signal: the Legend and HazardStatusList pair every color with text, and the list adds an icon.
 

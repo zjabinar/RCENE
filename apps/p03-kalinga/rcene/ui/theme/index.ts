@@ -33,3 +33,4 @@ export {
   type UseTheme,
 } from "./sync.ts";
 export { PaletteSwatch, ThemeMenu, type ThemeMenuProps } from "./theme-menu.tsx";
+export { readTokenColor, useTokenColor } from "./token-color.ts";

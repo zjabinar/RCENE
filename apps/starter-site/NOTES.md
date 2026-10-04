@@ -18,7 +18,7 @@ A public website built only from the kit, the shared map and the data layers. Re
 | `src/features/city-data/use-city-data.ts` | Four layers as one `LoadState` (`useCityLayers`), plus stats computed once (`useCityStats`); `CITY_LAYERS` for `SampleDataBadge` |
 | `src/features/city-data/DataNote.tsx` · `use-share-format.ts` | The honesty line under any computed number (source, Sample data badge, caveats); "4.4%" / "24%" share formatting per language |
 | `src/features/story-map/StoryMap.tsx` | A scrollytelling map: one `BaseMap tone="auto"` stays mounted, each step swaps `ZoneLayer` (`casing` when dark) / `PointLayer`s and fits the camera (`useMap().fitBounds`, instant under reduced motion, padded around the legend); non-interactive so touch scrolls the page; `Legend tone="auto"` + a facility key |
-| `src/features/story-map/use-token-color.ts` | Theme tokens for MapLibre paint (`useSyncExternalStore` + `MutationObserver` on `<html>`), so map points follow the palette and mode |
+| `src/features/story-map/StoryMap.tsx` (`useTokenColor` from `@rcene/ui/theme`) | Theme tokens for MapLibre paint, so map points follow the palette and mode |
 | `src/features/city-map-svg/CityMapSvg.tsx` · `MapKey.tsx` | The city as a token-coloured SVG (barangays, boundary, zones by level with a casing, facilities): print-safe poster figures, hero art (`variant="tapestry"`, banig pattern, GSAP DrawSVG reveal), before/after panes; the matching key (swatch + icon + word) |
 | `src/features/hazard-chart/HazardShareChart.tsx` · `HazardShareSvg.tsx` | `ChartCard` + Recharts horizontal bars (`var(--color-share)`, labels, tooltip, table view) for screens; the same numbers as a plain SVG bar chart for print |
 | `src/domain/city-stats.ts` | Pure, tested numbers from layers: counts, area shares with Turf (zones merged first, so overlapping levels count once), facilities split into the three answers via `lookupHazards`; a missing layer is `null`, never 0 |
@@ -34,6 +34,7 @@ changed, why), so it can be carried back to `apps/_template/rcene/` and synced
 to the other apps.
 
 - No file in `rcene/` was changed. Suggestions found while building, each worked around in `src/`:
+  - **Fixed in the template (2026-10-04):** StatBand prints its final numbers and smoke screenshots run with reduced motion; BaseMap `controls={false}`; `useTokenColor` is now in `@rcene/ui/theme`; SiteShell moves the language picker into the menu below `sm`. The notes below are kept for the record.
   - **`kit/site/stat-band.tsx`**: the numbers show **0** until the band scrolls into view, so a full-page screenshot (the smoke test's `docs/screenshots/home-*.png`) or a print taken before scrolling shows zeros. Suggest showing the final value when the band is already in view on mount, under `print`, or when IntersectionObserver never fires; count up only when it enters later.
   - **`map/BaseMap.tsx`**: no way to turn off `NavigationControl` (and the empty compact attribution button) for a non-interactive figure map. Suggest `controls={false}`. Worked around with `[&_.maplibregl-ctrl-top-right]:hidden` in `StoryMap`.
   - **`map/PointLayer.tsx`** (and any paint colour): MapLibre can't read CSS variables, so points can't follow the theme. `src/features/story-map/use-token-color.ts` (`useTokenColor("--primary")`) is a candidate for `@rcene/map`.
