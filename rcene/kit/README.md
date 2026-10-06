@@ -39,5 +39,5 @@ The kit's labels live in `<family>/strings.ts` (keys `kit.<block>.<thing>`), mer
 
 - Generic only: no project's feature code (no hazard lookup, queue or eligibility logic). That is what keeps it fair to prepare before the event (`docs/DISCLOSURE.md`).
 - Layering: the kit may import `@rcene/ui`, `@rcene/i18n`, `@rcene/data`, `@rcene/map` and `@rcene/store`; `rcene/ui` never imports the kit.
-- Changes go to the template first (`apps/_template/rcene/kit`), then `pnpm sync-shared`; an app that changes its copy lists the change in `NOTES.md` under "Shared-code changes (for the template)".
-- The gallery (`apps/kit-gallery`) must have an example for every exported component; its `registry.test.tsx` checks that.
+- Keep changes to the kit minimal and list each one in `NOTES.md` under "Shared-code changes".
+- Example pages for every block (from the former gallery project) are in `sources/templates/kit-gallery/src`.

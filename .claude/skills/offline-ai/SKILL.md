@@ -44,7 +44,6 @@ npm run fetch-models -- --model e5             # downloads into models/<repo>/..
 ```
 `--model e5|clip|all` (e5 for 10 and 20, clip for 06), `--force` fetches again, `--skip-ort` skips the runtime files. Re-runs skip finished files. Every download is also copied into a shared cache (`~/.cache/rcene-models`, or `RCENE_MODELS_CACHE`), so the next app copies instead of downloading; `--from <folder>|cache` copies without touching the network (e.g. `--from ../10-reklamo/models`). `HF_ENDPOINT` selects a mirror. `models/` is gitignored (each model is well over 100 MB): never `git add -f` it, never commit it. On another machine, run the script there, or copy the folder over. **Re-run it after upgrading `@huggingface/transformers`**, because the ORT files must match its version.
 
-In the monorepo, `node scripts/fetch-models.mjs --app <slug>` from the repo root runs the same script for that app.
 
 ## Vite config
 

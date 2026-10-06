@@ -1,6 +1,6 @@
 # Kit blocks: the short reference
 
-One line per block. Full docs, examples and behaviour notes: `rcene/kit/<family>/README.md`. Live examples with copyable code: the gallery (`../kit-gallery`, port 5300) when working in the monorepo.
+One line per block. Full docs, examples and behaviour notes: `rcene/kit/<family>/README.md`. Example code for every block: `sources/templates/kit-gallery/src`.
 
 All content props take text that is **already translated** (`t("…")`); the blocks' own labels come from the kit strings in three languages.
 

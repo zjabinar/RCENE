@@ -11,7 +11,7 @@
  *   npm run fetch-models -- --model e5          text search / classification (~135 MB)
  *   npm run fetch-models -- --model clip        image classification (~155 MB)
  *   npm run fetch-models -- --model all --dry-run
- *   node scripts/fetch-models.mjs --model e5 --from ../10-reklamo/models   copy, don't download
+ *   node scripts/fetch-models.mjs --model e5 --from <dir>/models          copy, don't download
  *   node scripts/fetch-models.mjs --model e5 --from cache                  the shared cache
  * Options: --force (fetch again), --skip-ort, --skip-models, --no-cache
  *
@@ -69,7 +69,7 @@ const USAGE = `Usage: node scripts/fetch-models.mjs --model e5|clip|all [--dry-r
                  clip = ${MODELS.clip.repo} (~${MODELS.clip.approxMB} MB): image classification
                  all  = both; a comma list (e5,clip) works too
   --dry-run      print the plan (what is present, copied or downloaded); write nothing
-  --from <dir>   copy from another models folder (e.g. ../10-reklamo/models) instead of downloading;
+  --from <dir>   copy from another models folder (e.g. another checkout's models/) instead of downloading;
                  "cache" means the shared cache ${CACHE_DIR}
   --force        fetch files again even when present
   --skip-ort     do not copy the ONNX Runtime Web files into models/ort/

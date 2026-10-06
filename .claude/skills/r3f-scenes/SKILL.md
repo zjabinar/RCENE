@@ -49,7 +49,7 @@ Two files, served at `/data/` like every layer:
 
 `bounds` is `[west, south, east, north]` from `gdalinfo`. The values above are placeholders, not real Catbalogan extents. `source` and `tier` feed the terrain badge and `/sources`.
 
-Where the files live: the data session writes them to the monorepo's root `data/files/`, and `pnpm sync-data` copies them into every app's `data/files/`. On a project branch this app's `data/` is read-only. In a standalone copy you may drop the two files into `data/files/` yourself. They are not in `LAYER_FILES`: load the JSON with `useOptionalLayer` (below) and request the PNG only once the JSON is ready. Never probe for either with `useLayer` or a bare `fetch`.
+Where the files live: data prep (skill `geo-data-prep`) writes them to `data/files/`, from the DEM in `sources/gis/raw/` if there is one. They are not in `LAYER_FILES`: load the JSON with `useOptionalLayer` (below) and request the PNG only once the JSON is ready. Never probe for either with `useLayer` or a bare `fetch`.
 
 **Precompute per-feature elevation too.** In QGIS, run *Processing → Sample raster values* on the facilities layer against the DEM to add an `elev_m` property. Exposure then becomes a simple comparison at runtime instead of reading texture pixels in the browser.
 

@@ -6,9 +6,9 @@
 | **Date** | 2026-10-02 |
 | **Competition** | RSCENE 2026 AI Vibe Coding Challenge (Open Category) — October 7, 2026, Tandaya Hall, Catbalogan City |
 | **Builder** | Zaldy A. Jabiñar (solo) |
-| **Origin** | Platform P1 in `docs/PROPOSALS.md` |
-| **Codebase design** | `docs/superpowers/specs/2026-09-03-rscene-competition-codebase-design.md` |
-| **Status** | Revised 2026-10-03: all 20 single-feature proposals are pre-built before the event as separate apps, and one is continued on the day (§11, `docs/DISCLOSURE.md`). Core 1 is now `docs/projects/01-ligtas.md` (`apps/01-ligtas`); Core 2 and Core 3 map to #5 Sakuna Sim (`apps/05-sakuna`) and #3 Likas (`apps/03-likas`). The P1 composition comes after those apps are finished. |
+| **Origin** | Platform P1 in `sources/proposals/PROPOSALS.md` |
+| **Codebase design** | `sources/docs/superpowers/specs/2026-09-03-rscene-competition-codebase-design.md` |
+| **Status** | Revised 2026-10-07: the repo is now this single app. The pre-built single-feature apps were not built, so Cores 1–3 are built here from their module briefs (`docs/modules/01-ligtas.md`, `05-sakuna.md`, `03-likas.md`), as `docs/brief.md` describes, plus an admin layer (users, audit log, settings, dashboard, common-information records). `docs/DISCLOSURE.md` says what was prepared before the day. Mentions of `apps/…` below are historical. |
 
 > ***Andam*** — ready. One map that tells a resident whether a place is in danger, where to go, and whether there is still room there. It updates live the moment the CDRRMO raises a warning.
 

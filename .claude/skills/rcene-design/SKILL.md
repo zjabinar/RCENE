@@ -74,15 +74,15 @@ Building something no block covers? Build it from the shadcn primitives in `@rce
 
 ## Copy from the gallery and the starters
 
-Three reference projects on `main` show every block in use. They sit next to this app in the monorepo (not in a copied-out folder):
+The `src/` of three reference projects is kept in `sources/templates/` (source only: they are not built or served):
 
-| Folder | Port | What to take |
-|---|---|---|
-| `../kit-gallery` | 5300 | every block live in every palette and mode, with its source; `/themes` shows the 5 x 2 matrix |
-| `../starter-app` | 5301 | a role launcher, a console with KPIs, chart and table, a form wizard, a record page with timeline, meter and QR, a phone view and a board |
-| `../starter-site` | 5302 | a showcase landing page, a scrollytelling story with the map, an about page with the AI disclosure, an A3 poster and presenter mode |
+| Folder | What to take |
+|---|---|
+| `sources/templates/kit-gallery` | an example page for every block in every palette and mode; `src/pages/` and the registry show how each block is used |
+| `sources/templates/starter-app` | a role launcher, a console with KPIs, chart and table, a form wizard, a record page with timeline, meter and QR, a phone view and a board |
+| `sources/templates/starter-site` | a showcase landing page, a scrollytelling story with the map, an about page with the AI disclosure, an A3 poster and presenter mode |
 
-Read them, copy the page you need into `src/`, then change the content. Never import from them (this app must stay self-contained), and note what you copied in `NOTES.md`. When working from a copied-out folder without the monorepo, the recipes below and `references/blocks.md` are enough.
+Read them, copy the page you need into `src/`, then change the content. Never import from `sources/` (it can be deleted at any time), and note what you copied in `NOTES.md`. The recipes below and `references/blocks.md` are enough on their own.
 
 ## Recipes
 

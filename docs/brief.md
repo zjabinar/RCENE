@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | **App** | the repo root (single app) · dev port 5201 · preview 6201 |
-| **Batch** | 5. Run it after batches 1–4 are merged into `main` (#1, #3 and #4 are in B1, #5 in B2) |
-| **Proposal** | `docs/proposal.md` (P1 in the monorepo's `docs/PROPOSALS.md`) · the composition target of `docs/PRD.md` (Cores 1–3, §5, §7, §8.3). Where this brief and the PRD differ, this brief wins |
+| **Build** | The module apps were never built: build their functions here from `docs/modules/` (see "Lift, then wire") |
+| **Proposal** | `docs/proposal.md` (P1 in `sources/proposals/PROPOSALS.md`) · the composition target of `docs/PRD.md` (Cores 1–3, §5, §7, §8.3). Where this brief and the PRD differ, this brief wins |
 | **Modules** | `#1 Ligtas Ba Ako?` → Core 1, resident hazard check (`docs/modules/01-ligtas.md`)<br>`#5 Sakuna Sim` → Core 2, CDRRMO scenario console (`docs/modules/05-sakuna.md`)<br>`#3 Likas` → Core 3, eligibility rule, center staff and public board (`docs/modules/03-likas.md`)<br>`#4 Bantay Barangay` → Stretch S1, plain-language explainer (`docs/modules/04-bantay.md`) |
 | **Roles** | CDRRMO console → `/console` → full · Resident → `/resident` → phone · Evacuation center staff → `/center` (+ `/center/:id`) → phone · Public board → `/board` → full |
 | **Data** | boundary, barangays, facilities, all five `hazard-*`, `derived/barangay-hazard`, `derived/facility-hazard` · 🟢 HDX + OSM, 🟡 CDRRMO/CPDCO risk maps (permission) · synthetic: candidate capacities (seed 101); illustrative population (seed 105, stretch S2 only) |
@@ -42,10 +42,11 @@ The generated scaffold already has `/` (the role launcher: `RoleLauncher` cards 
 
 **One center model.** The module briefs define `candidateCenters` three ways. The platform uses #3's only: `candidateCenters(facilities, barangays, 101)` (schools sorted by id, capacity `createRng(101).int(15, 60) × 10`, `status: "candidate"`, `source: "OSM"`). Use it from R1 on, so centers and capacities never change between requirements. **One exclusion rule.** Every role decides eligibility with #3's `centerLevels` (zones through `zoneLevelAt`) and `isEligible`. #5's `excludedCenters` (derived table) is kept only for the consistency test below.
 
-1. **Check each module app** in this worktree: `../NN-slug/STATUS.md` says `Phase: done`, and its tests pass (`npm run test` in that folder).
-2. **Lift** by copying (`cp -r ../01-ligtas/src/domain src/modules/ligtas/domain`, and so on). Reading other app folders is fine; never edit them. Fix the imports, merge its strings into `src/i18n/strings.ts` under the module's prefix, and make its tests pass here.
-3. **If a module app isn't done**, build only the requirements this brief lists, from `docs/modules/NN-slug.md`. Domain first, test-first, with that brief's signatures, so a later lift can replace it.
-4. **Record every lift** in `NOTES.md` under "Lifted modules": app, its commit (`git log -1 --format=%h -- ../NN-slug`), files and what you changed.
+The module apps were not built before the event, so there is nothing to lift. Read the table above as "build into":
+
+1. **Build** only the functions and components this brief lists, from `docs/modules/NN-slug.md`, into `src/modules/<name>/`. Domain first, test-first, with that brief's signatures and test cases.
+2. Merge each module's strings into `src/i18n/strings.ts` under the module's prefix. The stores named in "Change after lifting" are never created: their state lives in the spine (or per window) from the start.
+3. **Record** what each module became in `NOTES.md` under "Modules".
 
 ## Spine (one store, keyed by barangay)
 
@@ -145,4 +146,4 @@ Routing (there is no road network); accounts and logins; SMS and push alerts; re
 - **S2 Overflow and timeline** (#5 R5.3–R5.4) in a console tab: excluded and would-overflow centers (illustrative, seed 105), the spine's occupancy passed as `liveOccupancy` and shown as a "Logged now" column (not added to the projected load), and the T-24h → Recovery timeline, per window.
 - **S3 Center verification** (PRD S2): "Verify (CDRRMO)" in the console promotes a candidate to `official` with an edited capacity. Spine `version: 2` adds `verified: Record<string, { capacity: number }>` (with a migration), written only by `/console`.
 - **S4 "Before you go"** (#3 R3.5) under the resident's first recommendation.
-- **S5 SSA1–4 presets** (PRD S4), only if the data session ships per-SSA layers. Ask in `NOTES.md` under "Requests for the data session"; never invent them.
+- **S5 SSA1–4 presets** (PRD S4), only if data prep can make per-SSA layers from `sources/gis/raw` (skill `geo-data-prep`); never invent them.

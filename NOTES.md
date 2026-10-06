@@ -1,43 +1,45 @@
-# Notes — P1 Andam Catbalogan
+# Notes — Andam Catbalogan
 
-## Shared-code changes (for the template)
+## Shared-code changes
 
-This app owns its copy of the shared code in `rcene/`. Prefer using it as-is.
-If you change it, keep the change minimal and list each one here (file, what
-changed, why), so it can be carried back to `apps/_template/rcene/` and synced
-to the other apps.
+The shared code in `rcene/` is used as-is where possible. Each change: file, what changed, why.
 
-- (none yet)
+- `rcene/config/vite.ts`: vitest `testTimeout` 30 s (the axe and guard-hook tests exceed 5 s on this laptop when the whole suite runs).
+- `rcene/kit/README.md`: rules rewritten for the single app (no template or sync step).
 
-## Requests for the data session
+## Data
 
-`data/` is read-only on a project branch. List the layers or fields this app
-needs (file, properties, source), and work around them meanwhile.
+Raw GIS is in `sources/gis/raw/` (local, gitignored). Converted layers go to `data/files/` with the skill `geo-data-prep`; until then every layer is a fixture.
 
-- (none yet)
+- `scripts/data/include/*.txt` (the level-mapping and facility-kind include files the skill describes) do not exist yet: write them when converting.
 
 ## Dependencies added
 
-Every app already has the full stack. If you still added a package, name it,
-the exact version and why.
-
-- (none yet)
+- `mapshaper` 0.6.121, `@tmcw/togeojson` 7.1.2, `@xmldom/xmldom` 0.9.12, `fflate` 0.8.3 (devDependencies): the data tools in `scripts/data/`, previously installed at the monorepo root.
 
 ## Decisions and open questions
 
-- (none yet)
+- 2026-10-07: the monorepo was collapsed into this single app, based on the P1 scaffold (`apps/p01-andam`). The other 29 scaffolds and the monorepo tooling were removed (they are in the history of `main`). Reference material moved to `sources/` (catalogue: `sources/README.md`).
+- Slug `andam`: stores are `andam:<name>`, the launcher's window prefix is `andam`.
+- Admin layer on top of the brief: users (demo accounts, no passwords, per-window session), audit log, settings, dashboard, CRUD for common information. It is outside the PRD's scope (which rules out real accounts), so sign-in is labelled demo-only.
+- `scripts/hooks/guard.mjs`: fixed a hole where a write to a missing folder on a drive root (`C:\x\y`) was treated as inside the app.
 
 ## Translations to review
 
-AI-drafted Waray and Filipino strings that a person should check (key, English,
-draft).
+AI-drafted Waray and Filipino strings that a person should check (key, English, draft).
 
 - (none yet)
 
-## Lifted modules
+## Modules
 
-Every module copied from a finished app (see "Lift, then wire" in docs/brief.md).
+What each module brief in `docs/modules/` became (see "Lift, then wire" in `docs/brief.md`).
 
-| Module app | Commit | Files (from → to) | Changes after lifting |
-|---|---|---|---|
-| (none yet) | | | |
+| Module | Built in | Notes |
+|---|---|---|
+| (none yet) | | |
+
+## Copied from `sources/templates/`
+
+| From | To | Changes |
+|---|---|---|
+| (none yet) | | |
