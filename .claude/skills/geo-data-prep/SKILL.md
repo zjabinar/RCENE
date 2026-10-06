@@ -1,28 +1,28 @@
 ---
 name: geo-data-prep
-description: Converting the local GIS archive into the shipped data layers in the repo's root data/files (copied into every app with pnpm sync-data) — shapefiles, KML/KMZ and GeoJSON with mapshaper (inspect with -info, reproject UTM 51N / EPSG:32651 to WGS84, fix a missing or wrong .prj, clip to the Catbalogan boundary, map hazard categories to levels, dissolve, simplify, filter fields, 5-decimal precision), OSM facilities, the land outline, heritage/eco-tourism KML points, the UP NOAH fallback, writing sources.json and data/README.md, running derive.mjs and validate.mjs, and keeping the data under 3 MB. Use this whenever working on data prep, the 00-data session, mapshaper commands, hazard level mapping, data attribution, or a data file that fails validation.
+description: Converting the local GIS archive into the app's data layers in data/files (served at /data/) — shapefiles, KML/KMZ and GeoJSON with mapshaper (inspect with -info, reproject UTM 51N / EPSG:32651 to WGS84, fix a missing or wrong .prj, clip to the Catbalogan boundary, map hazard categories to levels, dissolve, simplify, filter fields, 5-decimal precision), OSM facilities, the land outline, heritage/eco-tourism KML points, the UP NOAH fallback, writing sources.json and data/README.md, running derive.mjs and validate.mjs, and keeping the data under 3 MB. Use this whenever working on data prep, the 00-data session, mapshaper commands, hazard level mapping, data attribution, or a data file that fails validation.
 ---
 
-# Geo data prep (root data/files)
+# Geo data prep (data/files)
 
-The data session (`docs/projects/00-data.md`) runs at the monorepo root, on branch `proj/00-data`, on the user's Windows PC, where the archive lives under `D:\lgu_portal - GIS\`. It reads the archive, writes converted GeoJSON into the root `data/files/`, and commits only that output (plus `data/README.md` and `scripts/data/**`). Root `data/` is the canonical copy: `pnpm sync-data` (run on main after the merge) mirrors it into every app's own `data/`, because each app folder is self-contained. Apps serve `/data/<file>` from their `data/files` first and fall back to the fake fixtures in `data/fixtures` file by file. So you can replace one layer at a time. A layer that is still a fixture shows a "Sample data" badge.
+Data prep runs at the repo root (the app) on the user's Windows PC. The raw archive is copied, gitignored, into `sources/gis/raw/`: `catbalogan/` is `D:\lgu_portal - GIS\gis_data\CATBALOGAN`, and `region8/` holds the Catbalogan boundary and barangays, the Region 8 provinces and the critical facilities from `D:\lgu_portal - GIS\data\region8`. It writes converted GeoJSON into `data/files/` and commits only that output (plus `data/README.md` and `scripts/data/**`). The app serves `/data/<file>` from `data/files` first and falls back to the fake fixtures in `data/fixtures` file by file. So you can replace one layer at a time. A layer that is still a fixture shows a "Sample data" badge.
 
-The data scripts in `scripts/data/` import the contracts (`LAYER_FILES`, types, zod schemas) from the reference copy of the shared code, `apps/_template/rcene/data/*.ts`.
+The data scripts in `scripts/data/` import the contracts (`LAYER_FILES`, types, zod schemas) from the app's shared code, `rcene/data/*.ts`.
 
 Every recipe below was run against fixture-based stand-ins for the archive files (a UTM 51N risk shapefile, OSM-style facility files, KML/KMZ), using mapshaper 0.6.121. The main ones are pinned in `scripts/data/data-tools.test.mjs`. Mapshaper's optional native modules (better-sqlite3, msgpackr-extract) are not built. Shapefile, GeoJSON, KML, CSV, FlatGeobuf and GeoPackage I/O work without them anyway, so no extra flag is needed.
 
 ## Hard rules (PRD §8.4)
 
-- **Never read anything under `D:\monica`. Never copy anything from `C:\lgu_portal`**, because credential files sit at its root. Read only from `D:\lgu_portal - GIS\`.
+- **Never read anything under `D:\monica`. Never copy anything from `C:\lgu_portal`**, because credential files sit at its root. Read only from `sources/gis/raw/` (the local copy) or `D:\lgu_portal - GIS\`.
 - Use barangay-level and facility-level data only. No personal data, real or invented. Check KML descriptions for names and phone numbers (`--no-description` drops them).
 - Credit every source in `sources.json`. The `/sources` page and the poster render it.
 - 🟡 permission data (CDRRMO/CPDCO risk maps, CPDCO heritage KML) goes only into this **private** repo. Never push it to a public remote, gist or public deploy.
-- Never copy raw sources into the repo. `.shp/.dbf/.prj/.kmz` are gitignored, but `.kml` and raw `.geojson` copies are not. Read straight from `D:\`, and stage in `$env:TEMP` if you must. `validate.mjs` fails on raw GIS files inside `data/files`.
+- Raw sources live only in `sources/gis/raw/`, which is gitignored as a whole. Never copy raw files anywhere else in the repo: `.shp/.dbf/.prj/.kmz` are gitignored everywhere, but `.kml` and raw `.geojson` copies are not. Stage in `$env:TEMP` if you must. `validate.mjs` fails on raw GIS files inside `data/files`.
 - 🟢 open data must be enough to ship. If a 🟡 layer is unusable, use the UP NOAH fallback (see the last section of this file).
 
 ## Output contract
 
-| File (`LAYER_FILES` in `apps/_template/rcene/data/layers.ts`) | Geometry | Properties to keep (`types.ts`); drop everything else |
+| File (`LAYER_FILES` in `rcene/data/layers.ts`) | Geometry | Properties to keep (`types.ts`); drop everything else |
 |---|---|---|
 | `boundary.geojson` | 1 polygon | `name` |
 | `barangays.geojson` | 57 polygons | `name`, `psgc?`, `coastal?` |
@@ -38,14 +38,14 @@ The output must be WGS84 lon/lat, use 5 decimals (`precision=0.00001`), and tota
 ## Setup (PowerShell, repo root)
 
 ```powershell
-$GIS  = 'D:\lgu_portal - GIS'
-$ADM  = "$GIS\data\region8\administrative_boundaries"
-$RISK = "$GIS\gis_data\CATBALOGAN\Shapefiles (Mappers)\Risk Map"   # Flood, Landslide, Stormsurge, Groundshaking, Liquifaction
-$FAC  = "$GIS\data\region8\critical_facilities"
+$RAW  = 'sources\gis\raw'   # local copy of D:\lgu_portal - GIS (gitignored)
+$ADM  = "$RAW\region8\administrative_boundaries"
+$RISK = "$RAW\catbalogan\Shapefiles (Mappers)\Risk Map"   # Flood, Landslide, Stormsurge, Groundshaking, Liquifaction
+$FAC  = "$RAW\region8\critical_facilities"
 $OUT  = 'data/files'
 ```
 
-**Quoting rule.** Never pass a double quote inside an argument. Embedded `"` can be stripped on the way through `pnpm.cmd` to node.
+**Quoting rule.** Never pass a double quote inside an argument. Embedded `"` can be stripped on the way through `npx.cmd` to node.
 - Put each mapshaper JS expression in PowerShell single quotes: `-each 'level = levelOf($.properties)'`. Single quotes also keep `$` from being expanded.
 - A short string literal can go in double quotes outside and single quotes inside: `-each "name='Samar (land)'"`. Use this form only when there is no `$`.
 - Lookups and anything longer go in an `-include` file.
@@ -57,8 +57,8 @@ $OUT  = 'data/files'
 
 ```powershell
 Get-ChildItem "$RISK\Flood" -Filter *.shp | Select-Object Name, Length
-pnpm exec mapshaper "$RISK\Flood\Population to Flood Risk.shp" -info          # fields, CRS, bounds
-pnpm exec mapshaper "$RISK\Flood\Population to Flood Risk.shp" -dissolve RiskLevel 'calc=n = count()' -o format=csv -   # every category + count
+npx mapshaper "$RISK\Flood\Population to Flood Risk.shp" -info          # fields, CRS, bounds
+npx mapshaper "$RISK\Flood\Population to Flood Risk.shp" -dissolve RiskLevel 'calc=n = count()' -o format=csv -   # every category + count
 ```
 
 How to read `-info`:
@@ -67,14 +67,14 @@ How to read `-info`:
 - Bounds near 124.9,11.8 means it is already geographic, and `-proj wgs84` is a no-op.
 - Garbled `ñ` in names means the `.dbf` encoding is wrong. Read the file with `-i "<file>.shp" encoding=latin1`.
 
-`pnpm exec mapshaper-gui` opens a local viewer at http://localhost:5555 for comparing candidate layers.
+`npx mapshaper-gui` opens a local viewer at http://localhost:5555 for comparing candidate layers.
 
 ## 2. Boundary and barangays (HDX GeoJSON, already WGS84)
 
 ```powershell
-pnpm exec mapshaper "$ADM\catbalogan_city_boundary.geojson" -rename-fields name=ADM3_EN -filter-fields name `
+npx mapshaper "$ADM\catbalogan_city_boundary.geojson" -rename-fields name=ADM3_EN -filter-fields name `
   -o "$OUT/boundary.geojson" format=geojson precision=0.00001
-pnpm exec mapshaper "$ADM\catbalogan_barangays.geojson" -rename-fields name=ADM4_EN,psgc=ADM4_PCODE -filter-fields name,psgc `
+npx mapshaper "$ADM\catbalogan_barangays.geojson" -rename-fields name=ADM4_EN,psgc=ADM4_PCODE -filter-fields name,psgc `
   -simplify dp interval=5 keep-shapes -o "$OUT/barangays.geojson" format=geojson precision=0.00001
 ```
 `-rename-fields` takes `new=old`. Use the field names `-info` actually shows. Expect 57 barangays. Set `coastal` only from a source or local knowledge, never by guessing.
@@ -82,7 +82,7 @@ pnpm exec mapshaper "$ADM\catbalogan_barangays.geojson" -rename-fields name=ADM4
 ## 3. Land outline (offline basemap coastline)
 
 ```powershell
-pnpm exec mapshaper "$ADM\<region 8 provinces or municipalities>.geojson" `
+npx mapshaper "$ADM\<region 8 provinces or municipalities>.geojson" `
   -clip bbox=124.55,11.45,125.35,12.15 -dissolve2 -simplify 15% keep-shapes `
   -filter-islands min-area=0.5km2 remove-empty -each "name='Samar (land)'" -filter-fields name `
   -o "$OUT/land.geojson" format=geojson precision=0.00001
@@ -107,7 +107,7 @@ Choose **one** canonical layer per hazard. The default is *Population to {Hazard
 ```
 
 ```powershell
-pnpm exec mapshaper "$RISK\Flood\Population to Flood Risk.shp" `
+npx mapshaper "$RISK\Flood\Population to Flood Risk.shp" `
   -include scripts/data/include/levels-flood.txt `
   -proj wgs84 `
   -each 'level = levelOf($.properties), hazard = HAZARD, sourceLayer = SOURCE_LAYER' `
@@ -138,7 +138,7 @@ pnpm exec mapshaper "$RISK\Flood\Population to Flood Risk.shp" `
 `scripts/data/include/facility-kinds.txt` maps OSM tags to `kind` and builds stable ids from OSM ids. The full text is in [reference.md](reference.md).
 
 ```powershell
-pnpm exec mapshaper -i "$FAC\hospitals.geojson" "$FAC\schools.geojson" "$FAC\police.geojson" "$FAC\fire.geojson" combine-files `
+npx mapshaper -i "$FAC\hospitals.geojson" "$FAC\schools.geojson" "$FAC\police.geojson" "$FAC\fire.geojson" combine-files `
   -include scripts/data/include/facility-kinds.txt `
   -each 'kind = kindOf($.properties, this.layer_name)' `
   -target type=polygon -points inner -target '*' `
@@ -154,7 +154,7 @@ Use the real file names from `Get-ChildItem $FAC`. Keep `-target type=polygon -p
 ## 6. Heritage and eco-tourism points (CPDCO KML/KMZ)
 
 ```powershell
-Get-ChildItem "$GIS\gis_data\CATBALOGAN" -Recurse -Include *.kml,*.kmz | Select-Object FullName
+Get-ChildItem "$RAW\catbalogan" -Recurse -Include *.kml,*.kmz | Select-Object FullName
 node scripts/data/kml-to-geojson.mjs "<heritage.kmz>" "$OUT/heritage.geojson" --id-prefix H-
 node scripts/data/kml-to-geojson.mjs "<eco-tourism.kml>" "$OUT/heritage.geojson" --id-prefix H- --category eco-tourism --append
 ```
@@ -173,19 +173,18 @@ Write `$OUT/sources.json` with one entry for every file except `derived/*`, and 
 ```powershell
 node scripts/data/derive.mjs           # derived/barangay-hazard.json + derived/facility-hazard.json
 node scripts/data/validate.mjs         # schemas, Samar bbox, ids, sources entries, sizes; exit 1 on errors
-pnpm sync-data                         # copy data/ into every app's data/ (the template included) to look at it
-pnpm --filter @rcene/template dev      # http://localhost:5100: real layers lose the "Sample data" badge
-pnpm --filter @rcene/template smoke    # the template's own smoke test: build + offline browser check
+npm run dev                            # http://localhost:5201: real layers lose the "Sample data" badge
+npm run smoke                          # build + offline browser check
 Get-ChildItem $OUT -Recurse -File | Sort-Object Length -Descending | Select-Object Name, @{n='KB';e={[math]::Round($_.Length/1KB,1)}}
 ```
-On the `proj/00-data` branch, commit only `data/**` and `scripts/data/**`: leave the app copies that `pnpm sync-data` wrote uncommitted. They are regenerated and committed on main after the merge. Re-run `derive.mjs` after any change to boundary, barangays, facilities or hazards. `validate.mjs` reports derived tables that no longer match their inputs. Over 3 MB, raise the hazard `interval=` first, then simplify `barangays`.
+Commit only `data/**` and `scripts/data/**` (never `sources/gis/raw`). Re-run `derive.mjs` after any change to boundary, barangays, facilities or hazards. `validate.mjs` reports derived tables that no longer match their inputs. Over 3 MB, raise the hazard `interval=` first, then simplify `barangays`.
 
 ## Fallback: UP NOAH layer per hazard
 
-When a CDRRMO layer is unusable (missing, broken geometry, no category field), use the Samar-wide NOAH layer under `noah_hazards\` for that hazard only. NOAH files are large: use the bigger-heap binary, and cut them down to a bbox around the city first. `bbox=` is in the data's units, so it goes after `-proj wgs84`.
+When a CDRRMO layer is unusable (missing, broken geometry, no category field), use the Samar-wide NOAH layer under `D:\lgu_portal - GIS\data\region8\noah_hazards\` (not copied into `sources/`) for that hazard only. NOAH files are large: use the bigger-heap binary, and cut them down to a bbox around the city first. `bbox=` is in the data's units, so it goes after `-proj wgs84`.
 
 ```powershell
-pnpm exec mapshaper-xl 8gb "<noah flood 100yr>.shp" -proj wgs84 -clip bbox=124.75,11.65,125.05,11.95 `
+npx mapshaper-xl 8gb "<noah flood 100yr>.shp" -proj wgs84 -clip bbox=124.75,11.65,125.05,11.95 `
   -include scripts/data/include/levels-flood-noah.txt `
   -each 'level = levelOf($.properties), hazard = HAZARD, sourceLayer = SOURCE_LAYER' -filter 'level !== null' `
   -clip "$OUT/boundary.geojson" remove-slivers -dissolve2 level copy-fields=hazard,sourceLayer allow-overlaps `

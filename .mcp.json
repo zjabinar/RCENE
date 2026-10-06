@@ -3,7 +3,7 @@
     "playwright": {
       "command": "node",
       "args": [
-        "apps/_template/scripts/playwright-mcp.mjs",
+        "scripts/playwright-mcp.mjs",
         "--isolated",
         "--output-dir",
         ".playwright-mcp"

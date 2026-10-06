@@ -1,0 +1,46 @@
+{
+  "$comment": "App metadata. vite.config.ts, scripts/smoke.mjs and the Claude hooks read it.",
+  "id": "P1",
+  "slug": "andam",
+  "title": "Andam Catbalogan",
+  "tagline": "Community preparedness: one warning, every role, live",
+  "port": 5201,
+  "ai": false,
+  "brief": "docs/brief.md",
+  "branch": "main",
+  "smokeRoutes": [
+    "/",
+    "/console",
+    "/resident",
+    "/center",
+    "/board",
+    "/sources"
+  ],
+  "smokeSchemes": [
+    "light",
+    "dark"
+  ],
+  "kind": "platform",
+  "roles": [
+    {
+      "id": "console",
+      "path": "/console",
+      "width": "full"
+    },
+    {
+      "id": "resident",
+      "path": "/resident",
+      "width": "phone"
+    },
+    {
+      "id": "center",
+      "path": "/center",
+      "width": "phone"
+    },
+    {
+      "id": "board",
+      "path": "/board",
+      "width": "full"
+    }
+  ]
+}

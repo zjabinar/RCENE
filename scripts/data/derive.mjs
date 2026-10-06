@@ -11,8 +11,7 @@
  *   node scripts/data/derive.mjs              # reads and writes data/files
  *   node scripts/data/derive.mjs --fixtures   # reads and writes data/fixtures
  *
- * Apps get the result through `pnpm sync-data` (root data/ -> apps/<slug>/data/),
- * which the orchestrator runs after merging.
+ * The app serves data/files first and data/fixtures as a per-file fallback (at /data/).
  *
  * Levels can overlap in source layers, so a barangay's shares across levels can
  * sum to more than 1. Each share answers "how much of the barangay is inside a
@@ -23,8 +22,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as turf from "@turf/turf";
 // Single source of truth for hazards and levels: the template's copy of the shared
-// data module (Node >= 22.18 strips the types; its imports resolve from apps/_template).
-import { HAZARDS, LEVELS } from "../../apps/_template/rcene/data/types.ts";
+// data module (Node >= 22.18 strips the types; its imports resolve from the app).
+import { HAZARDS, LEVELS } from "../../rcene/data/types.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const dir = path.join(root, "data", process.argv.includes("--fixtures") ? "fixtures" : "files");

@@ -1,60 +1,40 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "env": {
-    "ECC_GATEGUARD": "off"
-  },
   "permissions": {
     "allow": [
-      "Bash(pnpm install *)",
-      "Bash(pnpm --filter *)",
-      "Bash(pnpm exec *)",
-      "Bash(pnpm test *)",
-      "Bash(pnpm typecheck *)",
-      "Bash(pnpm build *)",
-      "Bash(pnpm lint *)",
-      "Bash(pnpm smoke *)",
-      "Bash(pnpm new-app *)",
-      "Bash(pnpm sync-shared *)",
-      "Bash(pnpm sync-data *)",
-      "Bash(pnpm lockfiles *)",
-      "Bash(pnpm check-standalone *)",
-      "Bash(pnpm stack:check *)",
-      "Bash(pnpm data:fixtures *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(node scripts/*)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git show *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-files *)",
+      "Bash(git branch --show-current)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git rev-parse *)",
-      "Bash(git branch --show-current)",
-      "Bash(node scripts/*)",
+      "Bash(git restore *)",
       "Bash(ls *)",
-      "PowerShell(pnpm install *)",
-      "PowerShell(pnpm --filter *)",
-      "PowerShell(pnpm exec *)",
-      "PowerShell(pnpm test *)",
-      "PowerShell(pnpm typecheck *)",
-      "PowerShell(pnpm build *)",
-      "PowerShell(pnpm lint *)",
-      "PowerShell(pnpm smoke *)",
-      "PowerShell(pnpm new-app *)",
-      "PowerShell(pnpm sync-shared *)",
-      "PowerShell(pnpm sync-data *)",
-      "PowerShell(pnpm lockfiles *)",
-      "PowerShell(pnpm check-standalone *)",
-      "PowerShell(pnpm stack:check *)",
-      "PowerShell(pnpm data:fixtures *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npm test *)",
+      "PowerShell(node scripts/*)",
       "PowerShell(git status *)",
       "PowerShell(git diff *)",
       "PowerShell(git log *)",
       "PowerShell(git show *)",
+      "PowerShell(git rev-parse *)",
+      "PowerShell(git ls-files *)",
+      "PowerShell(git branch --show-current)",
       "PowerShell(git add *)",
       "PowerShell(git commit *)",
-      "PowerShell(git rev-parse *)",
-      "PowerShell(git branch --show-current)",
-      "PowerShell(node scripts/*)",
-      "mcp__playwright__*"
+      "PowerShell(git restore *)",
+      "PowerShell(ls *)",
+      "mcp__playwright__*",
+      "Bash(npx mapshaper *)",
+      "Bash(npm install *)",
+      "PowerShell(npx mapshaper *)",
+      "PowerShell(npm install *)"
     ],
     "deny": [
       "Read(//d/monica/**)",
@@ -83,7 +63,7 @@
               "${CLAUDE_PROJECT_DIR}/scripts/hooks/session-context.mjs"
             ],
             "timeout": 600,
-            "statusMessage": "Loading RCENE project context"
+            "statusMessage": "Loading RCENE app context"
           }
         ]
       }
@@ -106,5 +86,24 @@
   },
   "enabledMcpjsonServers": [
     "playwright"
-  ]
+  ],
+  "extraKnownMarketplaces": {
+    "knowledge-work-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/knowledge-work-plugins"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "design@knowledge-work-plugins": true,
+    "superpowers@superpowers-marketplace": true
+  }
 }

@@ -1,15 +1,8 @@
 {
-  "_comment": "Editor-only root config for scripts/ and vitest.config.ts. Apps have their own tsconfigs.",
-  "compilerOptions": {
-    "target": "es2023",
-    "lib": ["ES2023"],
-    "module": "nodenext",
-    "types": ["node"],
-    "allowJs": true,
-    "checkJs": false,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "strict": true
-  },
-  "include": ["vitest.config.ts", "scripts/**/*.mjs"]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.test.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }

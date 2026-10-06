@@ -7,7 +7,7 @@
  *   node scripts/data/validate.mjs --dir <path> # any folder laid out like data/files
  *
  * Errors (exit 1):
- *   - a file fails its zod schema in apps/_template/rcene/data/schemas.ts
+ *   - a file fails its zod schema in rcene/data/schemas.ts
  *   - a coordinate falls outside lon 124..126 / lat 11..13 (Samar), e.g. UTM metres
  *     that were never reprojected, or [lat, lon] order
  *   - an unclosed polygon ring, a duplicate facility/heritage id, a zone whose
@@ -17,8 +17,8 @@
  *   - derived tables whose barangays, facilities or hazards no longer match their
  *     inputs (a coverage check, not a recomputation: always re-run derive.mjs
  *     after changing any layer)
- * Schemas, layer names, hazards and levels come from the template's copy of the
- * shared data module (apps/_template/rcene/data; zod resolves from apps/_template).
+ * Schemas, layer names, hazards and levels come from the app's
+ * shared data module (rcene/data).
  * Warnings: total size over 3 MB, more than 5 decimals, properties that types.ts
  * does not define, unknown files, missing layers (the fixture is served instead).
  */
@@ -26,7 +26,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { LAYER_FILES } from "../../apps/_template/rcene/data/layers.ts";
+import { LAYER_FILES } from "../../rcene/data/layers.ts";
 import {
   barangaysSchema,
   boundarySchema,
@@ -34,8 +34,8 @@ import {
   heritageSchema,
   sourcesSchema,
   zonesSchema,
-} from "../../apps/_template/rcene/data/schemas.ts";
-import { HAZARDS, LEVELS } from "../../apps/_template/rcene/data/types.ts";
+} from "../../rcene/data/schemas.ts";
+import { HAZARDS, LEVELS } from "../../rcene/data/types.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const { values } = parseArgs({
@@ -222,7 +222,7 @@ for (const rel of files) {
   if (RAW_EXT.has(path.extname(rel).toLowerCase())) {
     errors.push("raw GIS source file: keep raw .shp/.kml/.kmz outside the repo, ship only converted GeoJSON");
   } else if (kind === "unknown") {
-    warnings.push("not a layer in apps/_template/rcene/data/layers.ts: not validated");
+    warnings.push("not a layer in rcene/data/layers.ts: not validated");
   } else {
     let data;
     try {

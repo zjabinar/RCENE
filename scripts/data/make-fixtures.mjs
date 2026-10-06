@@ -12,7 +12,7 @@
  *   - some facilities sit inside the storm-surge zone, some outside
  *
  * Usage: node scripts/data/make-fixtures.mjs   (then: node scripts/data/derive.mjs --fixtures)
- * or `pnpm data:fixtures` for both; then `pnpm sync-data` copies them into every app.
+ * or `npm run data:fixtures` for both.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";

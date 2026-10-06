@@ -1,47 +1,60 @@
 #!/usr/bin/env node
 /**
- * PreToolUse guard for sessions at the REPO ROOT (wired in the root
- * .claude/settings.json). Root sessions are the orchestrator (main) and the
- * data session (proj/00-data). App sessions start inside apps/<slug> of their
- * worktree and are guarded by that folder's own hooks (apps/<slug>/scripts/hooks),
- * not by this file.
+ * PreToolUse guard for this app's Claude Code sessions (wired in .claude/settings.json).
  *
- * Reads the hook input JSON from stdin ({ tool_name, tool_input, cwd }).
+ * The app root is the folder two levels above this file, never CLAUDE_PROJECT_DIR,
+ * so the guard protects the folder it ships in wherever that folder is copied.
+ *
+ * Reads the hook input JSON from stdin ({ tool_name, tool_input, cwd, scratchpad_dir? }).
  * To block, it prints a reason to stderr and exits 2; Claude sees the reason.
  * Anything else exits 0 and the normal permission flow continues.
  *
- * Rules, in order:
- *   1. Always: no path or command may touch D:\monica (another person's
- *      project) or C:\lgu_portal (holds credentials). D:\lgu_portal - GIS is
- *      allowed: it is the GIS archive the data session converts. ./ and ../ are
- *      collapsed and relative paths resolved against the cwd and any earlier cd.
- *      This rule runs first; it is the only rule that fails closed.
- *   2. Always: no reading or editing credential files (.env, .env.* except
- *      .env.example, *service-account*.json, gemini_api_key.txt, *.pem).
- *   3. Only on proj/<slug> branches (one worktree per project):
- *      - Edit/Write/MultiEdit/NotebookEdit targets must match the project's
- *        writeScope globs from docs/projects/projects.json (00-data: data/**
- *        and scripts/data/**; an app row: apps/<slug>/**).
- *      - Bash/PowerShell may not push, pull, merge, rebase, am, reset --hard, manage
- *        worktrees, leave or delete branches, or cherry-pick.
- *      - Dependency changes only for the project's own app:
- *        `pnpm --filter @rcene/<slug> add <pkg>` is fine, `pnpm add -w` is not;
- *        the data session has no app, so it may not change dependencies at all.
+ * Modes (from git, looked up from the app root):
+ *   project   the current branch starts with proj/ (one worktree per project)
+ *   monorepo  the git top level holds pnpm-workspace.yaml and is not the app root
+ *   free      anything else: no git, main, entry/*, a standalone copy
  *
- * Rules 2 and 3 fail open: an internal error exits 0.
+ * Rules:
+ *   always    no path or command may touch D:\monica or C:\lgu_portal (all spellings;
+ *             D:\lgu_portal - GIS is allowed). ./ and ../ are collapsed and relative paths
+ *             resolved against the cwd and any earlier cd. Evaluated first, and the
+ *             only rule that fails closed.
+ *   always    no reading or editing credential files (.env, .env.* except .env.example,
+ *             *service-account*.json, gemini_api_key.txt, *.pem).
+ *   always    Edit/Write/MultiEdit/NotebookEdit only inside the app root, ~/.claude,
+ *             the session scratchpad or the OS temp dir (never another part of the
+ *             repository that contains the app); never under node_modules/ or dist/.
+ *   project   edits only while the checkout is on project.json "branch"; no edits to
+ *             data/**, docs/brief.md and docs/modules/** (synced from the repo), scripts/hooks/** or
+ *             .claude/settings{,.local}.json (this guard and its wiring).
+ *   project + monorepo
+ *             no edits to ~/.claude/settings{,.local}.json (they can disable hooks).
+ *   project   no git push, pull, merge, rebase, cherry-pick, am, worktree, reset --hard,
+ *             branch delete/rename/copy/force, or checkout/switch off the branch.
+ *   project + monorepo
+ *             dependency changes only for this app: pnpm add/remove inside the app
+ *             (or --filter this package), never -w/-r; npm only with
+ *             --package-lock-only or read-only verbs (npm would break pnpm's
+ *             node_modules); no yarn/bun installs.
+ *   free      npm install/ci/add and git push are fine.
+ *
+ * Everything after the forbidden-path rule fails open: an internal error exits 0.
  *
  * Manual check:
- *   echo '{"tool_name":"Read","tool_input":{"file_path":"D:\\monica\\x"}}' | node scripts/hooks/guard.mjs
+ *   echo '{"tool_name":"Bash","tool_input":{"command":"git push"}}' | node scripts/hooks/guard.mjs
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const BLOCK = 2;
+const WIN = process.platform === "win32";
+const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 // ---------------------------------------------------------------------------
-// Rule 1: forbidden locations (plain string checks, evaluated first)
+// Always: forbidden locations (plain string checks, evaluated first)
 // ---------------------------------------------------------------------------
 
 /** Lowercase, forward slashes, no duplicate slashes. */
@@ -66,19 +79,15 @@ const FORBIDDEN = [
   },
 ];
 
-/** The tool_input fields that can name a location. */
+/** The tool_input fields that can name a location (never file contents). */
 const PATH_FIELDS = ["file_path", "path", "notebook_path", "pattern", "glob", "command"];
 
 function inputStrings(toolInput) {
   if (!toolInput || typeof toolInput !== "object") return [];
-  const out = [];
-  for (const key of PATH_FIELDS) {
-    if (typeof toolInput[key] === "string") out.push(toolInput[key]);
-  }
-  return out;
+  return PATH_FIELDS.filter((key) => typeof toolInput[key] === "string").map((key) => toolInput[key]);
 }
 
-/** Leading subshell/group openers and trailing closers: "(cd" -> "cd", "x)" -> "x". */
+/** Leading subshell/group openers and trailing closers: "(cd" -> "cd", "zod)" -> "zod". */
 function bare(token) {
   return String(token).replace(/^[({]+/, "").replace(/[)}]+$/, "");
 }
@@ -87,21 +96,11 @@ function isCd(token) {
   return ["cd", "set-location", "sl", "chdir", "pushd", "push-location"].some((name) => isProgram(token, name));
 }
 
-/** A path named in a command, resolved against a directory (drive letters, Git Bash /c/... and ~ too). */
-function resolveAgainst(base, p) {
-  let s = String(p);
-  if (s === "~" || s.startsWith("~/") || s.startsWith("~\\")) s = path.join(os.homedir(), s.slice(1));
-  const target = normalizePath(s);
-  if (isAbsoluteAny(target)) return target;
-  const b = normalizePath(base);
-  return isAbsoluteAny(b) ? normalizePath(`${b}/${target}`) : normalizePath(path.resolve(base, s));
-}
-
 /**
- * Every spelling of the locations an input names, for rule 1: the raw fields; each path with
- * ./ and ../ collapsed; each path resolved against the working directory (in shell commands,
- * the directory after any earlier cd / Set-Location); and the working directory itself.
- * If this throws, the raw fields are still checked.
+ * Every spelling of the locations an input names, for the forbidden-location rule: the raw
+ * fields; each path with ./ and ../ collapsed; each path resolved against the working
+ * directory (in shell commands, the directory after any earlier cd / Set-Location); and the
+ * working directory itself. If this throws, the raw fields are still checked.
  */
 function forbiddenCandidates(input) {
   const toolInput = input.tool_input && typeof input.tool_input === "object" ? input.tool_input : {};
@@ -112,13 +111,13 @@ function forbiddenCandidates(input) {
     const variants = (token, base) => {
       const t = String(token);
       out.push(path.posix.normalize(flatten(t)));
-      if (base && t && !t.startsWith("-")) out.push(resolveAgainst(base, t));
+      if (base && t && !t.startsWith("-")) out.push(resolveDir(base, t));
     };
     for (const key of ["file_path", "path", "notebook_path", "pattern", "glob"]) {
       if (typeof toolInput[key] !== "string") continue;
       variants(toolInput[key], cwd);
       if ((key === "pattern" || key === "glob") && typeof toolInput.path === "string") {
-        variants(toolInput[key], cwd ? resolveAgainst(cwd, toolInput.path) : toolInput.path);
+        variants(toolInput[key], cwd ? resolveDir(cwd, toolInput.path) : toolInput.path);
       }
     }
     if (typeof toolInput.command === "string") {
@@ -127,7 +126,7 @@ function forbiddenCandidates(input) {
         const tokens = tokenize(segment).map(bare).filter(Boolean);
         if (tokens.length === 0) continue;
         if (isCd(tokens[0]) && tokens[1]) {
-          if (dir) dir = resolveAgainst(dir, tokens[1]);
+          if (dir) dir = resolveDir(dir, tokens[1]);
           variants(tokens[1], dir);
           continue;
         }
@@ -151,7 +150,7 @@ function forbiddenReason(strings) {
 }
 
 // ---------------------------------------------------------------------------
-// Rule 2: credential files
+// Always: credential files
 // ---------------------------------------------------------------------------
 
 function baseName(p) {
@@ -201,7 +200,6 @@ function shellFileWords(command) {
 }
 
 function credentialReason(toolName, toolInput) {
-  if (!toolInput || typeof toolInput !== "object") return null;
   const candidates = [];
   for (const key of ["file_path", "path", "notebook_path"]) {
     if (typeof toolInput[key] === "string") candidates.push(baseName(toolInput[key]));
@@ -221,44 +219,8 @@ function credentialReason(toolName, toolInput) {
 }
 
 // ---------------------------------------------------------------------------
-// Rule 3: project branches
+// Paths
 // ---------------------------------------------------------------------------
-
-function git(cwd, args) {
-  return execFileSync("git", ["-C", cwd, ...args], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-    timeout: 5000,
-    windowsHide: true,
-  }).trim();
-}
-
-/** { root, branch } for the checkout containing cwd, or null outside git. */
-function checkoutInfo(cwd) {
-  try {
-    const [root, branch] = git(cwd, ["rev-parse", "--show-toplevel", "--abbrev-ref", "HEAD"]).split(/\r?\n/);
-    return root && branch ? { root, branch } : null;
-  } catch {
-    return null;
-  }
-}
-
-function loadManifest(root) {
-  const file = path.join(root, "docs", "projects", "projects.json");
-  if (!existsSync(file)) return null;
-  return JSON.parse(readFileSync(file, "utf8"));
-}
-
-function projectForBranch(manifest, branch) {
-  if (!manifest || !Array.isArray(manifest.projects) || !branch.startsWith("proj/")) return null;
-  return (
-    manifest.projects.find((p) => p.branch === branch) ??
-    manifest.projects.find((p) => p.slug === branch.slice("proj/".length)) ??
-    null
-  );
-}
-
-const WIN = process.platform === "win32";
 
 /** Forward slashes, lowercase drive letter, Git Bash /c/... to c:/..., no trailing slash. */
 function normalizePath(p, { windows = WIN } = {}) {
@@ -273,6 +235,18 @@ function normalizePath(p, { windows = WIN } = {}) {
   return s;
 }
 
+function isAbsoluteAny(p) {
+  return p.startsWith("/") || /^[a-z]:\//i.test(p);
+}
+
+/** Absolute, normalized form of a path the tool named (relative paths resolve against cwd). */
+function toAbs(raw, cwd) {
+  let s = String(raw);
+  if (s === "~" || s.startsWith("~/") || s.startsWith("~\\")) s = path.join(os.homedir(), s.slice(1));
+  const n = normalizePath(s);
+  return isAbsoluteAny(n) ? n : normalizePath(path.resolve(cwd, s));
+}
+
 /** Resolves junctions and symlinks on the nearest existing ancestor of a normalized path. */
 function realish(p) {
   const rest = [];
@@ -281,25 +255,15 @@ function realish(p) {
     try {
       return normalizePath(path.join(realpathSync.native(cur), ...rest.reverse()));
     } catch {
-      const parent = path.posix.dirname(cur);
+      // A bare "c:" is drive-relative (it resolves to the cwd on that drive), so step up to "c:/" and stop there.
+      if (/^[a-z]:\/$/i.test(cur)) return null;
+      let parent = path.posix.dirname(cur);
+      if (/^[a-z]:$/i.test(parent)) parent += "/";
       if (parent === cur) return null;
       rest.push(path.posix.basename(cur));
       cur = parent;
     }
   }
-}
-
-/** Path relative to the worktree root, tolerating junctions; null when outside. */
-function repoRelative(root, abs) {
-  const direct = relativeTo(root, abs);
-  if (direct !== null) return direct;
-  const realRoot = realish(root);
-  const realAbs = realish(abs);
-  return realRoot && realAbs ? relativeTo(realRoot, realAbs) : null;
-}
-
-function isAbsoluteAny(p) {
-  return p.startsWith("/") || /^[a-z]:\//i.test(p);
 }
 
 /** Path of `target` relative to `root`, or null when it lies outside. Both normalized. */
@@ -312,73 +276,149 @@ function relativeTo(root, target, { windows = WIN } = {}) {
   return target.slice(prefix.length);
 }
 
-/** Minimal glob: `**` spans directories, `*` and `?` stay within one segment. */
-function globToRegExp(glob, { ignoreCase = WIN } = {}) {
-  let re = "";
-  const g = String(glob).replace(/\\/g, "/").replace(/^\.\//, "");
-  for (let i = 0; i < g.length; i++) {
-    const c = g[i];
-    if (c === "*") {
-      if (g[i + 1] === "*") {
-        const atStart = i === 0 || g[i - 1] === "/";
-        const slashAfter = g[i + 2] === "/";
-        if (atStart && slashAfter) {
-          re += "(?:.*/)?"; // "**/" matches zero or more directories
-          i += 2;
-        } else if (atStart && i + 2 === g.length && i > 0) {
-          re = re.slice(0, -1) + "(?:/.*)?"; // "dir/**" also matches "dir" itself
-          i += 1;
-        } else {
-          re += ".*";
-          i += 1;
-        }
-      } else re += "[^/]*";
-    } else if (c === "?") re += "[^/]";
-    else re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+/** Like relativeTo, but tolerates symlinks and junctions (e.g. /tmp vs /private/tmp). */
+function within(root, abs) {
+  if (!root) return null;
+  const direct = relativeTo(root, abs);
+  if (direct !== null) return direct;
+  const realRoot = realish(root);
+  const realAbs = realish(abs);
+  return realRoot && realAbs ? relativeTo(realRoot, realAbs) : null;
+}
+
+// ---------------------------------------------------------------------------
+// Context: the app, its project.json and the git checkout around it
+// ---------------------------------------------------------------------------
+
+function readJson(file) {
+  try {
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    return null;
   }
-  return new RegExp(`^${re}$`, ignoreCase ? "i" : "");
 }
 
-function inScope(relPath, globs, opts) {
-  return globs.some((g) => globToRegExp(g, opts).test(relPath));
+function git(cwd, args) {
+  try {
+    return execFileSync("git", ["-C", cwd, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      timeout: 5000,
+      windowsHide: true,
+    }).trim();
+  } catch {
+    return null;
+  }
 }
 
-function notesFile(row) {
-  if (row.app) return `${row.app}/NOTES.md`;
-  if (row.kind === "data") return "data/README.md";
-  const readme = (row.writeScope ?? []).find((g) => !/[*?]/.test(g) && g.endsWith(".md"));
-  return readme ?? "your notes";
+let cachedContext = null;
+
+/** Mode, branch and paths for this app. Computed once, lazily (Read/Grep calls never need git). */
+function appContext(input) {
+  if (cachedContext) return cachedContext;
+  const project = readJson(path.join(APP_ROOT, "project.json")) ?? {};
+  const pkg = readJson(path.join(APP_ROOT, "package.json")) ?? {};
+  const appRoot = normalizePath(APP_ROOT);
+  const topRaw = git(APP_ROOT, ["rev-parse", "--show-toplevel"]);
+  const top = topRaw ? normalizePath(topRaw) : null;
+  // `branch --show-current` also works on a fresh repo without commits; it is empty when detached.
+  const branch = top ? (git(APP_ROOT, ["branch", "--show-current"]) ?? "") : "";
+  const sameAsApp = top !== null && within(appRoot, top) === "";
+  const workspace = top !== null && !sameAsApp && existsSync(path.join(topRaw, "pnpm-workspace.yaml"));
+  const mode = branch.startsWith("proj/") ? "project" : workspace ? "monorepo" : "free";
+  const cwd = (typeof input.cwd === "string" && input.cwd) || process.env.CLAUDE_PROJECT_DIR || APP_ROOT;
+  const scratchpad = typeof input.scratchpad_dir === "string" && input.scratchpad_dir ? toAbs(input.scratchpad_dir, cwd) : null;
+  cachedContext = {
+    appRoot,
+    top: sameAsApp ? null : top,
+    branch,
+    mode,
+    workspace,
+    expectedBranch: typeof project.branch === "string" ? project.branch : null,
+    slug: typeof project.slug === "string" ? project.slug : path.basename(APP_ROOT),
+    pkgName: typeof pkg.name === "string" ? pkg.name : null,
+    cwd,
+    scratchpad,
+  };
+  return cachedContext;
 }
 
-function scopeText(row) {
-  return (row.writeScope ?? []).join(", ");
+// ---------------------------------------------------------------------------
+// Edits
+// ---------------------------------------------------------------------------
+
+const EDIT_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
+const SHELL_TOOLS = new Set(["Bash", "PowerShell"]);
+
+/** Claude Code settings in ~/.claude: they can switch hooks off (disableAllHooks). */
+function isUserSettings(abs) {
+  const rel = within(normalizePath(path.join(os.homedir(), ".claude")), abs);
+  return rel !== null && /^settings(\.local)?\.json$/i.test(rel);
 }
 
-/** Places outside the repo a session may still write: Claude's own files and the temp dir. */
-function outsideRepoAllowed(target) {
-  const roots = [path.join(os.homedir(), ".claude"), os.tmpdir()].map((p) => normalizePath(p));
-  return roots.some((r) => relativeTo(r, target) !== null);
+/** Places outside the app a session may still write: Claude's own files and its scratchpad. */
+function personalAllowed(abs, ctx) {
+  const roots = [normalizePath(path.join(os.homedir(), ".claude"))];
+  if (ctx.scratchpad) roots.push(ctx.scratchpad);
+  return roots.some((r) => within(r, abs) !== null);
 }
 
 function editReason(toolInput, ctx) {
   const raw = toolInput.file_path ?? toolInput.notebook_path;
   if (typeof raw !== "string" || !raw) return null;
-  const abs = isAbsoluteAny(normalizePath(raw)) ? normalizePath(raw) : normalizePath(path.resolve(ctx.cwd, raw));
-  const rel = repoRelative(ctx.root, abs);
-  const { row } = ctx;
+  const abs = toAbs(raw, ctx.cwd);
+  const rel = within(ctx.appRoot, abs);
+
   if (rel === null) {
-    if (outsideRepoAllowed(abs)) return null;
+    if (ctx.mode !== "free" && isUserSettings(abs)) {
+      return `Blocked: ${raw} is Claude Code's own configuration (it can turn this guard off). A project session never edits it; the human does.`;
+    }
+    if (personalAllowed(abs, ctx)) return null;
+    if (ctx.top && within(ctx.top, abs) !== null) {
+      const repoRel = within(ctx.top, abs);
+      return (
+        `Blocked: ${repoRel} is outside this app (${ctx.slug}). A session edits only files inside its own app folder. ` +
+        "Shared code, other apps and repo files change between batches: write the request in NOTES.md."
+      );
+    }
+    if (within(normalizePath(os.tmpdir()), abs) !== null) return null;
     return (
-      `Blocked: ${raw} is outside this worktree. This session (${row.slug}) may only edit ${scopeText(row)}. ` +
-      `Put requests for anything else in ${notesFile(row)}.`
+      `Blocked: ${raw} is outside this app folder (${ctx.appRoot}). Edit files inside the app only; ` +
+      "scratch files can go in your scratchpad or the OS temp folder. Write anything else you need in NOTES.md."
     );
   }
-  if (inScope(rel, row.writeScope ?? [])) return null;
-  return (
-    `Blocked: ${rel} is outside this session's write scope. This session may only edit ${scopeText(row)}. ` +
-    `Put requests for anything else (the shared code in apps/_template, tooling, docs) in ${notesFile(row)}; the orchestrator applies them on main.`
-  );
+
+  const relLower = WIN ? rel.toLowerCase() : rel;
+  const segments = relLower.split("/");
+  if (segments.includes("node_modules")) {
+    return `Blocked: ${rel} is inside node_modules/, which the package manager owns. Change dependencies through the package manager (see the dependency rule in the session context) or note the problem in NOTES.md.`;
+  }
+  if (segments[0] === "dist") {
+    return `Blocked: ${rel} is build output. Edit the source under src/ and rebuild (npm run build).`;
+  }
+  if (ctx.mode !== "project") return null;
+
+  if (ctx.expectedBranch && ctx.branch !== ctx.expectedBranch) {
+    return (
+      `Blocked: this worktree belongs to ${ctx.expectedBranch} (project.json "branch"), but the checkout is on ${ctx.branch}. ` +
+      `Do not edit here. Switch back with git switch ${ctx.expectedBranch}, or stop and tell the human.`
+    );
+  }
+  if (segments[0] === "data" || relLower === "docs/brief.md" || relLower.startsWith("docs/modules/")) {
+    return (
+      `Blocked: ${rel} is synced from the RCENE repo (data layers and the brief are read-only in a project session). ` +
+      "Write the change you need (a new layer, a field, a brief correction) in NOTES.md, and work around it locally meanwhile."
+    );
+  }
+  if (relLower.startsWith("scripts/hooks/") || relLower === ".claude/settings.json" || relLower === ".claude/settings.local.json") {
+    return `Blocked: ${rel} is this session's guard or its wiring and is read-only in a project session. Write the change you need in NOTES.md.`;
+  }
+  return null;
 }
+
+// ---------------------------------------------------------------------------
+// Shell commands
+// ---------------------------------------------------------------------------
 
 /** Splits a command line into simple commands on ; && || | & and newlines. */
 function segments(command) {
@@ -402,6 +442,21 @@ function isProgram(token, name) {
   return b === name;
 }
 
+function expandHome(p) {
+  const s = String(p);
+  return s === "~" || s.startsWith("~/") || s.startsWith("~\\") ? path.join(os.homedir(), s.slice(1)) : s;
+}
+
+/** Resolves a directory named in a command against the current one (Git Bash /c/..., drive letters and ~ too). */
+function resolveDir(cwd, dir) {
+  const target = normalizePath(expandHome(dir));
+  if (isAbsoluteAny(target)) return target;
+  const base = normalizePath(cwd);
+  return isAbsoluteAny(base) ? normalizePath(`${base}/${target}`) : normalizePath(path.resolve(cwd, dir));
+}
+
+// --- git (project mode) ----------------------------------------------------
+
 // git global options that take a separate value.
 const GIT_OPTS_WITH_VALUE = new Set(["-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"]);
 
@@ -414,9 +469,9 @@ function parseGit(tokens, start) {
   return { sub: tokens[i], args: tokens.slice(i + 1) };
 }
 
-function gitReason(sub, args, row) {
-  const own = row.branch;
-  const fix = `Commit on ${own} and leave integration to the orchestrator (main checkout).`;
+function gitReason(sub, args, ctx) {
+  const own = ctx.expectedBranch || ctx.branch;
+  const fix = `Commit on ${own}; the human reviews and merges.`;
   const plain = args.filter((a) => !a.startsWith("-"));
   switch (sub) {
     case "push":
@@ -427,7 +482,7 @@ function gitReason(sub, args, row) {
     case "am":
       return `Blocked: git ${sub} is not allowed in a project session. ${fix}`;
     case "worktree":
-      return `Blocked: git worktree is managed by scripts/launch-worktrees.ps1, not by project sessions. ${fix}`;
+      return `Blocked: worktrees are managed by the orchestrator, not by project sessions. ${fix}`;
     case "reset":
       if (args.includes("--hard")) {
         return "Blocked: git reset --hard can destroy work. Use git restore <file> or git revert, or stop and write the problem in STATUS.md.";
@@ -441,7 +496,7 @@ function gitReason(sub, args, row) {
             ["--delete", "--move", "--copy", "--force", "--set-upstream-to", "--unset-upstream"].includes(a.split("=")[0]),
         )
       ) {
-        return `Blocked: deleting or renaming branches is not allowed in a project session. Stay on ${own}.`;
+        return `Blocked: deleting, renaming or copying branches is not allowed in a project session. Stay on ${own}.`;
       }
       return null;
     case "checkout":
@@ -464,8 +519,11 @@ function gitReason(sub, args, row) {
   }
 }
 
-const PNPM_OPTS_WITH_VALUE = new Set(["--filter", "-F", "-C", "--dir", "--reporter", "--loglevel", "--workspace-concurrency", "--store-dir"]);
-const PNPM_DEP_COMMANDS = new Set(["add", "remove", "rm", "uninstall", "un", "update", "up", "upgrade", "link", "unlink"]);
+// --- pnpm (project + monorepo) ----------------------------------------------
+
+const PNPM_OPTS_WITH_VALUE = new Set(["--reporter", "--loglevel", "--workspace-concurrency", "--store-dir", "--virtual-store-dir"]);
+const PNPM_ADD_REMOVE = new Set(["add", "remove", "rm", "uninstall", "un"]);
+const PNPM_OTHER_DEP_COMMANDS = new Set(["update", "up", "upgrade", "link", "ln", "unlink", "dedupe", "import"]);
 
 function parsePnpm(tokens, start) {
   const filters = [];
@@ -476,34 +534,7 @@ function parsePnpm(tokens, start) {
   const subArgs = [];
   for (let i = start + 1; i < tokens.length; i++) {
     const t = tokens[i];
-    if (sub === undefined) {
-      if (t === "--filter" || t === "-F") {
-        filters.push(tokens[++i] ?? "");
-        continue;
-      }
-      if (t.startsWith("--filter=")) {
-        filters.push(t.slice("--filter=".length));
-        continue;
-      }
-      if (t === "-C" || t === "--dir") {
-        dir = tokens[++i] ?? null;
-        continue;
-      }
-      if (t.startsWith("--dir=")) {
-        dir = t.slice("--dir=".length);
-        continue;
-      }
-      if (t === "-w" || t === "--workspace-root") workspaceRoot = true;
-      if (t === "-r" || t === "--recursive") recursive = true;
-      if (t.startsWith("-")) {
-        if (PNPM_OPTS_WITH_VALUE.has(t)) i++;
-        continue;
-      }
-      sub = t;
-      continue;
-    }
-    if (t === "-w" || t === "--workspace-root") workspaceRoot = true;
-    if (t === "-r" || t === "--recursive") recursive = true;
+    // These options are honoured before and after the subcommand.
     if (t === "--filter" || t === "-F") {
       filters.push(tokens[++i] ?? "");
       continue;
@@ -520,109 +551,180 @@ function parsePnpm(tokens, start) {
       dir = t.slice("--dir=".length);
       continue;
     }
+    if (t === "-w" || t === "--workspace-root") workspaceRoot = true;
+    if (t === "-r" || t === "--recursive") recursive = true;
+    if (sub === undefined) {
+      if (t.startsWith("-")) {
+        if (PNPM_OPTS_WITH_VALUE.has(t)) i++;
+        continue;
+      }
+      sub = t;
+      continue;
+    }
     subArgs.push(t);
   }
   return { sub, subArgs, filters, dir, workspaceRoot, recursive };
 }
 
-function ownFilter(filter, row, pkgName) {
-  const f = filter.replace(/^\{|\}$/g, "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/$/, "");
-  return f === pkgName || f === row.app || f === row.slug;
+/** True when a pnpm --filter selector names exactly this app (by name, slug or path). */
+function ownFilter(filter, ctx, cwd) {
+  const f = filter.replace(/^\{|\}$/g, "").replace(/\\/g, "/").replace(/\/$/, "");
+  if (!f) return false;
+  if (f === ctx.pkgName || f === ctx.slug) return true;
+  if (f.startsWith(".") || f.includes("/") || isAbsoluteAny(normalizePath(f))) {
+    const bases = [cwd, ctx.top].filter(Boolean);
+    return bases.some((base) => within(ctx.appRoot, resolveDir(base, f)) === "");
+  }
+  return false;
 }
 
-function pnpmReason(parsed, ctx, effectiveCwd) {
-  const { row } = ctx;
+function pnpmReason(parsed, ctx, cwd) {
   const { sub, subArgs, filters, dir, workspaceRoot, recursive } = parsed;
   if (!sub) return null;
   const installsPackages = (sub === "install" || sub === "i") && subArgs.some((a) => !a.startsWith("-"));
-  if (!PNPM_DEP_COMMANDS.has(sub) && !installsPackages) return null;
+  const addRemove = PNPM_ADD_REMOVE.has(sub) || installsPackages;
+  if (!addRemove && !PNPM_OTHER_DEP_COMMANDS.has(sub)) return null;
 
-  const pkgName = readPackageName(ctx.root, row);
+  if (!addRemove) {
+    return `Blocked: pnpm ${sub} would move this app off its exact pinned versions. Keep the pins; if a version really must change, write the request in NOTES.md.`;
+  }
+  if (!ctx.workspace) {
+    return `Blocked: dependencies are frozen in this project session (the app is not in a pnpm workspace, so pnpm would replace its npm install). Write the request in NOTES.md.`;
+  }
   const allowed = (() => {
-    if (!row.app || !pkgName) return false;
     if (workspaceRoot || recursive) return false;
-    if (filters.length > 0) return filters.every((f) => ownFilter(f, row, pkgName));
-    const where = dir ? normalizePath(path.resolve(effectiveCwd, dir)) : normalizePath(effectiveCwd);
-    const rel = repoRelative(ctx.root, where);
-    return rel !== null && inScope(rel, [`${row.app}/**`]);
+    if (filters.length > 0) return filters.every((f) => ownFilter(f, ctx, cwd));
+    const where = dir ? resolveDir(cwd, dir) : normalizePath(cwd);
+    return within(ctx.appRoot, where) !== null;
   })();
   if (allowed) return null;
-  const example = pkgName ? ` Use: pnpm --filter ${pkgName} add <pkg>.` : "";
+  const name = ctx.pkgName ?? ctx.slug;
   return (
-    `Blocked: pnpm ${sub} here would change dependencies outside ${scopeText(row)}.${example} ` +
-    `Requests for root or template dependencies go in ${notesFile(row)}.`
+    `Blocked: pnpm ${sub} here would change dependencies outside this app. Run pnpm add <pkg> inside the app folder ` +
+    `(or pnpm --filter ${name} add <pkg>), never with -w or -r. Pin an exact version (never ^ or ~, no new major) and justify the dependency in NOTES.md; ` +
+    "requests for root or other packages go in NOTES.md too."
   );
 }
 
-const NPM_DEP_VERBS = new Set(["add", "uninstall", "remove", "rm", "un", "update", "up", "link", "install", "i", "in", "isntall", "ci"]);
+// --- npm / yarn / bun (project + monorepo) ---------------------------------
 
-function npmReason(tokens, start, ctx) {
-  // Any dependency verb anywhere: this is a pnpm workspace, so even a bare `npm install`
-  // is wrong, and option values (e.g. --prefix <dir>) can't hide the verb.
-  const changesDeps = tokens.slice(start + 1).some((t) => NPM_DEP_VERBS.has(t));
-  if (!changesDeps) return null;
-  const pkgName = readPackageName(ctx.root, ctx.row);
-  const example = pkgName ? `pnpm --filter ${pkgName} add <pkg>` : "nothing: record the request";
-  return `Blocked: at the repo root this is a pnpm workspace; npm/yarn would break pnpm-lock.yaml. Use ${example} (or note it in ${notesFile(ctx.row)}).`;
+const NPM_OPTS_WITH_VALUE = new Set(["--prefix", "-C", "--workspace", "-w", "--registry", "--cache", "--userconfig", "--globalconfig", "--loglevel", "--tag", "--omit", "--include"]);
+const NPM_LOCKFILE_VERBS = new Set(["install", "i", "in", "ins", "inst", "insta", "instal", "isnt", "isnta", "isntal", "isntall", "add", "uninstall", "remove", "rm", "r", "un", "unlink", "update", "up", "upgrade", "udpate", "dedupe", "ddp"]);
+const NPM_DEP_VERBS = new Set([
+  ...NPM_LOCKFILE_VERBS,
+  "ci",
+  "clean-install",
+  "ic",
+  "install-clean",
+  "isntall-clean",
+  "link",
+  "ln",
+  "prune",
+  "rebuild",
+  "rb",
+  "install-test",
+  "it",
+  "install-ci-test",
+  "cit",
+]);
+/** npm verbs that never touch node_modules; once one is seen the rest are its arguments. */
+const NPM_SAFE_VERBS = new Set([
+  "run", "run-script", "rum", "urn", "test", "t", "tst", "start", "stop", "restart", "exec", "x",
+  "ls", "list", "ll", "la", "view", "v", "info", "show", "outdated", "explain", "why", "config", "c",
+  "get", "help", "version", "pack", "query", "doctor", "fund", "search", "find", "pkg", "prefix", "root",
+  "bin", "docs", "home", "repo", "bugs", "whoami", "ping", "cache", "init", "create",
+]);
+
+function npmVerb(tokens, start) {
+  for (let i = start + 1; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.startsWith("-")) {
+      if (NPM_OPTS_WITH_VALUE.has(t)) i++;
+      continue;
+    }
+    if (NPM_DEP_VERBS.has(t)) return { verb: t, index: i };
+    if (t === "audit") return { verb: tokens.slice(i + 1).includes("fix") ? "audit fix" : "audit", index: i };
+    if (NPM_SAFE_VERBS.has(t)) return { verb: t, index: i };
+    // Unknown word: probably the value of an option we don't know; keep looking.
+  }
+  return { verb: null, index: -1 };
 }
 
-const packageNames = new Map();
-function readPackageName(root, row) {
-  if (!row.app) return null;
-  if (packageNames.has(row.app)) return packageNames.get(row.app);
-  let name = null;
-  try {
-    name = JSON.parse(readFileSync(path.join(root, row.app, "package.json"), "utf8")).name ?? null;
-  } catch {
-    name = `@rcene/${row.slug}`;
+function optionValue(tokens, names) {
+  for (let i = 0; i < tokens.length; i++) {
+    for (const n of names) {
+      if (tokens[i] === n) return tokens[i + 1] ?? null;
+      if (tokens[i].startsWith(`${n}=`)) return tokens[i].slice(n.length + 1);
+    }
   }
-  packageNames.set(row.app, name);
-  return name;
+  return null;
+}
+
+function npmReason(tokens, start, ctx, cwd) {
+  const { verb } = npmVerb(tokens, start);
+  if (!verb || (!NPM_DEP_VERBS.has(verb) && verb !== "audit fix")) return null;
+  const rest = tokens.slice(start + 1);
+  const lockOnly = rest.some((t) => t === "--package-lock-only" || t === "--package-lock-only=true");
+  if (lockOnly && NPM_LOCKFILE_VERBS.has(verb)) {
+    const prefix = optionValue(rest, ["--prefix", "-C"]);
+    const where = prefix ? resolveDir(cwd, prefix) : normalizePath(cwd);
+    if (within(ctx.appRoot, where) !== null) return null; // rewrites only this app's package-lock.json
+  }
+  const name = ctx.pkgName ?? ctx.slug;
+  if (!ctx.workspace) {
+    return `Blocked: npm ${verb} changes dependencies, which are frozen in this project session. Write the request in NOTES.md.`;
+  }
+  return (
+    `Blocked: npm ${verb} would rewrite node_modules, which pnpm manages here (npm would break pnpm's layout). ` +
+    `Add a dependency with pnpm add <pkg> inside the app (or pnpm --filter ${name} add <pkg>), then refresh the app's own ` +
+    "lockfile with npm install --package-lock-only. Justify the dependency in NOTES.md."
+  );
+}
+
+const OTHER_PM_DEP_VERBS = new Set(["add", "remove", "install", "i", "upgrade", "up", "update", "dedupe", "link", "unlink", "import"]);
+
+function otherPmReason(program, tokens, start) {
+  const first = tokens.slice(start + 1).find((t) => !t.startsWith("-"));
+  if (first !== undefined && !OTHER_PM_DEP_VERBS.has(first)) return null;
+  if (first === undefined && program !== "yarn") return null; // bare `yarn` installs; bare `bun` does not
+  return `Blocked: ${program} would create another lockfile and node_modules layout. This app uses pnpm here (npm standalone); write dependency requests in NOTES.md.`;
 }
 
 function commandReason(command, ctx) {
+  const gitRules = ctx.mode === "project";
+  const depRules = ctx.mode === "project" || ctx.mode === "monorepo";
+  if (!gitRules && !depRules) return null;
   let cwd = ctx.cwd;
   for (const segment of segments(command)) {
     const tokens = tokenize(segment).map(bare).filter(Boolean);
     if (tokens.length === 0) continue;
-    // Track `cd dir` / `Set-Location dir` (also "(cd x && ...)") so `cd apps/x && pnpm add y`
-    // resolves correctly. Conservative: a subshell's cd is kept.
+    // Track `cd dir` / `Set-Location dir` (also in a subshell, "(cd x && ...)") so
+    // `cd ../.. && pnpm add y` resolves correctly. Conservative: a subshell's cd is kept.
     if (isCd(tokens[0]) && tokens[1]) {
-      cwd = resolveAgainst(cwd, tokens[1]);
+      cwd = resolveDir(cwd, tokens[1]);
       continue;
     }
     for (let i = 0; i < tokens.length; i++) {
       const t = tokens[i];
       let reason = null;
       if (isProgram(t, "git")) {
+        if (!gitRules) break;
         const { sub, args } = parseGit(tokens, i);
-        if (sub) reason = gitReason(sub, args, ctx.row);
+        if (sub) reason = gitReason(sub, args, ctx);
       } else if (isProgram(t, "pnpm")) {
+        if (!depRules) break;
         reason = pnpmReason(parsePnpm(tokens, i), ctx, cwd);
-      } else if (isProgram(t, "npm") || isProgram(t, "yarn")) {
-        reason = npmReason(tokens, i, ctx);
+      } else if (isProgram(t, "npm")) {
+        if (!depRules) break;
+        reason = npmReason(tokens, i, ctx, cwd);
+      } else if (isProgram(t, "yarn") || isProgram(t, "bun")) {
+        if (!depRules) break;
+        reason = otherPmReason(baseName(t).toLowerCase().replace(/\.(exe|cmd|bat|ps1)$/, ""), tokens, i);
       } else continue;
       if (reason) return reason;
       break; // one program per simple command
     }
   }
-  return null;
-}
-
-function projectReason(toolName, toolInput, hookCwd) {
-  const editTools = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
-  const shellTools = new Set(["Bash", "PowerShell"]);
-  if (!editTools.has(toolName) && !shellTools.has(toolName)) return null;
-
-  const cwd = hookCwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const info = checkoutInfo(cwd);
-  if (!info || !info.branch.startsWith("proj/")) return null;
-  const row = projectForBranch(loadManifest(info.root), info.branch);
-  if (!row) return null;
-  const ctx = { row, root: normalizePath(info.root), cwd };
-
-  if (editTools.has(toolName)) return editReason(toolInput, ctx);
-  if (typeof toolInput.command === "string") return commandReason(toolInput.command, ctx);
   return null;
 }
 
@@ -648,19 +750,20 @@ async function main() {
     input = null;
   }
 
-  // Rule 1 first, failing closed: if the input can't be parsed, scan the raw text.
+  // Forbidden locations first, failing closed: if the input can't be parsed, scan the raw text.
   const strings = input && typeof input === "object" ? forbiddenCandidates(input) : [raw.replace(/\\\\/g, "\\")];
   const forbidden = forbiddenReason(strings);
   if (forbidden) return forbidden;
-  if (!input) return null;
+  if (!input || typeof input !== "object") return null;
 
   try {
     const toolName = String(input.tool_name ?? "");
     const toolInput = input.tool_input && typeof input.tool_input === "object" ? input.tool_input : {};
-    return (
-      credentialReason(toolName, toolInput) ??
-      projectReason(toolName, toolInput, typeof input.cwd === "string" ? input.cwd : "")
-    );
+    const credential = credentialReason(toolName, toolInput);
+    if (credential) return credential;
+    if (EDIT_TOOLS.has(toolName)) return editReason(toolInput, appContext(input));
+    if (SHELL_TOOLS.has(toolName) && typeof toolInput.command === "string") return commandReason(toolInput.command, appContext(input));
+    return null;
   } catch {
     return null; // fail open: a bug in the guard must not stall an unattended session
   }

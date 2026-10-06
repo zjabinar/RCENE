@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Converts a KML or KMZ file of heritage / eco-tourism placemarks into the
- * heritage.geojson shape (HeritageProps in apps/_template/rcene/data/types.ts):
+ * heritage.geojson shape (HeritageProps in rcene/data/types.ts):
  *
  *   FeatureCollection<Point, { id, name, category, description? }>
  *

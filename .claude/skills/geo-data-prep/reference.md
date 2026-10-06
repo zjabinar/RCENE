@@ -80,7 +80,7 @@ Include files used: scripts/data/include/levels-*.txt, facility-kinds.txt.
 
 ## Conversion record (data/files)
 
-Converted on 2026-10-0X by the data session (docs/projects/00-data.md) from `D:\lgu_portal - GIS\`, read only.
+Converted on 2026-10-0X from `sources/gis/raw/` (local copy of `D:\lgu_portal - GIS\`), read only.
 Raw sources are not in this repo. Tools: mapshaper 0.6.121, scripts/data/kml-to-geojson.mjs, derive.mjs, validate.mjs.
 
 ### Other layers
@@ -119,5 +119,5 @@ Add one entry for each of the five hazard files. A NOAH substitute gets `"tier":
 | `[target] No layers were matched (pattern: * type: polygon)` | the input has no polygon layer; drop the `-target type=polygon -points inner -target '*'` part |
 | A higher level shrank after dissolving | `allow-overlaps` is missing from `-dissolve2` |
 | Garbled `ñ` | `-i "<file>.shp" encoding=latin1` |
-| Out of memory on NOAH files | `pnpm exec mapshaper-xl 8gb ...` and `-clip bbox=...` first |
+| Out of memory on NOAH files | `npx mapshaper-xl 8gb ...` and `-clip bbox=...` first |
 | Total over 3 MB | raise `interval=` on hazard layers, then simplify barangays; check with `validate.mjs` |
