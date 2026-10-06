@@ -18,6 +18,7 @@ export const ROLES = [
   { id: "resident", path: "/resident", width: "phone" },
   { id: "center", path: "/center", width: "phone" },
   { id: "board", path: "/board", width: "full" },
+  { id: "admin", path: "/admin", width: "full" },
 ] as const satisfies readonly RoleDef[];
 
 export type Role = (typeof ROLES)[number];

@@ -1,0 +1,38 @@
+# /etc/systemd/system/rscene-api.service
+# The RSCENE AI relay: one self-contained file (dist-server/api.mjs), plain Node, no npm
+# install on the server. Loopback only; nginx proxies /api/ to it.
+[Unit]
+Description=RSCENE 2026 AI relay (rscene.nxtdev.cloud /api/)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=deploy
+Group=www-data
+WorkingDirectory=/srv/rscene/current
+EnvironmentFile=/srv/rscene/.env
+ExecStart=/usr/bin/env node /srv/rscene/current/server/api.mjs
+Restart=always
+RestartSec=3
+# Logs go to the journal: journalctl -u rscene-api -f
+StandardOutput=journal
+StandardError=journal
+
+# Hardening: it only reads its release and talks HTTPS to the AI providers.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=256M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

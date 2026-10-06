@@ -195,7 +195,7 @@ export function AppShell({
               </ul>
             </nav>
           )}
-          {weave && <div aria-hidden="true" data-slot="weave-band" className="weave-band" />}
+          {weave && <div aria-hidden="true" data-slot="weave-band" className="accent-rule" />}
         </header>
 
         <main id="main" tabIndex={-1} className={cn("flex-1 focus:outline-none", MAIN[width])}>

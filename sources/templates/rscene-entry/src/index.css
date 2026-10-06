@@ -1,0 +1,10 @@
+/*
+ * Tailwind scans only this app's own code (source(none) + the @source lines),
+ * not data/, docs/ or node_modules. Add app-only styles below the imports.
+ */
+@import "tailwindcss" source(none);
+@import "../rcene/ui/styles/globals.css";
+
+@source "./";
+@source "../rcene";
+@source "../index.html";

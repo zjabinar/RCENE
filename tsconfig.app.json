@@ -6,5 +6,5 @@
     "types": ["vite/client"]
   },
   "include": ["src", "rcene"],
-  "exclude": ["rcene/config", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["rcene/config", "rcene/ai/server", "**/*.test.ts", "**/*.test.tsx"]
 }

@@ -84,12 +84,24 @@ export function useHydrated(store: {
   return hydrated;
 }
 
+/** Store names that every resetDemo() keeps (settings, not demo data). See keepOnReset. */
+const keptOnReset = new Set<string>();
+
+/**
+ * Marks a store as a setting that "Reset demo" must keep (e.g. "ai:settings"), so a
+ * rehearsal reset never loses the chosen AI provider. Call it next to createSyncedStore.
+ */
+export function keepOnReset(name: string): void {
+  keptOnReset.add(name);
+}
+
 /**
  * Clears every persisted RCENE store and reloads all open windows of this app.
- * Wire it to a "Reset demo" button for rehearsals.
+ * Wire it to a "Reset demo" button for rehearsals. Stores in `keep` and those
+ * registered with keepOnReset() survive.
  */
 export function resetDemo(options: { keep?: string[] } = {}): void {
-  const keep = new Set((options.keep ?? []).map((k) => `${STORAGE_PREFIX}${k}`));
+  const keep = new Set([...(options.keep ?? []), ...keptOnReset].map((k) => `${STORAGE_PREFIX}${k}`));
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

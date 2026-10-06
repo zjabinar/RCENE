@@ -6,5 +6,5 @@
     "types": ["vite/client", "node", "vitest/importMeta"]
   },
   "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "rcene/**/*.test.ts", "rcene/**/*.test.tsx", "src/vite-env.d.ts"],
-  "exclude": ["rcene/config"]
+  "exclude": ["rcene/config", "rcene/ai/server"]
 }

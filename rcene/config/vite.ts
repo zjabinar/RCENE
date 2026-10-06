@@ -13,6 +13,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { mergeConfig, normalizePath, type Alias, type Plugin, type PluginOption, type UserConfig } from "vite";
 import { defineConfig } from "vitest/config";
+import { rceneAiRelay } from "../ai/server/plugin.ts";
 import { themeBootScript } from "../ui/theme/boot.ts";
 import type { ThemeDefaults } from "../ui/theme/palettes.ts";
 import { rceneStatic, type StaticMount } from "./static.ts";
@@ -24,6 +25,11 @@ export interface RceneAppOptions {
   port?: number;
   /** Serve /models/ from ./models for in-browser AI. Defaults to project.json `ai`. */
   ai?: boolean;
+  /**
+   * The AI relay (/api/ai/status, /api/ai/complete) on the dev and preview servers, with
+   * the provider keys read from the local env file on the Node side. Default true.
+   */
+  aiRelay?: boolean;
   /** Extra Vite plugins, e.g. VitePWA(...). */
   plugins?: PluginOption[];
   /** Escape hatch, deep-merged last with Vite's mergeConfig (nested keys merge, they don't replace). */
@@ -75,7 +81,7 @@ export function rceneAliases(dir: string): Alias[] {
     { find: /^@rcene\/ui\/theme$/, replacement: at("rcene/ui/theme/index.ts") },
     { find: /^@rcene\/kit\/(app|site|poster|brand)$/, replacement: `${at("rcene/kit")}/$1/index.ts` },
     { find: /^@rcene\/data\/schemas$/, replacement: at("rcene/data/schemas.ts") },
-    { find: /^@rcene\/(data|geo|i18n|kit|map|store|ui)$/, replacement: `${at("rcene")}/$1/index.ts` },
+    { find: /^@rcene\/(ai|data|geo|i18n|kit|map|store|ui)$/, replacement: `${at("rcene")}/$1/index.ts` },
     { find: /^@\//, replacement: `${at("src")}/` },
   ];
 }
@@ -104,7 +110,14 @@ export function rceneApp(options: RceneAppOptions): UserConfig {
   if (ai) mounts.push({ url: "/models/", dirs: [path.join(options.dir, "models")] });
 
   const config = defineConfig({
-    plugins: [react(), tailwindcss(), rceneStatic(mounts), rceneTheme(project.theme), ...(options.plugins ?? [])],
+    plugins: [
+      react(),
+      tailwindcss(),
+      rceneStatic(mounts),
+      rceneTheme(project.theme),
+      ...(options.aiRelay === false ? [] : [rceneAiRelay()]),
+      ...(options.plugins ?? []),
+    ],
     resolve: {
       alias: rceneAliases(options.dir),
       dedupe: ["react", "react-dom", "react-router", "zustand", "maplibre-gl"],

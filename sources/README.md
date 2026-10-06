@@ -33,4 +33,7 @@ Not copied: the UP NOAH fallback layers stay at `D:\lgu_portal - GIS\data\region
 
 | Source | Became | When |
 |---|---|---|
+| `C:\RSCENE_Vibecoding` `src/` (whole) | `sources/templates/rscene-entry/src/` (reference: complaints triage console, records, AI assist and briefing, store migration) | 2026-10-07 |
+| `C:\RSCENE_Vibecoding` admin, demo, presenter, poster pages | `src/pages/admin/*`, `src/pages/{Demo,Presenter,Poster}.tsx`, `src/features/{admin,demo,poster}/`, `src/content/lab.ts`, `src/i18n/admin-strings.ts` (adapted to Andam) | 2026-10-07 |
+| `C:\RSCENE_Vibecoding` `deploy/` (without `out/`), `templates/DEMO-SCRIPT.md`, `POSTER-CONTENT.md`, `prompts/03`, `04`, `06` | `sources/deploy/`, `sources/templates/docs/`, `sources/docs/prompts/` (reference); `docs/POSTER-CONTENT.md` | 2026-10-07 |
 | `proposals/p01-andam.md` + `01-ligtas`, `03-likas`, `04-bantay`, `05-sakuna` | `docs/brief.md`, `docs/modules/` (copied at generation) | 2026-10-07 |

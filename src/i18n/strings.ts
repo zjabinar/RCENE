@@ -7,8 +7,9 @@
  * merge them here under the module's prefix.
  */
 import { common, extendStrings } from "@rcene/i18n";
+import { adminStrings } from "./admin-strings.ts";
 
-export const strings = extendStrings(common, {
+const baseStrings = extendStrings(common, {
   en: {
     "app.title": "Andam Catbalogan",
     "app.tagline": "Community preparedness: one warning, every role, live",
@@ -54,3 +55,6 @@ export const strings = extendStrings(common, {
     "role.board.summary": "Ang kasalukuyang babala, mga center at kapasidad, nababasa mula sa malayo.",
   },
 });
+
+/** The app strings plus the admin, AI lab, demo and poster strings (src/i18n/admin-strings.ts). */
+export const strings = extendStrings(baseStrings, adminStrings);

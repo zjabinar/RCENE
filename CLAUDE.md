@@ -2,7 +2,7 @@
 
 Community preparedness: one warning, every role, live.
 
-The RCENE entry for the RSCENE 2026 AI Vibe Coding Challenge (Catbalogan City, Oct 7). **This repo is one standalone app** at its root: its own dependencies, shared code (`rcene/`), data (`data/`), skills, hooks, Playwright MCP and smoke test. The demo runs **offline** (Wi-Fi off), with **no server and no runtime AI API**.
+The RCENE entry for the RSCENE 2026 AI Vibe Coding Challenge (Catbalogan City, Oct 7). **This repo is one standalone app** at its root: its own dependencies, shared code (`rcene/`), data (`data/`), skills, hooks, Playwright MCP and smoke test. The demo runs **offline** (Wi-Fi off) with no server: AI features answer with the deterministic demo rules of `@rcene/ai` by default, and live AI (OpenAI, Claude, Gemini, a local model) through its relay is **opt-in**, never required.
 
 **The spec is `docs/brief.md`** (P1 roles, spine, R1–R5), with `docs/PRD.md` behind it and the module briefs in `docs/modules/`. On top of it the app has an admin layer: users, an audit log, settings, a dashboard and CRUD for common information (see `docs/plan.md` when it exists).
 
@@ -13,9 +13,10 @@ The RCENE entry for the RSCENE 2026 AI Vibe Coding Challenge (Catbalogan City, O
 | `docs/brief.md` | The spec. Also `docs/PRD.md`, `docs/proposal.md`, `docs/DISCLOSURE.md`, `docs/modules/` (briefs of #1 Ligtas, #3 Likas, #4 Bantay, #5 Sakuna, whose functions P1 builds in `src/modules/`) |
 | `docs/plan.md` | The working plan · `docs/screenshots/` is written by the smoke test |
 | `src/` | App code: `domain/` (pure functions + tests), `modules/`, `features/`, `pages/`, `i18n/strings.ts`, `routes.tsx`, `roles.ts`, `store.ts`, `components/ui/` (app-only shadcn) |
-| `rcene/` | Shared code: `data`, `geo`, `i18n`, `store`, `ui` (+ `ui/theme`), `map`, `kit` (design blocks: `kit/app`, `kit/site`, `kit/poster`, `kit/brand`), `config`, imported as `@rcene/<pkg>`. Read the `README.md` in each (the map API is in the `maplibre-gis` skill, the design system in the `rcene-design` skill), not the source |
+| `rcene/` | Shared code: `data`, `geo`, `i18n`, `store`, `ui` (+ `ui/theme`), `map`, `kit` (design blocks: `kit/app`, `kit/site`, `kit/poster`, `kit/brand`), `config`, `ai` (AI tasks, cards and the provider relay in `ai/server/`), imported as `@rcene/<pkg>`. Read the `README.md` in each (the map API is in the `maplibre-gis` skill, the design system in the `rcene-design` skill), not the source |
 | `data/files`, `data/fixtures` | Layers served at `/data/` (real files first, fake fixtures as a per-file fallback). `data/README.md` is the catalogue |
 | `models/` | In-browser AI models (gitignored), filled by `npm run fetch-models` |
+| `server/`, `vite.server.config.ts` | Standalone build of the AI relay (`npm run build:server` → `dist-server/api.mjs`). Not needed for the offline demo |
 | `scripts/` | `smoke.mjs`, `fetch-models.mjs`, `data/` (GIS → `data/files` tools), `hooks/` (guard and session context) |
 | `sources/` | **Reference material only** (see below): proposals, templates, raw GIS, event material |
 | `project.json` | id, slug, title, port, `ai`, brief, `smokeRoutes`, `kind`, `roles` |
@@ -37,6 +38,7 @@ npm run dev                                  # dev server on port 5201; preview 
 npm run test                                 # vitest: src/, rcene/, scripts/
 npm run typecheck
 npm run build
+npm run build:server                         # the AI relay as one Node file (optional; live AI only)
 npm run smoke                                # definition-of-done gate: build, preview offline, console, axe, screenshots at 390/1280
 npm run smoke -- --route /x --route /y       # only these routes; the default list is "smokeRoutes" in project.json
 npm run data:validate                        # data/files (add -- --fixtures for the fixtures)
@@ -64,6 +66,7 @@ npm run data:fixtures                        # regenerate the fake fixtures
 - **Stores:** `createSyncedStore("andam:<name>", …)` (localStorage, synced across windows). Persist state only, never layers. Every admin mutation also writes an audit entry.
 - **Every UI string goes through `src/i18n/strings.ts`** (`extendStrings(common, {en, war, fil})`). Draft Waray and Filipino, and list AI-drafted strings in `NOTES.md` under "Translations to review".
 - **Offline:** no CDN fonts, scripts, tiles or models. The online OSM basemap is an opt-in toggle only.
+- **AI:** every AI feature is a `defineAiTask` in `@rcene/ai` with a deterministic `demo()` fallback (skill `ai-feature`); the UI labels which answered (demo, fallback or a live provider) and a person confirms. Provider keys live only in the local env file read by the relay on the Node side (names in `.env.example`), never in the browser or git. The demo must work with no key and no network.
 - **Accessibility:** color + icon + text label, never color alone. Every action works by keyboard. Respect `prefers-reduced-motion`. WCAG AA contrast.
 - **Credit sources** on `/sources`. The disclaimer footer comes with `AppShell`.
 - **Dependencies:** the full stack is already in `package.json` (exact pins, `.npmrc` `save-exact`). Add a package only if truly needed (`npm install <pkg>`), justify it in `NOTES.md`, and never change a major version.
@@ -83,7 +86,7 @@ A PreToolUse guard (`scripts/hooks/guard.mjs`) blocks, and tells you why: any pa
 
 ## Roles and the spine
 
-`/` is the role launcher (`RoleLauncher` from `@rcene/ui`). Each role in `project.json` `roles` has a route (`src/roles.ts`): `/console` (CDRRMO operator and admin, full width), `/resident` (phone), `/center` (+ `/center/:id`, phone), `/board` (projector). All roles read and write one synced store, `andam:spine` (`activeScenarioId`, `raisedAt`, `centerLive`); each role usually runs in its own window (**New window** on `/`), and the synced store makes one role's action appear in the others. The functions of the module briefs (`docs/modules/`) are built in `src/modules/{ligtas,sakuna,likas,bantay}/` with their own tests.
+`/` is the role launcher (`RoleLauncher` from `@rcene/ui`). Each role in `project.json` `roles` has a route (`src/roles.ts`): `/console` (CDRRMO operator and admin, full width), `/resident` (phone), `/center` (+ `/center/:id`, phone), `/board` (projector), `/admin` (admin: AI provider, AI lab, appearance, demo data). Outside the roles: `/demo` (demo control), `/presenter` (speaker notes; `?present` or P shows the presenter bar) and `/poster` (A3). All roles read and write one synced store, `andam:spine` (`activeScenarioId`, `raisedAt`, `centerLive`); each role usually runs in its own window (**New window** on `/`), and the synced store makes one role's action appear in the others. The functions of the module briefs (`docs/modules/`) are built in `src/modules/{ligtas,sakuna,likas,bantay}/` with their own tests.
 
 ## Skills and plugins
 

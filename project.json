@@ -14,6 +14,13 @@
     "/resident",
     "/center",
     "/board",
+    "/admin",
+    "/admin/ai",
+    "/admin/lab",
+    "/admin/appearance",
+    "/admin/data",
+    "/demo",
+    "/poster",
     "/sources"
   ],
   "smokeSchemes": [
@@ -40,6 +47,11 @@
     {
       "id": "board",
       "path": "/board",
+      "width": "full"
+    },
+    {
+      "id": "admin",
+      "path": "/admin",
       "width": "full"
     }
   ]

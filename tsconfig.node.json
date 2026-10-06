@@ -17,5 +17,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "rcene/config"]
+  "include": ["vite.config.ts", "vite.server.config.ts", "rcene/config", "rcene/ai/server", "server"]
 }
