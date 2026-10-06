@@ -13,7 +13,7 @@ Every recipe below was run against fixture-based stand-ins for the archive files
 
 ## Hard rules (PRD §8.4)
 
-- **Never read anything under `D:\monica`. Never copy anything from `C:\lgu_portal`**, because credential files sit at its root. Read only from `sources/gis/raw/` (the local copy) or `D:\lgu_portal - GIS\`.
+- **Never copy anything from `C:\lgu_portal`**, because credential files sit at its root. Read from `sources/gis/raw/` (the local copy) or `D:\lgu_portal - GIS\`, and, read-only, from the builder's own codebases `D:\LGU_Portal`, `D:\AI-ARUS` and `D:\monica`. The `source-codebases` skill catalogues them. Never edit them, never open their credential files.
 - Use barangay-level and facility-level data only. No personal data, real or invented. Check KML descriptions for names and phone numbers (`--no-description` drops them).
 - Credit every source in `sources.json`. The `/sources` page and the poster render it.
 - 🟡 permission data (CDRRMO/CPDCO risk maps, CPDCO heritage KML) goes only into this **private** repo. Never push it to a public remote, gist or public deploy.

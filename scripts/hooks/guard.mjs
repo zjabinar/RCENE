@@ -15,10 +15,13 @@
  *   free      anything else: no git, main, entry/*, a standalone copy
  *
  * Rules:
- *   always    no path or command may touch D:\monica or C:\lgu_portal (all spellings;
+ *   always    no path or command may touch C:\lgu_portal (all spellings;
  *             D:\lgu_portal - GIS is allowed). ./ and ../ are collapsed and relative paths
  *             resolved against the cwd and any earlier cd. Evaluated first, and the
- *             only rule that fails closed.
+ *             only rule that fails closed. The user's own source codebases D:\monica,
+ *             D:\LGU_Portal and D:\AI-ARUS are readable but never editable: the edit rule
+ *             below keeps edits inside the app root, settings.json denies Edit under
+ *             D:\monica, and their credential files fall under the credential rule.
  *   always    no reading or editing credential files (.env, .env.* except .env.example,
  *             *service-account*.json, gemini_api_key.txt, *.pem).
  *   always    Edit/Write/MultiEdit/NotebookEdit only inside the app root, ~/.claude,
@@ -65,13 +68,8 @@ function flatten(text) {
 // A drive prefix written any common way: "d:", "/d", "/mnt/d", "/cygdrive/d", or the
 // Windows admin share ("\\host\d$\...").
 // The folder name must end at a separator, quote, space or end of string, so
-// "D:\monica" and "D:\monica - copy" are blocked but "D:\monica2" is not.
+// "C:\lgu_portal" and "C:\lgu_portal - copy" are blocked but "C:\lgu_portal2" is not.
 const FORBIDDEN = [
-  {
-    re: /(?:^|[^a-z0-9])(?:d:|d\$|\/mnt\/d|\/cygdrive\/d|\/d)\/monica(?=$|[^a-z0-9_])/,
-    label: "D:\\monica",
-    why: "D:\\monica is another person's dissertation project and is off limits. Do not read, list or copy anything from it.",
-  },
   {
     re: /(?:^|[^a-z0-9])(?:c:|c\$|\/mnt\/c|\/cygdrive\/c|\/c)\/lgu_portal(?=$|[^a-z0-9_])/,
     label: "C:\\lgu_portal",

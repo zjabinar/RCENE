@@ -37,7 +37,6 @@
       "PowerShell(npm install *)"
     ],
     "deny": [
-      "Read(//d/monica/**)",
       "Edit(//d/monica/**)",
       "Read(//c/lgu_portal/**)",
       "Edit(//c/lgu_portal/**)",

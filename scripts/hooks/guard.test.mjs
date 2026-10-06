@@ -119,15 +119,23 @@ const MODES = [
 ];
 
 describe.each(MODES)("always-rules: %s", (_label, key) => {
-  it("blocks D:\\monica in every spelling", () => {
+  it("allows reading the user's own source codebases (D:\\monica, D:\\LGU_Portal, D:\\AI-ARUS)", () => {
     const f = fx[key];
-    const r = call(f, "Read", { file_path: "D:\\monica\\thesis.docx" });
-    expect(r.status).toBe(2);
-    expect(r.stderr).toContain("D:\\monica");
-    for (const p of ["d:/Monica/data", "/d/monica", "/mnt/d/monica/x.csv", "D:\\MONICA", "/cygdrive/d/monica", "\\\\localhost\\d$\\monica\\x", "//PC/D$/monica"]) {
-      expect(call(f, "Glob", { pattern: "**/*", path: p }).status, p).toBe(2);
+    expect(call(f, "Read", { file_path: "D:\\monica\\README.md" }).status).toBe(0);
+    for (const p of ["d:/Monica/data", "/d/monica", "/mnt/d/monica/x.csv", "D:\\MONICA", "/cygdrive/d/monica", "D:\\LGU_Portal\\apps", "D:\\AI-ARUS\\apps"]) {
+      expect(call(f, "Glob", { pattern: "**/*", path: p }).status, p).toBe(0);
     }
-    expect(bash(f, "ls -la /d/monica && echo done").status).toBe(2);
+    expect(bash(f, "ls -la /d/monica && echo done").status).toBe(0);
+    expect(call(f, "Glob", { pattern: "monica/**", path: "D:\\" }).status).toBe(0);
+  });
+
+  it("still blocks editing D:\\monica and its credential files", () => {
+    const f = fx[key];
+    expect(write(f, "D:\\monica\\README.md").status).toBe(2);
+    expect(call(f, "Edit", { file_path: "D:\\monica\\apps\\x.py" }).status).toBe(2);
+    expect(call(f, "Read", { file_path: "D:\\monica\\gemini_api_key.txt" }).status).toBe(2);
+    expect(call(f, "Read", { file_path: "D:\\monica\\.env" }).status).toBe(2);
+    expect(bash(f, "cat /d/AI-ARUS/.env.production").status).toBe(2);
   });
 
   it("blocks C:\\lgu_portal but allows D:\\lgu_portal - GIS", () => {
@@ -141,25 +149,25 @@ describe.each(MODES)("always-rules: %s", (_label, key) => {
 
   it("blocks forbidden folders reached through ./, ../, the cwd or an earlier cd", () => {
     const f = fx[key];
-    expect(call(f, "Read", { file_path: "D:/./monica/x" }).status).toBe(2);
-    expect(bash(f, 'cat "D:/lgu_portal - GIS/../monica/notes.txt"').status).toBe(2);
-    expect(bash(f, "cd /d/ && ls monica").status).toBe(2);
-    expect(call(f, "PowerShell", { command: "Set-Location D:\\; Get-ChildItem monica" }).status).toBe(2);
-    expect(bash(f, "ls monica", "D:\\").status).toBe(2);
-    expect(call(f, "Glob", { pattern: "monica/**", path: "D:\\" }).status).toBe(2);
+    expect(call(f, "Read", { file_path: "C:/./lgu_portal/x" }).status).toBe(2);
+    expect(bash(f, 'cat "C:/Windows/../lgu_portal/notes.txt"').status).toBe(2);
+    expect(bash(f, "cd /c/ && ls lgu_portal").status).toBe(2);
+    expect(call(f, "PowerShell", { command: "Set-Location C:\\; Get-ChildItem lgu_portal" }).status).toBe(2);
+    expect(bash(f, "ls lgu_portal", "C:\\").status).toBe(2);
+    expect(call(f, "Glob", { pattern: "lgu_portal/**", path: "C:\\" }).status).toBe(2);
     expect(bash(f, 'cd "/d/lgu_portal - GIS" && ls Hazard').status).toBe(0);
-    expect(bash(f, "ls monica").status).toBe(0);
+    expect(bash(f, "ls lgu_portal").status).toBe(0);
   });
 
   it("blocks forbidden paths even when the input is not valid JSON", () => {
     const f = fx[key];
-    expect(run(f, '{"tool_name":"Read","tool_input":{"file_path":"D:\\\\monica\\\\x"').status).toBe(2);
+    expect(run(f, '{"tool_name":"Read","tool_input":{"file_path":"C:\\\\lgu_portal\\\\x"').status).toBe(2);
     expect(run(f, "not json at all").status).toBe(0);
   });
 
   it("does not scan the contents being written", () => {
     const f = fx[key];
-    expect(call(f, "Write", { file_path: path.join(f.app, "NOTES.md"), content: "Never read D:\\monica." }).status).toBe(0);
+    expect(call(f, "Write", { file_path: path.join(f.app, "NOTES.md"), content: "Never read C:\\lgu_portal." }).status).toBe(0);
   });
 
   it("blocks credential files but allows .env.example", () => {

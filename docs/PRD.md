@@ -53,7 +53,7 @@ Catbalogan faces typhoons, storm surge, flooding, rain-induced landslides, and e
 - Turn-by-turn routing. There is no road-network dataset, so distances are straight-line and labelled as such.
 - Machine-learning risk prediction, or any computed "risk score" presented as fact.
 - Real household or personal data of any kind.
-- Anything from GPDSS / Project HABAGAT (`D:\monica`): no code, outputs, data, or findings.
+- GPDSS (`D:\monica`) code or model outputs presented as fact. Its data comes in only through the `source-codebases` skill: barangay-level aggregates, with any model output labelled "indicative".
 - Deployment. The app runs on localhost.
 
 ## 4. Users and roles
@@ -221,7 +221,7 @@ Waray labels are prepared with the content in §11.
 
 ### 8.4 Data rules
 
-- **Never read from `D:\monica`.** Never copy anything from `C:\lgu_portal`; its root holds credential files.
+- **`D:\LGU_Portal`, `D:\AI-ARUS` and `D:\monica` are read-only sources**, pulled through the `source-codebases` skill. Never copy anything from `C:\lgu_portal`; its root holds credential files.
 - Barangay-level and facility-level data only. No personal data, real or invented, appears anywhere in the app.
 - The repository stays private: the 🟡 permission-tier layers are committed in `data/files/` (and copied into each app's `data/`).
 - Every source is credited on `/sources` and on the poster:
@@ -259,7 +259,7 @@ Waray labels are prepared with the content in §11.
 No AI runs inside the app, by decision. The AI score therefore rests on the build process, made visible:
 
 - **Built with Claude Code**, using the ECC plugin and the project skills (`gsap-motion` and others; see `docs/SKILLS.md`). Every prompt that shaped the product and every accept or reject decision goes into that app's own `AI-LOG.md` (`apps/NN-slug/AI-LOG.md`), one entry per commit, before the event and on the day.
-- **The parallel multi-agent build itself.** Twenty briefs in `docs/projects/` act as the specs. Parallel Claude Code sessions, one per app in its own git worktree, build them in batches (`docs/PARALLEL.md`). Hooks in `.claude/settings.json` are the guardrails: each session stays inside its own app folder and away from `D:\monica` and `C:\lgu_portal`. Each app is verified with Playwright screenshots (`scripts/smoke.mjs`).
+- **The parallel multi-agent build itself.** Twenty briefs in `docs/projects/` act as the specs. Parallel Claude Code sessions, one per app in its own git worktree, build them in batches (`docs/PARALLEL.md`). Hooks in `.claude/settings.json` are the guardrails: each session stays inside its own app folder, away from `C:\lgu_portal` and credential files, and treats the source codebases as read-only. Each app is verified with Playwright screenshots (`scripts/smoke.mjs`).
 - **AI-written data-prep commands** (mapshaper), run in the local data session before the event and logged.
 - **AI-drafted Waray strings, corrected by a human.** Keep the before and after. *"Here's what the AI got wrong in Waray, and how we fixed it"* is a strong, honest poster panel.
 - **AI-generated unit tests** for the domain functions in §7, reviewed by a human.

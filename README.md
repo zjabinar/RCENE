@@ -47,7 +47,7 @@ There is no server: the roles share one synced store in the browser, so an actio
 
 ## Data rules
 
-- **Never read anything under `D:\monica`.** It is someone else's unpublished research.
+- **`D:\LGU_Portal`, `D:\AI-ARUS` and `D:\monica` are read-only sources.** They are the builder's own codebases. Pull from them through the `source-codebases` skill; never edit them, never open their credential files, never export personal-data tables.
 - **Never copy anything from `C:\lgu_portal`.** It holds credential files. The GIS archive is `D:\lgu_portal - GIS`, copied into `sources/gis/raw/` (never committed).
 - **Keep this repo private.** Some layers in `data/files/` are permission-tier (used with LGU permission, not open data).
 - No personal data, real or invented: synthetic records use codes.

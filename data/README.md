@@ -62,7 +62,7 @@ _Not filled in yet. Data prep records the date, the tools, the other layers' sou
 ## Rules
 
 - Barangay- and facility-level data only. **No personal data, real or invented.** Synthetic records use codes such as `HH-0123`, never names.
-- Never read anything under `D:\monica`. Never copy anything from `C:\lgu_portal`. The only archive data prep may read is `D:\lgu_portal - GIS` (copied into `sources/gis/raw/`).
+- Never copy anything from `C:\lgu_portal`. Data prep reads `D:\lgu_portal - GIS` (copied into `sources/gis/raw/`) and, read-only, the builder's own codebases `D:\LGU_Portal`, `D:\AI-ARUS` and `D:\monica`. See "External codebases" below and the `source-codebases` skill.
 - Raw sources (`.shp`, `.dbf`, `.prj`, `.kmz`, raw `.kml`/`.geojson` copies) stay in the gitignored `sources/gis/raw/` and are never committed, only converted outputs.
 - Every shipped file except `derived/*` has a `sources.json` entry, with the credit lines from the PRD (§8.4) word for word.
 - After a change: `npm run data:derive`, then `npm run data:validate` (exit 0), then `npm run smoke`.

@@ -30,7 +30,7 @@ const MAX_CONTEXT = 9500;
 const PROTOCOL =
   "Follow the session protocol in CLAUDE.md. The brief is the approved spec: do not brainstorm or ask clarifying questions; make reasonable decisions and record them in NOTES.md.";
 const OFF_LIMITS =
-  "Off limits everywhere: D:\\monica, C:\\lgu_portal, and credential files (.env*, *service-account*.json, gemini_api_key.txt, *.pem). A PreToolUse guard enforces the rules below.";
+  "Off limits everywhere: C:\\lgu_portal and credential files (.env*, *service-account*.json, gemini_api_key.txt, *.pem). Read-only sources (never edit, never export personal-data tables): D:\\LGU_Portal, D:\\AI-ARUS, D:\\monica; see the source-codebases skill. A PreToolUse guard enforces the rules below.";
 
 function readStdin() {
   return new Promise((resolve) => {

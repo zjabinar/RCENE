@@ -122,7 +122,7 @@ zod 4 schemas for the shipped files: `hazardSchema`, `levelSchema`, `boundarySch
 ## Rules
 
 - Barangay- and facility-level data only. **No personal data, real or invented**: synthetic households use codes like `HH-0123`, never names.
-- Never read from `D:\monica` or `C:\lgu_portal`.
+- Never read from `C:\lgu_portal`. `D:\LGU_Portal`, `D:\AI-ARUS` and `D:\monica` are read-only sources: extract through the `source-codebases` skill into `data/files/`, never at runtime.
 - Never `fetch` a data file directly: `useLayer`, `useZones` or `useOptionalLayer` handle missing files without console errors.
 - Every shipped file has a `sources.json` entry; `/sources` renders it, plus the app's `extra` sources.
 
